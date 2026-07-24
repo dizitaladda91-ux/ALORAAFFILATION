@@ -1,51 +1,24 @@
 import React from 'react';
 
-export const AuthLayout = ({ children, title, subtitle }) => {
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'var(--bg-app)',
-        padding: '1.5rem',
-      }}
-    >
-      <div
-        className="card"
-        style={{
-          width: '100%',
-          maxWidth: '440px',
-          padding: '2.5rem',
-          boxShadow: 'var(--shadow-lg)',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'var(--primary)',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 800,
-              fontSize: '1.5rem',
-              margin: '0 auto 1rem',
-            }}
-          >
-            A
-          </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.375rem' }}>
-            {title}
-          </h2>
-          {subtitle && <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{subtitle}</p>}
-        </div>
-        {children}
+export const AuthLayout = ({ children, title, subtitle, showAffiliateGuide = false }) => (
+  <main className="auth-shell">
+    <div className="auth-orb auth-orb-one" aria-hidden="true" />
+    <div className="auth-orb auth-orb-two" aria-hidden="true" />
+    <section className="auth-stage">
+      <div className="auth-intro">
+        <div className="alora-brand" aria-label="Alora"><span className="alora-mark">A</span><span>alora</span></div>
+        <p className="auth-kicker">Affiliate partner portal</p>
+        <h1>Build a network that grows with you.</h1>
+        <p className="auth-intro-copy">A focused workspace to manage links, track commissions, and move every partnership forward.</p>
+        {showAffiliateGuide && <div className="affiliate-guide" aria-label="Account types">
+          <article className="affiliate-type affiliate-type-featured"><div className="affiliate-type-icon">↗</div><div><p className="affiliate-type-label">Super Affiliate</p><p>Lead a team, monitor network performance, and grow through your referrals.</p></div></article>
+          <article className="affiliate-type"><div className="affiliate-type-icon">✦</div><div><p className="affiliate-type-label">Standard Affiliate</p><p>Create referral links, track conversions, and manage your earnings in one place.</p></div></article>
+        </div>}
       </div>
-    </div>
-  );
-};
+      <div className="auth-card-wrap"><div className="auth-card card">
+        <div className="auth-card-heading"><p className="auth-card-overline">Secure access</p><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>
+        {children}
+      </div></div>
+    </section>
+  </main>
+);

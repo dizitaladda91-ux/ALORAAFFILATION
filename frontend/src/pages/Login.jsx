@@ -48,7 +48,7 @@ export const Login = () => {
   };
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to your Affiliate Cloud account">
+    <AuthLayout title="Welcome back" subtitle="Sign in to your Alora partner account." showAffiliateGuide>
       <form onSubmit={handleSubmit}>
         <Input
           label="Email Address"
