@@ -23,6 +23,7 @@ app.use(
   })
 );
 
+
 // Body parser & Cookie parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -30,6 +31,20 @@ app.use(cookieParser());
 
 // Rate Limiter
 app.use(globalRateLimiter);
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    application: 'Affiliate Management API',
+    version: '1.0.0',
+    environment: config.env,
+    api: `${config.apiPrefix}`,
+    health: '/health',
+    documentation: `${config.apiPrefix}`,
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
