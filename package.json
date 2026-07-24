@@ -1,0 +1,12 @@
+{
+  "name": "affiliate-management-system-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root workspace runner for Enterprise Affiliate Management System",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "db:migrate": "npm --prefix backend run db:migrate",
+    "db:seed": "npm --prefix backend run db:seed"
+  }
+}

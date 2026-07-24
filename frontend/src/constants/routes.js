@@ -1,0 +1,26 @@
+export const ROUTES = {
+  HOME: '/',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
+  REF_REDIRECT: '/ref/:code',
+  UNAUTHORIZED: '/unauthorized',
+
+  // Dashboards
+  SUPER_ADMIN_DASHBOARD: '/super-admin/dashboard',
+  ADMIN_DASHBOARD: '/admin/dashboard',
+  SUPER_AFFILIATE_DASHBOARD: '/super-affiliate/dashboard',
+  AFFILIATE_DASHBOARD: '/affiliate/dashboard',
+
+  // Management Modules
+  USER_MANAGEMENT: '/admin/users',
+  AFFILIATE_APPROVALS: '/admin/affiliates/approvals',
+  COMMISSION_RULES: '/admin/commission-rules',
+  TEAM_TRACKING: '/super-affiliate/team',
+  REFERRAL_LINKS: '/affiliate/links',
+  EARNINGS: '/affiliate/earnings',
+  AUDIT_LOGS: '/admin/audit-logs',
+  SYSTEM_SETTINGS: '/admin/settings',
+  PROFILE: '/profile',
+};
