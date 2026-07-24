@@ -4,6 +4,7 @@
   "private": true,
   "description": "Root workspace runner for Enterprise Affiliate Management System",
   "scripts": {
+    "build": "npm --prefix frontend run build",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "db:migrate": "npm --prefix backend run db:migrate",
