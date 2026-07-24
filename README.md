@@ -75,13 +75,18 @@ Frontend application will open at `http://localhost:3000`.
 ## Deployment Guide
 
 ### Vercel (Frontend)
-- Build Command: `npm run build`
-- Output Directory: `dist`
-- Uses `frontend/vercel.json` for SPA URL rewrites.
+- The repository-root `vercel.json` builds the `frontend` directory automatically.
+- In Vercel, add `VITE_API_BASE_URL=https://<your-render-service>.onrender.com/api/v1`.
+- Redeploy after setting the variable because Vite embeds it at build time.
 
 ### Render (Backend)
-- Uses `backend/render.yaml` configuration.
-- Set environment variables `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`.
+- Create the service using the repository-root `render.yaml` Blueprint. It sets
+  `backend` as the service root and exposes `/health` for health checks.
+- Set `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`,
+  `FRONTEND_URL`, and `CORS_ORIGIN`. The last two must be your exact Vercel URL,
+  including `https://` and without a trailing slash.
+- Initialize the database before using the API: run
+  `npm run db:migrate` once from `backend` with the production `DATABASE_URL`.
 
 ### Docker
 ```bash

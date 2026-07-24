@@ -9,7 +9,8 @@ module.exports = {
   env: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 5000,
   apiPrefix: process.env.API_PREFIX || '/api/v1',
-  frontendUrl: process.env.FRONTEND_URL || 'affilationsoftware.vercel.app',
+  // Set this to the full Vercel URL in production, including https://.
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   dbUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/affiliate_db',
   dbMax: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
   dbIdleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),
@@ -19,7 +20,13 @@ module.exports = {
     accessExpiration: process.env.JWT_ACCESS_EXPIRATION || '15m',
     refreshExpiration: process.env.JWT_REFRESH_EXPIRATION || '7d',
   },
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  // CORS_ORIGIN may contain a comma-separated list, e.g. the production
+  // Vercel domain plus a preview domain. Falling back to FRONTEND_URL keeps
+  // the two production settings consistent when only FRONTEND_URL is set.
+  corsOrigins: (process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
 };
