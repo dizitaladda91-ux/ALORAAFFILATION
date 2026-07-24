@@ -1,3 +1,22 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build
+dist/
+frontend/dist/
+
+# Environment
 .env
+frontend/.env
+backend/.env
+
+# Logs
+*.log
+
+# Vercel
+.vercel/
+
+# OS
+.DS_Store
+Thumbs.db
