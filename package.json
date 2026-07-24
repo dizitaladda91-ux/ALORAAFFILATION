@@ -5,7 +5,7 @@
   "description": "Enterprise Affiliate Management System",
   "type": "module",
   "scripts": {
-    "build": "vite build --outDir dist",
+    "build": "vite build",
     "dev": "vite",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
