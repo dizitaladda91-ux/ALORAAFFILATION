@@ -71,7 +71,7 @@ class AuthService {
         id: user.id,
         email: user.email,
         status: user.status,
-        role: roleObj.name,
+        role_name: roleObj.name,
         profile,
         primaryLink,
       },

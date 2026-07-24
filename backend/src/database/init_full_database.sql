@@ -271,11 +271,11 @@ INSERT INTO system_settings (key, value, description) VALUES
 ON CONFLICT (key) DO NOTHING;
 
 -- Seed Users (Password for all: password123)
--- Hash: $2a$10$w/x/R5eGZ9K5D6x8o7N4e.8Y9U1o2P3Q4R5S6T7U8V9W0X1Y2Z3a4
+-- Hash: $2a$10$oVNlzNusWmZf0HejJSzcO.ED98S91N16F1BMqBlUwSyDzCZhzWZlO
 
 -- 1. Super Admin
 INSERT INTO users (id, email, password_hash, role_id, status, is_email_verified) VALUES
-('b1111111-1111-4111-a111-111111111111', 'superadmin@affiliate.com', '$2a$10$w/x/R5eGZ9K5D6x8o7N4e.8Y9U1o2P3Q4R5S6T7U8V9W0X1Y2Z3a4', '11111111-1111-4111-a111-111111111111', 'active', true)
+('b1111111-1111-4111-a111-111111111111', 'superadmin@affiliate.com', '$2a$10$oVNlzNusWmZf0HejJSzcO.ED98S91N16F1BMqBlUwSyDzCZhzWZlO', '11111111-1111-4111-a111-111111111111', 'active', true)
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO profiles (user_id, first_name, last_name, company, phone) VALUES
@@ -284,7 +284,7 @@ ON CONFLICT (user_id) DO NOTHING;
 
 -- 2. Operations Admin
 INSERT INTO users (id, email, password_hash, role_id, status, is_email_verified) VALUES
-('b2222222-2222-4222-a222-222222222222', 'admin@affiliate.com', '$2a$10$w/x/R5eGZ9K5D6x8o7N4e.8Y9U1o2P3Q4R5S6T7U8V9W0X1Y2Z3a4', '22222222-2222-4222-a222-222222222222', 'active', true)
+('b2222222-2222-4222-a222-222222222222', 'admin@affiliate.com', '$2a$10$oVNlzNusWmZf0HejJSzcO.ED98S91N16F1BMqBlUwSyDzCZhzWZlO', '22222222-2222-4222-a222-222222222222', 'active', true)
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO profiles (user_id, first_name, last_name, company, phone) VALUES
@@ -293,7 +293,7 @@ ON CONFLICT (user_id) DO NOTHING;
 
 -- 3. Super Affiliate Team Leader
 INSERT INTO users (id, email, password_hash, role_id, status, is_email_verified) VALUES
-('b3333333-3333-4333-a333-333333333333', 'superaffiliate@affiliate.com', '$2a$10$w/x/R5eGZ9K5D6x8o7N4e.8Y9U1o2P3Q4R5S6T7U8V9W0X1Y2Z3a4', '33333333-3333-4333-a333-333333333333', 'active', true)
+('b3333333-3333-4333-a333-333333333333', 'superaffiliate@affiliate.com', '$2a$10$oVNlzNusWmZf0HejJSzcO.ED98S91N16F1BMqBlUwSyDzCZhzWZlO', '33333333-3333-4333-a333-333333333333', 'active', true)
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO profiles (user_id, first_name, last_name, company, phone) VALUES
@@ -302,7 +302,7 @@ ON CONFLICT (user_id) DO NOTHING;
 
 -- 4. Standard Affiliate 1
 INSERT INTO users (id, email, password_hash, role_id, status, is_email_verified, parent_affiliate_id) VALUES
-('b4444444-4444-4444-a444-444444444444', 'affiliate@affiliate.com', '$2a$10$w/x/R5eGZ9K5D6x8o7N4e.8Y9U1o2P3Q4R5S6T7U8V9W0X1Y2Z3a4', '44444444-4444-4444-a444-444444444444', 'active', true, 'b3333333-3333-4333-a333-333333333333')
+('b4444444-4444-4444-a444-444444444444', 'affiliate@affiliate.com', '$2a$10$oVNlzNusWmZf0HejJSzcO.ED98S91N16F1BMqBlUwSyDzCZhzWZlO', '44444444-4444-4444-a444-444444444444', 'active', true, 'b3333333-3333-4333-a333-333333333333')
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO profiles (user_id, first_name, last_name, company, phone) VALUES
@@ -311,12 +311,18 @@ ON CONFLICT (user_id) DO NOTHING;
 
 -- 5. Standard Affiliate 2
 INSERT INTO users (id, email, password_hash, role_id, status, is_email_verified, parent_affiliate_id) VALUES
-('b5555555-5555-4555-a555-555555555555', 'affiliate2@affiliate.com', '$2a$10$w/x/R5eGZ9K5D6x8o7N4e.8Y9U1o2P3Q4R5S6T7U8V9W0X1Y2Z3a4', '44444444-4444-4444-a444-444444444444', 'active', true, 'b3333333-3333-4333-a333-333333333333')
+('b5555555-5555-4555-a555-555555555555', 'affiliate2@affiliate.com', '$2a$10$oVNlzNusWmZf0HejJSzcO.ED98S91N16F1BMqBlUwSyDzCZhzWZlO', '44444444-4444-4444-a444-444444444444', 'active', true, 'b3333333-3333-4333-a333-333333333333')
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO profiles (user_id, first_name, last_name, company, phone) VALUES
 ('b5555555-5555-4555-a555-555555555555', 'Jordan', 'Marketer', 'Nexus Marketing', '+1 (555) 000-0005')
 ON CONFLICT (user_id) DO NOTHING;
+
+-- Repair existing demo accounts created with the previous invalid placeholder hash.
+-- Password for these demo accounts: password123
+UPDATE users
+SET password_hash = '$2a$10$oVNlzNusWmZf0HejJSzcO.ED98S91N16F1BMqBlUwSyDzCZhzWZlO'
+WHERE email IN ('superadmin@affiliate.com', 'admin@affiliate.com', 'superaffiliate@affiliate.com', 'affiliate@affiliate.com', 'affiliate2@affiliate.com');
 
 -- Seed Affiliate Links
 INSERT INTO affiliate_links (id, user_id, referral_code, target_url, title, click_count) VALUES
