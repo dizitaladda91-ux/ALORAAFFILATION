@@ -8,7 +8,7 @@ dotenv.config({ path: path.join(__dirname, '../../../.env') });
 module.exports = {
   env: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 5000,
-  apiPrefix: process.env.API_PREFIX || '/api/v1',
+  apiPrefix: process.env.API_PREFIX || '',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   dbUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/affiliate_db',
   dbMax: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),

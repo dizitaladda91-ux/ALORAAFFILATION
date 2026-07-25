@@ -76,7 +76,7 @@ Frontend application will open at `http://localhost:3000`.
 
 ### Vercel (Frontend)
 - The repository-root `vercel.json` builds the `frontend` directory automatically.
-- In Vercel, add `VITE_API_BASE_URL=https://<your-render-service>.onrender.com/api/v1`.
+- In Vercel, add `VITE_API_BASE_URL=https://<your-render-service>.onrender.com`.
 - Redeploy after setting the variable because Vite embeds it at build time.
 
 ### Render (Backend)

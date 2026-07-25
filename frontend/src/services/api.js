@@ -7,8 +7,8 @@ import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken, clear
 // An explicit VITE_API_BASE_URL always takes precedence.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   || (import.meta.env.PROD
-    ? 'https://affilation-software.onrender.com/api/v1'
-    : 'http://localhost:5000/api/v1');
+    ? 'https://affilation-software.onrender.com'
+    : 'http://localhost:5000');
 
 const api = axios.create({
   baseURL: API_BASE_URL,

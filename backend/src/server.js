@@ -8,7 +8,7 @@ const server = app.listen(config.port, () => {
   logger.info(` Affiliate Management Server running on port ${config.port}`);
   logger.info(` Environment: ${config.env}`);
   logger.info(` Database Host: ${dbHost}`);
-  logger.info(` API Version 1: http://localhost:${config.port}${config.apiPrefix}`);
+  logger.info(` API: http://localhost:${config.port}${config.apiPrefix || '/'}`);
   logger.info(`=======================================================`);
 });
 

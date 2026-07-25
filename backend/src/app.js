@@ -58,9 +58,9 @@ app.get('/', (req, res) => {
     application: 'Affiliate Management API',
     version: '1.0.0',
     environment: config.env,
-    api: `${config.apiPrefix}`,
+    api: config.apiPrefix || '/',
     health: '/health',
-    documentation: `${config.apiPrefix}`,
+    documentation: config.apiPrefix || '/',
     timestamp: new Date().toISOString(),
   });
 });
@@ -74,8 +74,12 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
-app.use(config.apiPrefix, routesV1);
+// API Routes — no version prefix, e.g. POST /auth/login.
+if (config.apiPrefix) {
+  app.use(config.apiPrefix, routesV1);
+} else {
+  app.use(routesV1);
+}
 
 // Handle 404
 app.use((req, res, next) => {
