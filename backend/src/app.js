@@ -10,6 +10,10 @@ const ApiError = require('./utils/apiError');
 
 const app = express();
 
+// Render sits in front of this service and supplies X-Forwarded-For. Trusting
+// one proxy lets express-rate-limit identify the original client correctly.
+app.set('trust proxy', config.trustProxy);
+
 // Security HTTP headers
 app.use(helmet());
 
