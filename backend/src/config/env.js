@@ -6,6 +6,19 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
 
 module.exports = {
+  env: process.env.NODE_ENV || 'development',
+  port: process.env.PORT || 5000,
+  apiPrefix: process.env.API_PREFIX || '/api/v1',
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  dbUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/affiliate_db',
+  dbMax: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
+  dbIdleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),
+  jwt: {
+    accessSecret: process.env.JWT_ACCESS_SECRET || 'default_access_secret_for_dev_only',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || 'default_refresh_secret_for_dev_only',
+    accessExpiration: process.env.JWT_ACCESS_EXPIRATION || '15m',
+    refreshExpiration: process.env.JWT_REFRESH_EXPIRATION || '7d',
+  },
   // CORS_ORIGIN may contain a comma-separated list, e.g. the production
   // Vercel domain plus a preview domain. Falling back to FRONTEND_URL keeps
   // the two production settings consistent when only FRONTEND_URL is set.
