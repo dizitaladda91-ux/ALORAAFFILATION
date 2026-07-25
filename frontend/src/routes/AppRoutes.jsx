@@ -1,10 +1,11 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { ROUTES } from '../constants/routes';
 import { ROLES } from '../constants/roles';
 
 import { Login } from '../pages/Login';
+import { Landing } from '../pages/Landing';
 import { Register } from '../pages/Register';
 import { ForgotPassword } from '../pages/ForgotPassword';
 import { RedirectRef } from '../pages/RedirectRef';
@@ -63,8 +64,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.PROFILE} element={<Profile />} />
       </Route>
 
-      {/* Default Fallback Redirect */}
-      <Route path="/" element={<Navigate to={ROUTES.LOGIN} replace />} />
+      <Route path={ROUTES.HOME} element={<Landing />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

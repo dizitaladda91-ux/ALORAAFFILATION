@@ -1,7 +1,14 @@
 import axios from 'axios';
 import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken, clearTokens } from '../utils/storage';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+// Vite exposes environment variables at build time.  Keep local development
+// self-contained, but use the deployed API when a production build is created
+// without VITE_API_BASE_URL (for example, before the Vercel variable is added).
+// An explicit VITE_API_BASE_URL always takes precedence.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+  || (import.meta.env.PROD
+    ? 'https://affilation-software.onrender.com/api/v1'
+    : 'http://localhost:5000/api/v1');
 
 const api = axios.create({
   baseURL: API_BASE_URL,

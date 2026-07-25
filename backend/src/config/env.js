@@ -23,7 +23,14 @@ module.exports = {
   // CORS_ORIGIN may contain a comma-separated list, e.g. the production
   // Vercel domain plus a preview domain. Falling back to FRONTEND_URL keeps
   // the two production settings consistent when only FRONTEND_URL is set.
-  corsOrigins: (process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000')
+  // Render environment variables are optional in the Blueprint.  Use the
+  // deployed frontend as the production default so an omitted variable does
+  // not make every browser API request fail its CORS preflight.
+  corsOrigins: (process.env.CORS_ORIGIN
+    || process.env.FRONTEND_URL
+    || (process.env.NODE_ENV === 'production'
+      ? 'https://affilationsoftware.vercel.app'
+      : 'http://localhost:3000'))
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
