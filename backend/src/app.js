@@ -44,6 +44,13 @@ app.use(cookieParser());
 // Rate Limiter
 app.use(globalRateLimiter);
 
+// Browsers may request this automatically when the API URL is opened directly.
+// There is no API favicon, so return an empty successful response without
+// sending the request through the 404 error handler.
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.status(200).json({
