@@ -1,14 +1,11 @@
 import axios from 'axios';
 import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken, clearTokens } from '../utils/storage';
 
-// Vite exposes environment variables at build time.  Keep local development
-// self-contained, but use the deployed API when a production build is created
-// without VITE_API_BASE_URL (for example, before the Vercel variable is added).
-// An explicit VITE_API_BASE_URL always takes precedence.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-  || (import.meta.env.PROD
-    ? 'https://affilation-software.onrender.com'
-    : 'http://localhost:5000');
+// Vite exposes environment variables at build time. Production must use the
+// actual deployed backend URL from Vercel; a guessed hostname causes Login and
+// Create Account to fail with an unhelpful browser "Network Error".
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
+  || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -20,6 +17,10 @@ const api = axios.create({
 // Request Interceptor: Attach Access Token
 api.interceptors.request.use(
   (config) => {
+    if (!API_BASE_URL) {
+      return Promise.reject(new Error('The API is not configured. Set VITE_API_BASE_URL to your deployed backend URL.'));
+    }
+
     const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
