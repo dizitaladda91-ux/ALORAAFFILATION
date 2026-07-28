@@ -6,11 +6,9 @@ import { ROUTES } from '../../constants/routes';
 import {
   LayoutDashboard,
   Users,
-  UserCheck,
   Percent,
   Link,
   DollarSign,
-  TrendingUp,
   FileText,
   Settings,
   User,
@@ -58,28 +56,18 @@ export const Sidebar = () => {
   const navItems = getNavItems();
 
   return (
-    <aside
-      style={{
-        width: '260px',
-        backgroundColor: 'var(--bg-sidebar)',
-        color: '#ffffff',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRight: '1px solid rgba(255, 255, 255, 0.08)',
-        flexShrink: 0,
-      }}
-    >
+    <aside className="premium-sidebar">
       {/* Brand */}
-      <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+      <div className="sidebar-brand">
         <div className="flex items-center gap-3">
-          <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.25rem' }}>
+          <div className="sidebar-brand-mark">
             A
           </div>
           <div>
-            <h1 style={{ fontSize: '1.125rem', fontWeight: 800, margin: 0, color: '#ffffff', letterSpacing: '-0.02em' }}>
+            <h1 className="sidebar-brand-title">
               Affiliate Cloud
             </h1>
-            <span style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span className="sidebar-brand-subtitle">
               Enterprise SaaS
             </span>
           </div>
@@ -87,8 +75,8 @@ export const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav style={{ padding: '1rem 0.75rem', flex: 1 }}>
-        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.4)', padding: '0 0.75rem 0.5rem', textTransform: 'uppercase' }}>
+      <nav className="sidebar-navigation">
+        <div className="sidebar-menu-label">
           Main Menu
         </div>
         {navItems.map((item, idx) => {
@@ -97,20 +85,7 @@ export const Sidebar = () => {
             <NavLink
               key={idx}
               to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-3`
-              }
-              style={({ isActive }) => ({
-                padding: '0.75rem 1rem',
-                borderRadius: 'var(--radius-sm)',
-                color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.65)',
-                backgroundColor: isActive ? 'var(--primary)' : 'transparent',
-                fontWeight: isActive ? 600 : 500,
-                fontSize: '0.875rem',
-                marginBottom: '0.25rem',
-                textDecoration: 'none',
-                transition: 'all 0.15s ease',
-              })}
+              className={({ isActive }) => `sidebar-nav-link ${isActive ? 'sidebar-nav-link-active' : ''}`}
             >
               <Icon size={18} />
               <span>{item.label}</span>
@@ -120,20 +95,10 @@ export const Sidebar = () => {
       </nav>
 
       {/* Profile link */}
-      <div style={{ padding: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+      <div className="sidebar-footer">
         <NavLink
           to={ROUTES.PROFILE}
-          style={({ isActive }) => ({
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.625rem 0.875rem',
-            borderRadius: 'var(--radius-sm)',
-            color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
-            backgroundColor: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-            textDecoration: 'none',
-            fontSize: '0.875rem',
-          })}
+          className={({ isActive }) => `sidebar-profile-link ${isActive ? 'sidebar-profile-link-active' : ''}`}
         >
           <User size={18} />
           <span>My Profile</span>
