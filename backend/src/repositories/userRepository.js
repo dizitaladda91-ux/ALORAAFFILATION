@@ -43,6 +43,24 @@ class UserRepository {
     );
   }
 
+  async updateEmail(userId, email) {
+    const res = await db.query(
+      `UPDATE users SET email = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2 AND deleted_at IS NULL
+       RETURNING id, email`,
+      [email.toLowerCase(), userId]
+    );
+    return res.rows[0] || null;
+  }
+
+  async updatePassword(userId, passwordHash) {
+    await db.query(
+      `UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2 AND deleted_at IS NULL`,
+      [passwordHash, userId]
+    );
+  }
+
   async updateStatus(userId, status) {
     const res = await db.query(
       `UPDATE users SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND deleted_at IS NULL RETURNING id, status`,
