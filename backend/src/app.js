@@ -20,15 +20,9 @@ app.use(helmet());
 // Enable CORS
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Requests without an Origin header (health checks, curl, server-to-server)
-      // do not need browser CORS protection.
-      if (!origin || config.corsOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error(`CORS origin not allowed: ${origin}`));
-    },
+    // Reflect every requesting origin. `credentials: true` cannot be combined
+    // with Access-Control-Allow-Origin: *, so cors handles the reflection.
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
