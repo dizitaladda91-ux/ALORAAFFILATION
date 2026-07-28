@@ -1,5 +1,5 @@
 import React from 'react';
-import aloraLogo from '../../assets/logo2.png';
+import aloraLogo from '../../assets/alora-radiance-logo.png';
 
 export const AuthLayout = ({ children, title, subtitle, showAffiliateGuide = false }) => (
   <main className="auth-shell">

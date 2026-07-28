@@ -272,9 +272,8 @@
 /* Landing-page wordmark */
 .landing-brand-logo { display: block; width: clamp(7.5rem, 13vw, 10.5rem); height: 2.65rem; object-fit: contain; object-position: left center; filter: brightness(0) invert(1); }
 
-/* The supplied wordmark has transparent padding around it; crop that padding
-   at display time so the full logo remains sharp without altering the source. */
-.alora-brand { width: clamp(9rem, 16vw, 12.5rem); height: clamp(3.05rem, 5.35vw, 4.23rem); overflow: hidden; }
-.auth-brand-logo { display: block; width: 100%; max-width: none; height: auto; transform: translateY(-33.78%); filter: brightness(0) invert(1); }
-.landing-brand { width: clamp(7.5rem, 13vw, 10.5rem); height: clamp(2.54rem, 4.41vw, 3.53rem); overflow: hidden; }
-.landing-brand-logo { width: 100%; max-width: none; height: auto; transform: translateY(-33.78%); }
+/* Use the tightly cropped logo asset so it is always visible at header size. */
+.alora-brand { width: clamp(9rem, 16vw, 12.5rem); }
+.auth-brand-logo { display: block; width: 100%; height: auto; filter: brightness(0) invert(1); }
+.landing-brand { width: clamp(7.5rem, 13vw, 10.5rem); }
+.landing-brand-logo { width: 100%; height: auto; filter: brightness(0) invert(1); }

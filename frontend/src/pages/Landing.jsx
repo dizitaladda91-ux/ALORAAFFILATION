@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart3, CheckCircle2, Link2, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import { ROUTES } from '../constants/routes';
-import aloraLogo from '../assets/logo2.png';
+import aloraLogo from '../assets/alora-radiance-logo.png';
 
 const features = [
   { icon: Link2, title: 'Share with confidence', text: 'Create referral links that make every recommendation measurable.' },
