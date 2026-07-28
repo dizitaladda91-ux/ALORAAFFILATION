@@ -25,14 +25,21 @@ module.exports = {
   // Render environment variables are optional in the Blueprint.  Use the
   // deployed frontend as the production default so an omitted variable does
   // not make every browser API request fail its CORS preflight.
-  corsOrigins: (process.env.CORS_ORIGIN
-    || process.env.FRONTEND_URL
-    || (process.env.NODE_ENV === 'production'
-      ? 'https://affilationsoftware.vercel.app'
-      : 'http://localhost:3000'))
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean),
+  corsOrigins: [
+    ...(process.env.CORS_ORIGIN
+      || process.env.FRONTEND_URL
+      || (process.env.NODE_ENV === 'production'
+        ? 'https://affiliation.aloraradiance.com'
+        : 'http://localhost:3000'))
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+    // Keep the custom production domain available during a DNS migration even
+    // if Render still has an older CORS_ORIGIN value configured.
+    ...(process.env.NODE_ENV === 'production'
+      ? ['https://affiliation.aloraradiance.com']
+      : []),
+  ],
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
   // Render terminates TLS and forwards the original client IP through one

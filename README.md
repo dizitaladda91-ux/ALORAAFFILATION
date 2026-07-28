@@ -83,7 +83,7 @@ Frontend application will open at `http://localhost:3000`.
 - Create the service using the repository-root `render.yaml` Blueprint. It sets
   `backend` as the service root and exposes `/health` for health checks.
 - Set `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`,
-  `FRONTEND_URL`, and `CORS_ORIGIN`. The last two must be your exact Vercel URL,
+  `FRONTEND_URL`, and `CORS_ORIGIN`. The last two must be your exact frontend URL,
   including `https://` and without a trailing slash.
 - Initialize the database before using the API: run
   `npm run db:migrate` once from `backend` with the production `DATABASE_URL`.
