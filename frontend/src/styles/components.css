@@ -268,3 +268,5 @@
 .toast-success { border-left-color: var(--success); }
 .toast-error { border-left-color: var(--danger); }
 .toast-warning { border-left-color: var(--warning); }
+/* Landing-page wordmark */
+.landing-brand-logo { display: block; width: clamp(7.5rem, 13vw, 10.5rem); height: 2.65rem; object-fit: contain; object-position: left center; filter: brightness(0) invert(1); }

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart3, CheckCircle2, Link2, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import { ROUTES } from '../constants/routes';
+import aloraLogo from '../assets/logo2.png';
 
 const features = [
   { icon: Link2, title: 'Share with confidence', text: 'Create referral links that make every recommendation measurable.' },
@@ -17,7 +18,7 @@ export const Landing = () => (
 
     <nav className="landing-nav">
       <Link className="landing-brand" to={ROUTES.HOME} aria-label="ALORA home">
-        <span className="landing-brand-mark">A</span><span>ALORA</span>
+        <img className="landing-brand-logo" src={aloraLogo} alt="ALORA Radiance" />
       </Link>
       <Link className="landing-login-link" to={ROUTES.LOGIN}>Login <ArrowRight size={16} /></Link>
     </nav>
