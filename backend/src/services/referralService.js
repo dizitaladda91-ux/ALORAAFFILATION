@@ -2,6 +2,7 @@ const affiliateRepository = require('../repositories/affiliateRepository');
 const referralRepository = require('../repositories/referralRepository');
 const commissionRepository = require('../repositories/commissionRepository');
 const ApiError = require('../utils/apiError');
+const config = require('../config/env');
 
 class ReferralService {
   async trackClick({ referralCode, ipAddress, userAgent, referrerUrl }) {
@@ -16,9 +17,17 @@ class ReferralService {
       referrerUrl,
     });
 
+    // Older default links pointed back to /ref/:code, which would cause a
+    // redirect loop. Keep existing campaign links intact, but route those
+    // legacy defaults to the storefront.
+    const legacyDefaultUrl = `${config.frontendUrl}/ref/${referralCode}`;
+    const targetUrl = link && link.target_url === legacyDefaultUrl
+      ? config.storefrontUrl
+      : (link ? link.target_url : '/');
+
     return {
       clickId: click.id,
-      targetUrl: link ? link.target_url : '/',
+      targetUrl,
       valid: !!link,
     };
   }

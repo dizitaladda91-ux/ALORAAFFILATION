@@ -48,7 +48,8 @@ class AuthService {
       primaryLink = await affiliateRepository.createLink({
         userId: user.id,
         referralCode,
-        targetUrl: `${config.frontendUrl}/ref/${referralCode}`,
+        // Standard affiliate traffic should land on the Alora Radiance storefront.
+        targetUrl: role === 'affiliate' ? config.storefrontUrl : `${config.frontendUrl}/ref/${referralCode}`,
         title: 'Default Referral Link',
       });
     }

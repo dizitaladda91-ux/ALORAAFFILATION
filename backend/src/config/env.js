@@ -10,6 +10,7 @@ module.exports = {
   port: process.env.PORT || 5000,
   apiPrefix: process.env.API_PREFIX || '',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  storefrontUrl: process.env.STOREFRONT_URL || 'https://aloraradiance.com/',
   dbUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/affiliate_db',
   dbMax: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
   dbIdleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),

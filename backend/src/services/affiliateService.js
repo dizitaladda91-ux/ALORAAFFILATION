@@ -10,7 +10,9 @@ class AffiliateService {
 
   async createCustomLink(userId, { targetUrl, title }) {
     const referralCode = codeGenerator.generateReferralCode('AFF');
-    const finalTargetUrl = targetUrl || `${config.frontendUrl}/ref/${referralCode}`;
+    // When no campaign destination is supplied, send referral traffic to the
+    // storefront instead of creating a redirect back to the referral URL.
+    const finalTargetUrl = targetUrl || config.storefrontUrl;
     return affiliateRepository.createLink({
       userId,
       referralCode,
