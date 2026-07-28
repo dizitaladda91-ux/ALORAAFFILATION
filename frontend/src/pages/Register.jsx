@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Check, Eye, EyeOff, ShieldCheck, Sparkles } from 'lucide-react';
 import { AuthLayout } from '../components/layouts/AuthLayout';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
@@ -18,6 +19,9 @@ export const Register = () => {
     role: 'affiliate',
   });
   const [loading, setLoading] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { register } = useAuth();
   const { showSuccess, showError } = useNotification();
@@ -29,6 +33,10 @@ export const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.password !== confirmPassword) {
+      showError('Passwords do not match. Please try again.');
+      return;
+    }
     setLoading(true);
     try {
       const user = await register(formData);
@@ -57,68 +65,106 @@ export const Register = () => {
   };
 
   return (
-    <AuthLayout title="Get Started" subtitle="Join the Enterprise Affiliate SaaS Platform">
-      <form onSubmit={handleSubmit}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+    <AuthLayout title="Create your account" subtitle="Set up your partner profile in less than a minute." showAffiliateGuide>
+      <form className="register-form" onSubmit={handleSubmit}>
+        <div className="register-name-grid">
           <Input
-            label="First Name"
+            label="First name"
             name="firstName"
-            placeholder="John"
+            placeholder="Enter your first name"
             value={formData.firstName}
             onChange={handleChange}
             required
           />
           <Input
-            label="Last Name"
+            label="Last name"
             name="lastName"
-            placeholder="Doe"
+            placeholder="Enter your last name"
             value={formData.lastName}
             onChange={handleChange}
             required
           />
         </div>
         <Input
-          label="Email Address"
+          label="Email address"
           type="email"
           name="email"
-          placeholder="name@company.com"
+          placeholder="yourname@gmail.com"
+          autoComplete="email"
           value={formData.email}
           onChange={handleChange}
           required
         />
         <Input
-          label="Company Name"
+          label="Company or brand name"
           name="company"
-          placeholder="Acme Growth Inc"
+          placeholder="Optional - e.g. Acme Growth"
           value={formData.company}
           onChange={handleChange}
         />
-        <div className="form-group">
-          <label className="form-label">Register As</label>
+        <div className="form-group register-role-group">
+          <div className="register-field-heading">
+            <label className="form-label" htmlFor="account-role">How will you use Alora?</label>
+            <span>Choose the option that fits you best</span>
+          </div>
           <select
+            id="account-role"
             name="role"
             className="form-select"
             value={formData.role}
             onChange={handleChange}
           >
-            <option value="affiliate">Standard Affiliate</option>
-            <option value="super_affiliate">Super Affiliate (Team Manager)</option>
+            <option value="affiliate">I'll promote offers and earn commissions</option>
+            <option value="super_affiliate">I'll lead a team of affiliates</option>
           </select>
         </div>
-        <Input
-          label="Password"
-          type="password"
-          name="password"
-          placeholder="At least 8 characters"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-        <Button type="submit" loading={loading} style={{ width: '100%', marginTop: '0.5rem' }}>
-          Create Account
+        <div className="register-password-grid">
+          <div className="form-group password-field">
+            <label className="form-label" htmlFor="password">Create password</label>
+            <div className="password-input-wrap">
+              <input
+                id="password"
+                className="form-input"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+                value={formData.password}
+                onChange={handleChange}
+                minLength="8"
+                required
+              />
+              <button className="password-toggle" type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
+          </div>
+          <div className="form-group password-field">
+            <label className="form-label" htmlFor="confirmPassword">Confirm password</label>
+            <div className="password-input-wrap">
+              <input
+                id="confirmPassword"
+                className="form-input"
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="Re-enter your password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+              <button className="password-toggle" type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
+          </div>
+        </div>
+        <p className="register-password-hint"><Check size={14} /> Use 8 or more characters for a secure password.</p>
+        <div className="register-trust-note"><ShieldCheck size={16} /><span>Your details are protected with secure encryption.</span></div>
+        <Button type="submit" loading={loading} className="register-submit">
+          <Sparkles size={17} /> Create my account
         </Button>
       </form>
-      <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+      <div className="register-signin">
         Already have an account?{' '}
         <Link to={ROUTES.LOGIN} style={{ color: 'var(--primary)', fontWeight: 700 }}>
           Sign in
