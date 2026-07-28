@@ -1,4 +1,5 @@
 import React from 'react';
+import aloraLogo from '../../assets/logo2.png';
 
 export const AuthLayout = ({ children, title, subtitle, showAffiliateGuide = false }) => (
   <main className="auth-shell">
@@ -6,7 +7,9 @@ export const AuthLayout = ({ children, title, subtitle, showAffiliateGuide = fal
     <div className="auth-orb auth-orb-two" aria-hidden="true" />
     <section className="auth-stage">
       <div className="auth-intro">
-        <div className="alora-brand" aria-label="Alora"><span className="alora-mark">A</span><span>alora</span></div>
+        <div className="alora-brand" aria-label="ALORA Radiance">
+          <img className="auth-brand-logo" src={aloraLogo} alt="ALORA Radiance" />
+        </div>
         <p className="auth-kicker">Affiliate partner portal</p>
         <h1>Build a network that grows with you.</h1>
         <p className="auth-intro-copy">A focused workspace to manage links, track commissions, and move every partnership forward.</p>
