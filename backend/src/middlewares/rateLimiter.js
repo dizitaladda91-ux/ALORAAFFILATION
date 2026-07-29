@@ -26,7 +26,17 @@ const authRateLimiter = rateLimit({
   statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
 });
 
+const paymentRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many payment requests. Please try again later.' },
+  statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
+});
+
 module.exports = {
   globalRateLimiter,
   authRateLimiter,
+  paymentRateLimiter,
 };

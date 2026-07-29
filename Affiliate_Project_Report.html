@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Affiliate Management Project Report</title>
+  <style>
+    @page { size: A4; margin: 16mm; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; color: #172033; font-size: 10.5pt; line-height: 1.45; }
+    h1 { color: #12355b; font-size: 25pt; margin: 0 0 4px; }
+    h2 { color: #12355b; font-size: 15pt; border-bottom: 1px solid #cad7e5; padding-bottom: 5px; margin: 22px 0 9px; }
+    h3 { color: #1d4d7b; font-size: 12pt; margin: 15px 0 5px; }
+    .sub { color: #596579; margin: 0 0 20px; }
+    .badge { display: inline-block; background: #eaf4ff; color: #124c85; padding: 4px 9px; border-radius: 12px; font-size: 9pt; margin: 0 5px 6px 0; }
+    .note { background: #fff7df; border-left: 4px solid #edb948; padding: 10px 12px; margin: 12px 0; }
+    .success { background: #eaf9f0; border-left: 4px solid #36a269; padding: 10px 12px; margin: 12px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; }
+    th { background: #12355b; color: white; text-align: left; }
+    th, td { border: 1px solid #cfd9e4; padding: 7px 8px; vertical-align: top; }
+    tr:nth-child(even) td { background: #f7f9fc; }
+    ul, ol { margin: 5px 0 12px; padding-left: 22px; }
+    code { background: #edf2f7; padding: 1px 4px; border-radius: 3px; font-size: 9pt; }
+    .page-break { break-before: page; }
+    .footer { color: #667085; font-size: 8.5pt; margin-top: 28px; }
+  </style>
+</head>
+<body>
+  <h1>Affiliate Management Project Report</h1>
+  <p class="sub">Project status and implemented functionality &mdash; prepared 29 July 2026</p>
+  <span class="badge">React 19</span><span class="badge">Node.js / Express</span><span class="badge">PostgreSQL</span><span class="badge">Affiliate Tracking</span><span class="badge">Discount &amp; Commission Engine</span>
+
+  <h2>1. Project Overview</h2>
+  <p>This is a full-stack Affiliate Management SaaS platform for managing affiliates, referral links, customer conversions, commissions, and administrative controls.</p>
+  <table><tr><th>Layer</th><th>Technology / Design</th></tr>
+    <tr><td>Frontend</td><td>React 19, React Router, Axios, responsive CSS interface</td></tr>
+    <tr><td>Backend</td><td>Node.js, Express, MVC with Service and Repository layers</td></tr>
+    <tr><td>Database</td><td>PostgreSQL / Supabase-compatible normalized schema</td></tr>
+    <tr><td>Deployment</td><td>Vercel frontend, Render backend, Docker support</td></tr>
+  </table>
+
+  <h2>2. Roles and Access</h2>
+  <table><tr><th>Role</th><th>Access</th></tr>
+    <tr><td>Super Admin</td><td>Full system control, settings, audit logs, user administration</td></tr>
+    <tr><td>Admin</td><td>Affiliate/user management, commission rules, reports</td></tr>
+    <tr><td>Super Affiliate</td><td>Dashboard, referral links, team tracking</td></tr>
+    <tr><td>Standard Affiliate</td><td>Referral links, earnings, conversion tracking</td></tr>
+  </table>
+
+  <h2>3. Completed Core Features</h2>
+  <h3>Authentication and security</h3>
+  <ul><li>Registration, login, logout, current-user and refresh-token APIs</li><li>JWT authentication with access and refresh tokens</li><li>Password hashing, role-based authorization and input validation</li><li>Rate limiting, Helmet headers, CORS handling and centralized errors</li><li>Parameterized database queries, indexes and soft-deletion support</li></ul>
+  <h3>Affiliate and administration</h3>
+  <ul><li>Automatic affiliate referral-code and default-link creation</li><li>Custom campaign link generation, click tracking and click statistics</li><li>Affiliate earnings and commission status tracking</li><li>Super-affiliate team tracking</li><li>Admin user status management, audit logs, commission rules and system settings</li></ul>
+
+  <h2>4. Customer Discount Through Affiliate Links</h2>
+  <p>Every valid affiliate link provides a <strong>10% customer discount</strong> by default. The value is configurable through <code>AFFILIATE_DISCOUNT_PERCENT</code>.</p>
+  <ol><li>A visitor opens an affiliate URL.</li><li>The platform stores a click event and creates a unique <code>click_id</code>.</li><li>The store landing URL receives <code>ref</code>, <code>click_id</code> and <code>affiliate_discount=10</code>.</li><li>The storefront validates the code and applies the discount at checkout.</li><li>After successful payment, the final paid amount is recorded as a conversion.</li></ol>
+  <p><strong>Discount validation API:</strong> <code>GET /referrals/discount/:code</code></p>
+  <div class="note"><strong>Storefront integration required:</strong> The Alora ecommerce storefront must preserve <code>ref</code> and <code>click_id</code> through cart/checkout, validate the referral, and apply the discount. The storefront source code is not part of this workspace.</div>
+
+  <h2>5. Standard Affiliate Commission Rules</h2>
+  <p>Commission is calculated on the final paid amount after the customer discount.</p>
+  <table><tr><th>Customer final order value</th><th>Standard affiliate commission</th></tr>
+    <tr><td>Up to ₹1,000</td><td>10%</td></tr>
+    <tr><td>₹1,001 to ₹1,500</td><td>15%</td></tr>
+    <tr><td>₹1,501 to ₹2,000</td><td>20%</td></tr>
+    <tr><td>Above ₹2,000</td><td>20% continues</td></tr>
+  </table>
+  <table><tr><th>Final paid amount</th><th>Applicable rate</th><th>Commission</th></tr>
+    <tr><td>₹800</td><td>10%</td><td>₹80</td></tr>
+    <tr><td>₹1,200</td><td>15%</td><td>₹180</td></tr>
+    <tr><td>₹1,800</td><td>20%</td><td>₹360</td></tr>
+    <tr><td>₹2,500</td><td>20%</td><td>₹500</td></tr>
+  </table>
+  <p>These tiers apply only to the standard affiliate role. Super-affiliate and other roles continue using the active administrator-configured commission rule.</p>
+
+  <div class="page-break"></div>
+  <h2>6. Conversion and Commission Workflow</h2>
+  <ol><li>Affiliate shares a generated referral link.</li><li>Customer clicks it; a click event is stored.</li><li>Customer purchases from the store with the validated 10% discount.</li><li>Store payment webhook calls <code>POST /referrals/conversion</code>.</li><li>The platform creates a conversion and a pending commission.</li><li>Duplicate order IDs are rejected from creating duplicate commissions.</li><li>Admin can update commission status to pending, approved, rejected or paid.</li></ol>
+  <p><strong>Conversion payload:</strong></p>
+  <p><code>{ referralCode, clickId, orderId, amount, currency }</code></p>
+
+  <h2>7. API Modules</h2>
+  <table><tr><th>Module</th><th>Purpose</th></tr>
+    <tr><td><code>/auth</code></td><td>Registration, login, logout, refresh token and current user</td></tr>
+    <tr><td><code>/admin</code></td><td>User management and audit logs</td></tr>
+    <tr><td><code>/affiliates</code></td><td>Referral links and affiliate earnings</td></tr>
+    <tr><td><code>/referrals</code></td><td>Click tracking, discount validation, conversions and team data</td></tr>
+    <tr><td><code>/commissions</code></td><td>Commission rules and commission-status updates</td></tr>
+    <tr><td><code>/dashboard</code></td><td>Role-specific dashboard summaries</td></tr>
+    <tr><td><code>/profile</code></td><td>Profile read and update</td></tr>
+    <tr><td><code>/settings</code></td><td>System settings</td></tr>
+  </table>
+
+  <h2>8. Database Coverage</h2>
+  <p>The system includes 17 normalized tables covering roles and permissions; users and profiles; affiliate links and click events; referrals and conversions; commission rules and commission records; withdrawals and transactions; notifications; audit/activity logs; and system settings.</p>
+
+  <h2>9. Frontend Updates</h2>
+  <ul><li>Referral-link page explains that valid affiliate links give customers 10% off.</li><li>Copy-link confirmation mentions the customer discount.</li><li>Standard affiliate commission slabs are displayed on the referral-link page.</li><li>Role-protected dashboard and management routes are configured.</li></ul>
+
+  <h2>10. Verification Status</h2>
+  <div class="success"><strong>Completed verification:</strong> Backend JavaScript syntax checks and git diff validation passed for the implemented changes.</div>
+  <ul><li>No automated backend test suite currently exists in the project.</li><li>Frontend production build could not be run locally because the Vite executable/dependencies are unavailable in the current environment.</li></ul>
+
+  <h2>11. Production Checklist</h2>
+  <ol><li>Configure <code>DATABASE_URL</code>, JWT secrets, <code>FRONTEND_URL</code>, <code>CORS_ORIGIN</code>, <code>STOREFRONT_URL</code>, and <code>AFFILIATE_DISCOUNT_PERCENT=10</code>.</li><li>Integrate referral persistence, validation and 10% discount calculation into the live storefront checkout.</li><li>Call the conversion endpoint only after confirmed payment, with the final discounted amount.</li><li>Install frontend dependencies and run a production build.</li><li>Add automated tests for discount eligibility, commission tiers, conversion idempotency and webhook security.</li></ol>
+  <p class="footer">Affiliate Management Project Report &mdash; generated from the current project implementation.</p>
+</body>
+</html>

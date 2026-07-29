@@ -31,6 +31,9 @@ app.use(
 
 
 // Body parser & Cookie parser
+// Razorpay's signature is calculated on the exact raw bytes. This must be
+// registered before the JSON parser and must remain unauthenticated.
+app.use('/payments/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());

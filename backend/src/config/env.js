@@ -17,6 +17,11 @@ module.exports = {
   // on the storefront. Keep it configurable so promotions can be changed
   // without changing application code.
   affiliateDiscountPercent: parseFloat(process.env.AFFILIATE_DISCOUNT_PERCENT || '10'),
+  razorpay: {
+    keyId: process.env.RAZORPAY_KEY_ID || '',
+    keySecret: process.env.RAZORPAY_KEY_SECRET || '',
+    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+  },
   dbUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/affiliate_db',
   dbMax: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
   dbIdleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),
