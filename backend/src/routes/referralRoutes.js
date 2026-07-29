@@ -8,6 +8,10 @@ const validate = require('../middlewares/validationMiddleware');
 // Public route to record click events when visiting referral links
 router.get('/click/:code', referralController.trackClick);
 
+// Storefront checkout uses this to validate the referral before applying the
+// customer-facing affiliate discount.
+router.get('/discount/:code', referralController.getDiscount);
+
 // Endpoint for e-commerce or conversion webhooks to record a sale
 router.post('/conversion', conversionValidator, validate, referralController.recordConversion);
 

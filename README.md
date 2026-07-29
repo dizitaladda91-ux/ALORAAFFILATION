@@ -88,10 +88,40 @@ Frontend application will open at `http://localhost:3000`.
 - Initialize the database before using the API: run
   `npm run db:migrate` once from `backend` with the production `DATABASE_URL`.
 
+### Standard affiliate commission slabs
+
+Standard affiliate commissions are calculated on the final amount paid (after
+the customer discount):
+
+| Order value | Commission rate |
+| --- | --- |
+| Up to ₹1,000 | 10% |
+| ₹1,001–₹1,500 | 15% |
+| ₹1,501–₹2,000 | 20% |
+| Above ₹2,000 | 20% |
+
+Super-affiliate and other roles continue to use the active commission rule
+configured by an administrator.
+
 ### Ecommerce conversion tracking
 
-Referral visitors arrive on the storefront with `ref` and `click_id` in the
-URL, for example `https://aloraradiance.com/?ref=AFF-123&click_id=<uuid>`.
+Referral visitors arrive on the storefront with `ref`, `click_id`, and the
+affiliate offer in the URL, for example
+`https://aloraradiance.com/?ref=AFF-123&click_id=<uuid>&affiliate_discount=10`.
+Every valid affiliate link gives the customer a **10% discount** by default.
+Set `AFFILIATE_DISCOUNT_PERCENT` on the backend to change that value.
+
+The Alora Radiance storefront should persist `ref` and `click_id` through the
+cart, then apply the discount before payment. For server-side validation, call:
+
+```http
+GET https://<your-render-service>.onrender.com/referrals/discount/AFF-123
+```
+
+Only apply the returned `discountPercent` when the response confirms
+`valid: true`; do not trust a customer-edited URL parameter. Send the **final
+discounted amount** in the conversion request below, so affiliate commission
+is calculated on the amount actually paid.
 When the payment is confirmed, the **server-side** checkout/webhook on the
 Alora Radiance ecommerce site must send the paid order to:
 

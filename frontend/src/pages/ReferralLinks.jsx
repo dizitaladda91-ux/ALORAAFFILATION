@@ -57,7 +57,7 @@ export const ReferralLinks = () => {
     const referralBaseUrl = (import.meta.env.VITE_REFERRAL_BASE_URL || 'https://affiliation.aloraradiance.com').replace(/\/$/, '');
     const fullUrl = `${referralBaseUrl}/ref/${code}`;
     navigator.clipboard.writeText(fullUrl);
-    showSuccess('Referral URL copied to clipboard!');
+    showSuccess('Referral URL copied — customers using it get 10% off.');
   };
 
   const columns = [
@@ -99,12 +99,19 @@ export const ReferralLinks = () => {
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Referral Link Generator</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            Create custom tracking links for your marketing campaigns and social channels.
+            Create tracking links for your campaigns. Customers who purchase through a valid link receive 10% off.
           </p>
         </div>
         <Button onClick={() => setModalOpen(true)} icon={Plus}>
           Generate New Link
         </Button>
+      </div>
+
+      <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 'var(--radius-md)' }}>
+        <strong style={{ color: '#166534' }}>Standard affiliate commission</strong>
+        <p style={{ color: '#166534', margin: '0.5rem 0 0', fontSize: '0.875rem' }}>
+          Up to ₹1,000: 10% · ₹1,001–₹1,500: 15% · ₹1,501 and above: 20%
+        </p>
       </div>
 
       <Card>

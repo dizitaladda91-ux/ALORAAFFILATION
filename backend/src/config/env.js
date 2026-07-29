@@ -13,6 +13,10 @@ module.exports = {
   // generated without an environment file never expose localhost to visitors.
   frontendUrl: process.env.FRONTEND_URL || 'https://affiliation.aloraradiance.com',
   storefrontUrl: process.env.STOREFRONT_URL || 'https://aloraradiance.com/',
+  // Customers who arrive through a valid affiliate link receive this discount
+  // on the storefront. Keep it configurable so promotions can be changed
+  // without changing application code.
+  affiliateDiscountPercent: parseFloat(process.env.AFFILIATE_DISCOUNT_PERCENT || '10'),
   dbUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/affiliate_db',
   dbMax: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
   dbIdleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),

@@ -27,6 +27,11 @@ class ReferralController {
     return sendSuccess(res, 'Conversion & commission processed', result, HTTP_STATUS.CREATED);
   });
 
+  getDiscount = asyncHandler(async (req, res) => {
+    const discount = await referralService.getAffiliateDiscount(req.params.code);
+    return sendSuccess(res, 'Affiliate discount verified', discount);
+  });
+
   getTeam = asyncHandler(async (req, res) => {
     const team = await referralService.getTeamMembers(req.user.id);
     return sendSuccess(res, 'Sub-affiliate team members retrieved', team);
