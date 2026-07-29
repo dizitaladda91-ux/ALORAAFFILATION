@@ -20,8 +20,8 @@ class ReferralService {
     // Older default links pointed back to /ref/:code, which would cause a
     // redirect loop. Keep existing campaign links intact, but route those
     // legacy defaults to the storefront.
-    const legacyDefaultUrl = `${config.frontendUrl}/ref/${referralCode}`;
-    const targetUrl = link && link.target_url === legacyDefaultUrl
+    const legacyReferralUrl = new RegExp(`/ref/${referralCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/?$`, 'i');
+    const targetUrl = link && legacyReferralUrl.test(link.target_url)
       ? config.storefrontUrl
       : (link ? link.target_url : '/');
 

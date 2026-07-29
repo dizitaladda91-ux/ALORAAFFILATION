@@ -32,7 +32,8 @@ export const AffiliateDashboard = () => {
   const links = data?.links || [];
   const primaryLink = links[0] || {};
   const refCode = primaryLink.referral_code || 'AFF-HJ72KS';
-  const refUrl = primaryLink.target_url || `${window.location.origin}/ref/${refCode}`;
+  const referralBaseUrl = (import.meta.env.VITE_REFERRAL_BASE_URL || 'https://affiliation.aloraradiance.com').replace(/\/$/, '');
+  const refUrl = `${referralBaseUrl}/ref/${refCode}`;
 
   const copyToClipboard = (text, label) => {
     navigator.clipboard.writeText(text);

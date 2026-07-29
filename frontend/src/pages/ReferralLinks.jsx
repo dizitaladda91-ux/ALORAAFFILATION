@@ -52,7 +52,10 @@ export const ReferralLinks = () => {
   };
 
   const copyLink = (code) => {
-    const fullUrl = `${window.location.origin}/ref/${code}`;
+    // Use the public portal even if an administrator happens to generate a
+    // link from a local development machine.
+    const referralBaseUrl = (import.meta.env.VITE_REFERRAL_BASE_URL || 'https://affiliation.aloraradiance.com').replace(/\/$/, '');
+    const fullUrl = `${referralBaseUrl}/ref/${code}`;
     navigator.clipboard.writeText(fullUrl);
     showSuccess('Referral URL copied to clipboard!');
   };

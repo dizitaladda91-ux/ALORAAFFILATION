@@ -320,8 +320,8 @@ ON CONFLICT (user_id) DO NOTHING;
 
 -- Seed Affiliate Links
 INSERT INTO affiliate_links (id, user_id, referral_code, target_url, title, click_count) VALUES
-('c1111111-1111-4111-a111-111111111111', 'b4444444-4444-4444-a444-444444444444', 'AFF-HJ72KS', 'http://localhost:3000/ref/AFF-HJ72KS', 'Primary Growth Campaign', 42),
-('c2222222-2222-4222-a222-222222222222', 'b3333333-3333-4333-a333-333333333333', 'SUP-9982KS', 'http://localhost:3000/ref/SUP-9982KS', 'Super Affiliate VIP Link', 128)
+('c1111111-1111-4111-a111-111111111111', 'b4444444-4444-4444-a444-444444444444', 'AFF-HJ72KS', 'https://aloraradiance.com/', 'Primary Growth Campaign', 42),
+('c2222222-2222-4222-a222-222222222222', 'b3333333-3333-4333-a333-333333333333', 'SUP-9982KS', 'https://aloraradiance.com/', 'Super Affiliate VIP Link', 128)
 ON CONFLICT (referral_code) DO NOTHING;
 
 -- Seed Sample Click Events
