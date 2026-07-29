@@ -242,6 +242,7 @@ CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_affiliate_links_code ON affiliate_links(referral_code);
 CREATE INDEX IF NOT EXISTS idx_click_events_code ON click_events(referral_code);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_conversion_events_order_id ON conversion_events(order_id) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id);
 CREATE INDEX IF NOT EXISTS idx_commissions_affiliate ON commissions(affiliate_id);
 CREATE INDEX IF NOT EXISTS idx_activity_user ON activity_logs(user_id);

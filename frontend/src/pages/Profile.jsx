@@ -32,8 +32,8 @@ export const Profile = () => {
       showError('Please choose an image file.');
       return;
     }
-    if (file.size > 750000) {
-      showError('Please choose an image smaller than 750 KB.');
+    if (file.size > 2 * 1024 * 1024) {
+      showError('Please choose an image smaller than 2 MB.');
       return;
     }
     const reader = new FileReader();
@@ -84,7 +84,7 @@ export const Profile = () => {
             <div className="profile-photo-preview">
               {formData.avatarUrl ? <img src={formData.avatarUrl} alt="Your profile" /> : <span>{initials}</span>}
             </div>
-            <div><label className="profile-upload-button"><Camera size={16} /> Upload photo<input type="file" accept="image/*" onChange={handleImageSelect} /></label><p>PNG, JPG, or WebP up to 750 KB.</p></div>
+            <div><label className="profile-upload-button"><Camera size={16} /> Upload photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImageSelect} /></label><p>PNG, JPG, or WebP up to 2 MB.</p></div>
           </div>
           <Input label="Or use an image URL" name="avatarUrl" placeholder="https://example.com/my-photo.jpg" value={formData.avatarUrl} onChange={change} />
         </Card>

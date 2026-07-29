@@ -40,6 +40,26 @@ class CommissionRepository {
     return res.rows[0];
   }
 
+  async findConversionByOrderId(orderId) {
+    const res = await db.query(
+      `SELECT ce.*, c.id AS commission_id, c.amount AS commission_amount, c.rate AS commission_rate, c.status AS commission_status
+       FROM conversion_events ce
+       LEFT JOIN commissions c ON c.conversion_id = ce.id AND c.deleted_at IS NULL
+       WHERE ce.order_id = $1 AND ce.deleted_at IS NULL
+       LIMIT 1`,
+      [orderId]
+    );
+    if (!res.rows[0]) return null;
+
+    const row = res.rows[0];
+    return {
+      ...row,
+      commission: row.commission_id
+        ? { id: row.commission_id, amount: row.commission_amount, rate: row.commission_rate, status: row.commission_status }
+        : null,
+    };
+  }
+
   async createCommission({ affiliateId, conversionId, ruleId, amount, rate, status = 'pending' }) {
     const res = await db.query(
       `INSERT INTO commissions (affiliate_id, conversion_id, rule_id, amount, rate, status)

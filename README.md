@@ -88,6 +88,30 @@ Frontend application will open at `http://localhost:3000`.
 - Initialize the database before using the API: run
   `npm run db:migrate` once from `backend` with the production `DATABASE_URL`.
 
+### Ecommerce conversion tracking
+
+Referral visitors arrive on the storefront with `ref` and `click_id` in the
+URL, for example `https://aloraradiance.com/?ref=AFF-123&click_id=<uuid>`.
+When the payment is confirmed, the **server-side** checkout/webhook on the
+Alora Radiance ecommerce site must send the paid order to:
+
+```http
+POST https://<your-render-service>.onrender.com/referrals/conversion
+Content-Type: application/json
+
+{
+  "referralCode": "AFF-123",
+  "clickId": "<uuid>",
+  "orderId": "ORDER-1001",
+  "amount": 129.00,
+  "currency": "USD"
+}
+```
+
+The API creates the conversion and pending commission. Sending the same
+`orderId` again is safe: it returns the already-recorded conversion and does
+not create a duplicate commission.
+
 ### Docker
 ```bash
 docker-compose up --build
