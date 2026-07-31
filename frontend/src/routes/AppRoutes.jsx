@@ -27,6 +27,7 @@ import { SystemSettings } from '../pages/SystemSettings';
 import { Profile } from '../pages/Profile';
 import { Wallet } from '../pages/Wallet';
 import { Withdrawals } from '../pages/Withdrawals';
+import { BankAccounts } from '../pages/BankAccounts';
 
 export const AppRoutes = () => {
   return (
@@ -65,6 +66,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.EARNINGS} element={<Earnings />} />
         <Route path={ROUTES.WALLET} element={<Wallet />} />
         <Route path={ROUTES.WITHDRAWALS} element={<Withdrawals />} />
+        <Route path={ROUTES.BANK_ACCOUNTS} element={<BankAccounts />} />
         <Route path={ROUTES.PROFILE} element={<Profile />} />
       </Route>
 

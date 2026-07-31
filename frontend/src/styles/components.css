@@ -12,6 +12,8 @@
   box-shadow: var(--shadow-md);
 }
 
+.page-heading { margin-bottom: 1.5rem; }.page-heading h1 { font-size: 1.75rem; font-weight: 800; }.page-heading p { margin-top: .35rem; color: var(--text-muted); }.bank-account-form { display: grid; gap: .85rem; margin-top: 1rem; }.bank-account-list { display: grid; gap: .8rem; margin-top: 1rem; }.bank-account-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); }.bank-account-item p,.bank-account-item small,.empty-state { margin-top: .25rem; color: var(--text-muted); }.bank-account-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }.default-account { color: var(--success); font-size: .8rem; font-weight: 700; } @media (max-width: 680px) { .bank-account-item { align-items: flex-start; flex-direction: column; }.bank-account-actions { justify-content: flex-start; }.bank-account-actions .btn { flex: 1 1 auto; } }
+
 /* Alora authentication landing */
 .auth-shell { position: relative; isolation: isolate; min-height: 100vh; overflow: hidden; display: grid; place-items: center; padding: 2rem; background: radial-gradient(circle at 8% 12%, rgba(128,100,255,.2), transparent 32rem), radial-gradient(circle at 92% 90%, rgba(45,212,191,.16), transparent 30rem), #0b1020; }
 .auth-shell::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .32; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 52px 52px; mask-image: linear-gradient(to bottom, black, transparent); }

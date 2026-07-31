@@ -44,6 +44,7 @@ export const Sidebar = () => {
           { label: 'Earnings', path: ROUTES.EARNINGS, icon: DollarSign },
           { label: 'Wallet', path: ROUTES.WALLET, icon: DollarSign },
           { label: 'Withdrawals', path: ROUTES.WITHDRAWALS, icon: FileText },
+          { label: 'Bank Accounts', path: ROUTES.BANK_ACCOUNTS, icon: DollarSign },
         ];
       case ROLES.AFFILIATE:
       default:
@@ -53,6 +54,7 @@ export const Sidebar = () => {
           { label: 'Earnings & Payouts', path: ROUTES.EARNINGS, icon: DollarSign },
           { label: 'Wallet', path: ROUTES.WALLET, icon: DollarSign },
           { label: 'Withdrawals', path: ROUTES.WITHDRAWALS, icon: FileText },
+          { label: 'Bank Accounts', path: ROUTES.BANK_ACCOUNTS, icon: DollarSign },
         ];
     }
   };

@@ -22,6 +22,7 @@ export const ROUTES = {
   EARNINGS: '/affiliate/earnings',
   WALLET: '/affiliate/wallet',
   WITHDRAWALS: '/affiliate/withdrawals',
+  BANK_ACCOUNTS: '/affiliate/bank-accounts',
   AUDIT_LOGS: '/admin/audit-logs',
   SYSTEM_SETTINGS: '/admin/settings',
   PROFILE: '/profile',
