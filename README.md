@@ -87,6 +87,18 @@ Frontend application will open at `http://localhost:3000`.
   including `https://` and without a trailing slash.
 - Initialize the database before using the API: run
   `npm run db:migrate` once from `backend` with the production `DATABASE_URL`.
+  This creates schema only; never run the demo seed script in production.
+
+### Required production secrets
+
+Set `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, and `STOREFRONT_API_KEY` to
+independent random values of at least 32 characters. The storefront API key is
+server-to-server only: your ecommerce backend must send it in
+`X-Storefront-Api-Key` when it creates a payment order or records a conversion.
+Do not expose it in browser code or Vite environment variables.
+The ecommerce backend must calculate the final order amount from its own
+catalogue and checkout records before calling the payment endpoint; it must
+never trust an amount sent by a browser.
 
 ### Standard affiliate commission slabs
 

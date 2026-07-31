@@ -7,9 +7,13 @@ const passwordUtils = require('../utils/passwordUtils');
 const codeGenerator = require('../helpers/codeGenerator');
 const ApiError = require('../utils/apiError');
 const config = require('../config/env');
+const { ROLES } = require('../constants/roles');
 
 class AuthService {
   async register({ email, password, firstName, lastName, company = null, role = 'affiliate', parentAffiliateId = null, ipAddress = null }) {
+    if (![ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(role)) {
+      throw ApiError.forbidden('Administrative accounts cannot be created through public registration');
+    }
     const existingUser = await userRepository.findByEmail(email);
     if (existingUser) {
       throw ApiError.conflict('Email address is already registered');

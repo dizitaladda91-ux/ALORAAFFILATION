@@ -6,7 +6,7 @@ const registerValidator = [
   body('firstName').notEmpty().withMessage('First name is required').trim(),
   body('lastName').notEmpty().withMessage('Last name is required').trim(),
   body('company').optional().trim(),
-  body('role').optional().isIn(['super_admin', 'admin', 'super_affiliate', 'affiliate']).withMessage('Invalid user role'),
+  body('role').optional().isIn(['super_affiliate', 'affiliate']).withMessage('Only affiliate roles can be registered publicly'),
 ];
 
 const loginValidator = [

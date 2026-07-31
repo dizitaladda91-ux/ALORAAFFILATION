@@ -30,6 +30,11 @@ const authenticate = asyncHandler(async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    // Preserve deliberate authorization failures (for example, a suspended
+    // account) rather than incorrectly reporting them as malformed tokens.
+    if (error instanceof ApiError) {
+      throw error;
+    }
     if (error.name === 'TokenExpiredError') {
       throw ApiError.unauthorized('Token expired');
     }

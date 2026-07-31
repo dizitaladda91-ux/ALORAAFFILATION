@@ -25,6 +25,8 @@ import { TeamManagement } from '../pages/TeamManagement';
 import { AuditLogs } from '../pages/AuditLogs';
 import { SystemSettings } from '../pages/SystemSettings';
 import { Profile } from '../pages/Profile';
+import { Wallet } from '../pages/Wallet';
+import { Withdrawals } from '../pages/Withdrawals';
 
 export const AppRoutes = () => {
   return (
@@ -61,6 +63,8 @@ export const AppRoutes = () => {
         <Route path={ROUTES.AFFILIATE_DASHBOARD} element={<AffiliateDashboard />} />
         <Route path={ROUTES.REFERRAL_LINKS} element={<ReferralLinks />} />
         <Route path={ROUTES.EARNINGS} element={<Earnings />} />
+        <Route path={ROUTES.WALLET} element={<Wallet />} />
+        <Route path={ROUTES.WITHDRAWALS} element={<Withdrawals />} />
         <Route path={ROUTES.PROFILE} element={<Profile />} />
       </Route>
 

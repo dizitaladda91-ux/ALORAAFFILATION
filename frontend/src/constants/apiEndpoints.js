@@ -34,4 +34,8 @@ export const API_ENDPOINTS = {
   SETTINGS: {
     GET_UPDATE: '/settings',
   },
+  PAYMENTS: { CREATE_ORDER: '/payments/create-order', VERIFY: '/payments/verify' },
+  BANK_ACCOUNTS: '/bank-accounts',
+  WALLET: { SUMMARY: '/wallet/summary', TRANSACTIONS: '/wallet/transactions' },
+  WITHDRAWALS: { CREATE: '/withdrawals', MINE: '/withdrawals/my', CANCEL: (id) => `/withdrawals/${id}/cancel` },
 };

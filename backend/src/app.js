@@ -20,9 +20,12 @@ app.use(helmet());
 // Enable CORS
 app.use(
   cors({
-    // Reflect every requesting origin. `credentials: true` cannot be combined
-    // with Access-Control-Allow-Origin: *, so cors handles the reflection.
-    origin: true,
+    origin(origin, callback) {
+      // Payment providers and server-to-server integrations have no Origin.
+      // Every browser request must come from an explicitly configured origin.
+      if (!origin || config.corsOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Origin is not allowed by CORS policy'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -64,11 +67,18 @@ app.get('/', (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'UP',
-    environment: config.env,
-    timestamp: new Date().toISOString(),
-  });
+  return require('./database').query('SELECT 1')
+    .then(() => res.status(200).json({
+      status: 'UP',
+      database: 'UP',
+      environment: config.env,
+      timestamp: new Date().toISOString(),
+    }))
+    .catch(() => res.status(503).json({
+      status: 'DOWN',
+      database: 'DOWN',
+      timestamp: new Date().toISOString(),
+    }));
 });
 
 // API Routes — no version prefix, e.g. POST /auth/login.

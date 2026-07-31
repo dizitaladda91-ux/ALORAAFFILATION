@@ -260,3 +260,86 @@ CREATE INDEX IF NOT EXISTS idx_click_events_code ON click_events(referral_code);
 CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id);
 CREATE INDEX IF NOT EXISTS idx_commissions_affiliate ON commissions(affiliate_id);
 CREATE INDEX IF NOT EXISTS idx_activity_user ON activity_logs(user_id);
+
+-- Financial operations modules
+CREATE TABLE IF NOT EXISTS affiliate_bank_accounts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id __USER_ID_TYPE__ NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  account_holder_name VARCHAR(100) NOT NULL,
+  bank_name VARCHAR(100) NOT NULL,
+  account_number VARCHAR(18) NOT NULL,
+  ifsc_code VARCHAR(11) NOT NULL,
+  branch_name VARCHAR(100),
+  upi_id VARCHAR(100),
+  account_type VARCHAR(20) NOT NULL CHECK (account_type IN ('SAVINGS', 'CURRENT')),
+  is_default BOOLEAN NOT NULL DEFAULT FALSE,
+  verification_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (verification_status IN ('PENDING', 'VERIFIED', 'REJECTED')),
+  verified_by __USER_ID_TYPE__ REFERENCES users(id),
+  verified_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP WITH TIME ZONE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_default_bank_account_per_user ON affiliate_bank_accounts(user_id) WHERE is_default = TRUE AND deleted_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS wallets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id __USER_ID_TYPE__ NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  available_balance NUMERIC(12,2) NOT NULL DEFAULT 0,
+  pending_balance NUMERIC(12,2) NOT NULL DEFAULT 0,
+  lifetime_earnings NUMERIC(12,2) NOT NULL DEFAULT 0,
+  total_withdrawn NUMERIC(12,2) NOT NULL DEFAULT 0,
+  status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE IF NOT EXISTS wallet_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  wallet_id UUID NOT NULL REFERENCES wallets(id),
+  user_id __USER_ID_TYPE__ NOT NULL REFERENCES users(id),
+  type VARCHAR(40) NOT NULL,
+  reference_type VARCHAR(50),
+  reference_id TEXT,
+  amount NUMERIC(12,2) NOT NULL,
+  opening_balance NUMERIC(12,2) NOT NULL,
+  closing_balance NUMERIC(12,2) NOT NULL,
+  description VARCHAR(255),
+  status VARCHAR(20) NOT NULL DEFAULT 'SUCCESS',
+  created_by __USER_ID_TYPE__ REFERENCES users(id),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE withdraw_requests ADD COLUMN IF NOT EXISTS withdrawal_number VARCHAR(50);
+ALTER TABLE withdraw_requests ADD COLUMN IF NOT EXISTS bank_account_id UUID REFERENCES affiliate_bank_accounts(id);
+ALTER TABLE withdraw_requests ADD COLUMN IF NOT EXISTS approved_by __USER_ID_TYPE__ REFERENCES users(id);
+ALTER TABLE withdraw_requests ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE withdraw_requests ADD COLUMN IF NOT EXISTS transaction_reference VARCHAR(255);
+ALTER TABLE withdraw_requests ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE withdraw_requests ADD COLUMN IF NOT EXISTS failure_reason TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_withdraw_requests_number ON withdraw_requests(withdrawal_number) WHERE withdrawal_number IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS payouts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  payout_number VARCHAR(50) NOT NULL UNIQUE,
+  withdraw_request_id __WITHDRAW_REQUEST_ID_TYPE__ NOT NULL UNIQUE REFERENCES withdraw_requests(id),
+  user_id __USER_ID_TYPE__ NOT NULL REFERENCES users(id),
+  bank_account_id UUID REFERENCES affiliate_bank_accounts(id),
+  amount NUMERIC(12,2) NOT NULL,
+  gateway VARCHAR(30) NOT NULL,
+  gateway_reference VARCHAR(255),
+  transaction_reference VARCHAR(255),
+  status VARCHAR(20) NOT NULL,
+  remarks TEXT,
+  failure_reason TEXT,
+  processed_by __USER_ID_TYPE__ REFERENCES users(id),
+  processed_at TIMESTAMP WITH TIME ZONE,
+  completed_at TIMESTAMP WITH TIME ZONE,
+  failed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user_created ON wallet_transactions(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payouts_status_created ON payouts(status, created_at DESC);

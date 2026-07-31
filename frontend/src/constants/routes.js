@@ -20,6 +20,8 @@ export const ROUTES = {
   TEAM_TRACKING: '/super-affiliate/team',
   REFERRAL_LINKS: '/affiliate/links',
   EARNINGS: '/affiliate/earnings',
+  WALLET: '/affiliate/wallet',
+  WITHDRAWALS: '/affiliate/withdrawals',
   AUDIT_LOGS: '/admin/audit-logs',
   SYSTEM_SETTINGS: '/admin/settings',
   PROFILE: '/profile',

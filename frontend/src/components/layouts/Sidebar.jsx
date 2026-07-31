@@ -42,6 +42,8 @@ export const Sidebar = () => {
           { label: 'My Team', path: ROUTES.TEAM_TRACKING, icon: Users },
           { label: 'Referral Links', path: ROUTES.REFERRAL_LINKS, icon: Link },
           { label: 'Earnings', path: ROUTES.EARNINGS, icon: DollarSign },
+          { label: 'Wallet', path: ROUTES.WALLET, icon: DollarSign },
+          { label: 'Withdrawals', path: ROUTES.WITHDRAWALS, icon: FileText },
         ];
       case ROLES.AFFILIATE:
       default:
@@ -49,6 +51,8 @@ export const Sidebar = () => {
           { label: 'Dashboard', path: ROUTES.AFFILIATE_DASHBOARD, icon: LayoutDashboard },
           { label: 'Referral Links', path: ROUTES.REFERRAL_LINKS, icon: Link },
           { label: 'Earnings & Payouts', path: ROUTES.EARNINGS, icon: DollarSign },
+          { label: 'Wallet', path: ROUTES.WALLET, icon: DollarSign },
+          { label: 'Withdrawals', path: ROUTES.WITHDRAWALS, icon: FileText },
         ];
     }
   };

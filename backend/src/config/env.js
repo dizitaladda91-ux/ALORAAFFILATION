@@ -5,8 +5,21 @@ const path = require('path');
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
 
+const env = process.env.NODE_ENV || 'development';
+const requireProductionSecret = (name, minimumLength = 1) => {
+  const value = process.env[name];
+  if (env === 'production' && (!value || value.length < minimumLength)) {
+    throw new Error(`${name} must be configured securely when NODE_ENV=production`);
+  }
+  return value;
+};
+
+const accessSecret = requireProductionSecret('JWT_ACCESS_SECRET', 32) || 'default_access_secret_for_dev_only';
+const refreshSecret = requireProductionSecret('JWT_REFRESH_SECRET', 32) || 'default_refresh_secret_for_dev_only';
+const storefrontApiKey = requireProductionSecret('STOREFRONT_API_KEY', 32) || '';
+
 module.exports = {
-  env: process.env.NODE_ENV || 'development',
+  env,
   port: process.env.PORT || 5000,
   apiPrefix: process.env.API_PREFIX || '',
   // Public affiliate portal.  This is deliberately a production URL so links
@@ -26,11 +39,12 @@ module.exports = {
   dbMax: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
   dbIdleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),
   jwt: {
-    accessSecret: process.env.JWT_ACCESS_SECRET || 'default_access_secret_for_dev_only',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'default_refresh_secret_for_dev_only',
+    accessSecret,
+    refreshSecret,
     accessExpiration: process.env.JWT_ACCESS_EXPIRATION || '15m',
     refreshExpiration: process.env.JWT_REFRESH_EXPIRATION || '7d',
   },
+  storefrontApiKey,
   // CORS_ORIGIN may contain a comma-separated list, e.g. the production
   // Vercel domain plus a preview domain. Falling back to FRONTEND_URL keeps
   // the two production settings consistent when only FRONTEND_URL is set.
