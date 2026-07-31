@@ -28,6 +28,7 @@ import { Profile } from '../pages/Profile';
 import { Wallet } from '../pages/Wallet';
 import { Withdrawals } from '../pages/Withdrawals';
 import { BankAccounts } from '../pages/BankAccounts';
+import { AdminWithdrawals } from '../pages/AdminWithdrawals';
 
 export const AppRoutes = () => {
   return (
@@ -51,6 +52,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.USER_MANAGEMENT} element={<UserManagement />} />
         <Route path={ROUTES.COMMISSION_RULES} element={<CommissionRules />} />
         <Route path={ROUTES.AUDIT_LOGS} element={<AuditLogs />} />
+        <Route path={ROUTES.ADMIN_WITHDRAWALS} element={<AdminWithdrawals />} />
       </Route>
 
       {/* Super Affiliate Protected Routes */}

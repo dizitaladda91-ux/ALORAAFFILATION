@@ -107,8 +107,7 @@ class PayoutController {
         const payout =
             await PayoutService.processPayout(
                 req.params.id,
-                req.body.gatewayReference,
-                req.body.transactionId,
+                { gatewayReference: req.body.gatewayReference, transactionReference: req.body.transactionReference },
                 req.user.id
             );
 
@@ -133,8 +132,7 @@ class PayoutController {
         const payout =
             await PayoutService.completePayout(
                 req.params.id,
-                req.body.gatewayReference,
-                req.body.transactionId
+                { gatewayReference: req.body.gatewayReference, transactionReference: req.body.transactionReference }
             );
 
         return res.status(200).json({
@@ -158,7 +156,7 @@ class PayoutController {
         const payout =
             await PayoutService.failPayout(
                 req.params.id,
-                req.body.reason
+                { failureReason: req.body.failureReason, processedBy: req.user.id }
             );
 
         return res.status(200).json({

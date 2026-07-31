@@ -25,5 +25,6 @@ export const ROUTES = {
   BANK_ACCOUNTS: '/affiliate/bank-accounts',
   AUDIT_LOGS: '/admin/audit-logs',
   SYSTEM_SETTINGS: '/admin/settings',
+  ADMIN_WITHDRAWALS: '/admin/withdrawals',
   PROFILE: '/profile',
 };
