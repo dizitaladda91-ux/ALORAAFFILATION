@@ -4,6 +4,7 @@ const bankAccountController = require("../controllers/bankAccount.controller");
 
 const { authenticate } = require("../middlewares/authMiddleware");
 const { authorizeRoles } = require("../middlewares/rbacMiddleware");
+const { ROLES } = require('../constants/roles');
 const validate = require("../middlewares/validationMiddleware");
 
 const {
@@ -23,7 +24,7 @@ const router = express.Router();
 router.post(
   "/",
   authenticate,
-  authorizeRoles("AFFILIATE"),
+  authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
   createBankAccountSchema,
   validate,
   bankAccountController.createBankAccount
@@ -33,7 +34,7 @@ router.post(
 router.get(
   "/",
   authenticate,
-  authorizeRoles("AFFILIATE"),
+  authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
   bankAccountController.getMyAccounts
 );
 
@@ -41,7 +42,7 @@ router.get(
 router.get(
   "/:id",
   authenticate,
-  authorizeRoles("AFFILIATE"),
+  authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
   bankAccountController.getAccountById
 );
 
@@ -49,7 +50,7 @@ router.get(
 router.put(
   "/:id",
   authenticate,
-  authorizeRoles("AFFILIATE"),
+  authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
   updateBankAccountSchema,
   validate,
   bankAccountController.updateBankAccount
@@ -59,7 +60,7 @@ router.put(
 router.patch(
   "/:id/default",
   authenticate,
-  authorizeRoles("AFFILIATE"),
+  authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
   bankAccountController.setDefaultAccount
 );
 
@@ -67,7 +68,7 @@ router.patch(
 router.delete(
   "/:id",
   authenticate,
-  authorizeRoles("AFFILIATE"),
+  authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
   bankAccountController.deleteBankAccount
 );
 
@@ -81,7 +82,7 @@ router.delete(
 router.patch(
   "/:id/verify",
   authenticate,
-  authorizeRoles("ADMIN", "SUPER_ADMIN"),
+  authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN),
   bankAccountController.verifyAccount
 );
 
@@ -89,7 +90,7 @@ router.patch(
 router.patch(
   "/:id/reject",
   authenticate,
-  authorizeRoles("ADMIN", "SUPER_ADMIN"),
+  authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN),
   bankAccountController.rejectAccount
 );
 

@@ -34,6 +34,7 @@ const {
 const {
     authenticate
 } = require("../middlewares/authMiddleware");
+const { ROLES } = require('../constants/roles');
 
 /**
  * Create Payout
@@ -43,8 +44,8 @@ router.post(
     "/",
     authenticate,
     authorizeRoles(
-        "SUPER_ADMIN",
-        "ADMIN"
+        ROLES.SUPER_ADMIN,
+        ROLES.ADMIN
     ),
     createPayoutValidation,
     validate,
@@ -59,8 +60,8 @@ router.get(
     "/",
     authenticate,
     authorizeRoles(
-        "SUPER_ADMIN",
-        "ADMIN"
+        ROLES.SUPER_ADMIN,
+        ROLES.ADMIN
     ),
     getAllPayoutsValidation,
     validate,
@@ -75,8 +76,8 @@ router.get(
     "/statistics",
     authenticate,
     authorizeRoles(
-        "SUPER_ADMIN",
-        "ADMIN"
+        ROLES.SUPER_ADMIN,
+        ROLES.ADMIN
     ),
     getStatisticsValidation,
     validate,
@@ -91,8 +92,8 @@ router.get(
     "/:id",
     authenticate,
     authorizeRoles(
-        "SUPER_ADMIN",
-        "ADMIN"
+        ROLES.SUPER_ADMIN,
+        ROLES.ADMIN
     ),
     getPayoutValidation,
     validate,
@@ -107,8 +108,8 @@ router.patch(
     "/:id/process",
     authenticate,
     authorizeRoles(
-        "SUPER_ADMIN",
-        "ADMIN"
+        ROLES.SUPER_ADMIN,
+        ROLES.ADMIN
     ),
     processPayoutValidation,
     validate,
@@ -123,8 +124,8 @@ router.patch(
     "/:id/complete",
     authenticate,
     authorizeRoles(
-        "SUPER_ADMIN",
-        "ADMIN"
+        ROLES.SUPER_ADMIN,
+        ROLES.ADMIN
     ),
     completePayoutValidation,
     validate,
@@ -139,8 +140,8 @@ router.patch(
     "/:id/fail",
     authenticate,
     authorizeRoles(
-        "SUPER_ADMIN",
-        "ADMIN"
+        ROLES.SUPER_ADMIN,
+        ROLES.ADMIN
     ),
     failPayoutValidation,
     validate,
@@ -155,8 +156,8 @@ router.patch(
     "/:id/cancel",
     authenticate,
     authorizeRoles(
-        "SUPER_ADMIN",
-        "ADMIN"
+        ROLES.SUPER_ADMIN,
+        ROLES.ADMIN
     ),
     cancelPayoutValidation,
     validate,

@@ -4,6 +4,7 @@ const walletController = require("../controllers/walletcontroller");
 
 const { authenticate } = require("../middlewares/authMiddleware");
 const { authorizeRoles } = require("../middlewares/rbacMiddleware");
+const { ROLES } = require('../constants/roles');
 const validate = require("../middlewares/validationMiddleware");
 
 const {
@@ -25,7 +26,7 @@ const router = express.Router();
 router.get(
     "/",
     authenticate,
-    authorizeRoles("AFFILIATE"),
+    authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
     walletController.getWallet
 );
 
@@ -33,7 +34,7 @@ router.get(
 router.get(
     "/summary",
     authenticate,
-    authorizeRoles("AFFILIATE"),
+    authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
     walletController.getWalletSummary
 );
 
@@ -41,7 +42,7 @@ router.get(
 router.get(
     "/transactions",
     authenticate,
-    authorizeRoles("AFFILIATE"),
+    authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
     transactionHistoryValidation,
     validate,
     walletController.getTransactions
@@ -51,7 +52,7 @@ router.get(
 router.get(
     "/transactions/:id",
     authenticate,
-    authorizeRoles("AFFILIATE"),
+    authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
     transactionIdValidation,
     validate,
     walletController.getTransactionById
@@ -61,7 +62,7 @@ router.get(
 router.get(
     "/stats",
     authenticate,
-    authorizeRoles("AFFILIATE"),
+    authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
     walletController.getWalletStats
 );
 
@@ -69,7 +70,7 @@ router.get(
 router.post(
     "/withdraw",
     authenticate,
-    authorizeRoles("AFFILIATE"),
+    authorizeRoles(ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE),
     withdrawValidation,
     validate,
     walletController.withdraw
@@ -85,7 +86,7 @@ router.post(
 router.post(
     "/credit",
     authenticate,
-    authorizeRoles("ADMIN", "SUPER_ADMIN"),
+    authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN),
     walletTransactionValidation,
     validate,
     walletController.credit
@@ -95,7 +96,7 @@ router.post(
 router.post(
     "/debit",
     authenticate,
-    authorizeRoles("ADMIN", "SUPER_ADMIN"),
+    authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN),
     walletTransactionValidation,
     validate,
     walletController.debit
@@ -105,7 +106,7 @@ router.post(
 router.post(
     "/freeze",
     authenticate,
-    authorizeRoles("ADMIN", "SUPER_ADMIN"),
+    authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN),
     walletTransactionValidation,
     validate,
     walletController.freezeBalance
@@ -115,7 +116,7 @@ router.post(
 router.post(
     "/release",
     authenticate,
-    authorizeRoles("ADMIN", "SUPER_ADMIN"),
+    authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN),
     walletTransactionValidation,
     validate,
     walletController.releaseBalance
