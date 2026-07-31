@@ -73,3 +73,46 @@ button, input, select, textarea {
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 1.5rem;
 }
+
+/* Responsive portal layout: laptop, tablet and mobile */
+img, svg { max-width: 100%; }
+button, input, select, textarea { max-width: 100%; }
+
+@media (max-width: 1024px) {
+  .content-body { padding: 1.5rem; }
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .grid-2 { grid-template-columns: 1fr; gap: 1rem; }
+  .premium-sidebar { width: 84px; }
+  .sidebar-brand { padding: 1.25rem .75rem; justify-content: center; }
+  .sidebar-brand > div > div:last-child, .sidebar-menu-label, .sidebar-nav-link span, .sidebar-profile-link span { display: none; }
+  .sidebar-nav-link, .sidebar-profile-link { justify-content: center; padding: .82rem; }
+  .sidebar-nav-link-active::after { right: .45rem; }
+}
+
+@media (max-width: 680px) {
+  html { font-size: 15px; }
+  .app-container { display: block; }
+  .premium-sidebar { position: fixed; z-index: 20; bottom: 0; left: 0; width: 100%; min-height: 0; height: 64px; overflow: visible; border-top: 1px solid rgba(255,255,255,.14); border-right: 0; box-shadow: 0 -8px 24px rgba(9,12,30,.24); }
+  .premium-sidebar::before, .sidebar-brand, .sidebar-footer { display: none; }
+  .sidebar-navigation { display: flex; align-items: center; gap: .2rem; width: 100%; padding: .45rem .35rem; overflow-x: auto; scrollbar-width: none; }
+  .sidebar-navigation::-webkit-scrollbar { display: none; }
+  .sidebar-nav-link { flex: 0 0 auto; width: 52px; min-width: 52px; margin: 0; padding: .65rem; border-radius: .65rem; }
+  .sidebar-nav-link-active::after { display: none; }
+  .main-content { min-height: 100vh; }
+  .content-body { padding: 1rem; padding-bottom: 5.75rem; }
+  .card { padding: 1rem; }
+  .grid-4, .grid-2 { grid-template-columns: 1fr; gap: .85rem; }
+  .flex.justify-between { gap: .75rem; flex-wrap: wrap; }
+  .table-container { margin: 0 -1rem; width: calc(100% + 2rem); border-right: 0; border-left: 0; border-radius: 0; }
+  .custom-table { min-width: 620px; }
+  .btn { min-height: 42px; }
+  .form-input, .form-select, .form-textarea { min-height: 44px; }
+  .modal-content, .modal { max-width: calc(100vw - 1.5rem); }
+}
+
+@media (max-width: 420px) {
+  .content-body { padding: .85rem; padding-bottom: 5.5rem; }
+  .card { padding: .85rem; }
+  .stat-value { font-size: 1.5rem; }
+  h1 { font-size: 1.5rem !important; }
+}
