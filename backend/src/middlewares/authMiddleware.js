@@ -23,8 +23,8 @@ const authenticate = asyncHandler(async (req, res, next) => {
       throw ApiError.unauthorized('User associated with token no longer exists');
     }
 
-    if (user.status === 'suspended') {
-      throw ApiError.forbidden('Your account has been suspended. Please contact administrator.');
+    if (user.status !== 'active') {
+      throw ApiError.forbidden('Your account is not active. Please contact administrator.');
     }
 
     req.user = user;

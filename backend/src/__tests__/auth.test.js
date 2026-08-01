@@ -4,6 +4,7 @@ jest.mock('../repositories/userRepository', () => ({
   create: jest.fn(),
   updateRefreshToken: jest.fn(),
   findById: jest.fn(),
+  findSessionUserById: jest.fn(),
   savePasswordReset: jest.fn(),
   findByPasswordResetToken: jest.fn(),
   updatePassword: jest.fn(),
@@ -83,5 +84,11 @@ describe('auth service', () => {
     passwordUtils.comparePassword.mockResolvedValueOnce(false);
 
     await expect(authService.login({ email: 'old@example.com', password: 'wrong' })).rejects.toMatchObject({ statusCode: 401 });
+  });
+
+  it('rejects a refresh token that was revoked or rotated', async () => {
+    userRepository.findSessionUserById.mockResolvedValueOnce({ id: 1, email: 'member@example.com', role_name: 'affiliate', status: 'active', refresh_token: 'other-token' });
+
+    await expect(authService.refreshTokens('refresh-token')).rejects.toMatchObject({ statusCode: 401 });
   });
 });

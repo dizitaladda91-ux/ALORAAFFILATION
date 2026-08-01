@@ -77,6 +77,16 @@ class UserRepository {
     return res.rows[0] || null;
   }
 
+  async findSessionUserById(id) {
+    const res = await db.query(
+      `SELECT u.id, u.email, u.status, u.refresh_token, r.name AS role_name
+       FROM users u JOIN roles r ON r.id = u.role_id
+       WHERE u.id = $1 AND u.deleted_at IS NULL`,
+      [id]
+    );
+    return res.rows[0] || null;
+  }
+
   async verifyEmail(userId) {
     await db.query(
       `UPDATE users SET is_email_verified=TRUE, email_verification_token_hash=NULL,

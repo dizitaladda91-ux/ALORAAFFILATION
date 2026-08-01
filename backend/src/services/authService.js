@@ -110,12 +110,8 @@ class AuthService {
       throw ApiError.unauthorized('Invalid email or password');
     }
 
-    if (user.status === 'suspended') {
-      throw ApiError.forbidden('Your account has been suspended. Please contact support.');
-    }
-
-    if (user.status === 'rejected') {
-      throw ApiError.forbidden('Your account registration request was rejected.');
+    if (user.status !== 'active') {
+      throw ApiError.forbidden('Your account is not active. Please contact support.');
     }
 
     const isMatch = await passwordUtils.comparePassword(password, user.password_hash);
@@ -148,6 +144,9 @@ class AuthService {
   }
 
   async refreshTokens(refreshToken) {
+    if (!refreshToken || typeof refreshToken !== 'string') {
+      throw ApiError.unauthorized('Invalid or expired refresh token');
+    }
     let decoded;
     try {
       decoded = jwtUtils.verifyRefreshToken(refreshToken);
@@ -155,9 +154,19 @@ class AuthService {
       throw ApiError.unauthorized('Invalid or expired refresh token');
     }
 
-    const user = await userRepository.findById(decoded.id);
+    const user = await userRepository.findSessionUserById(decoded.id);
     if (!user) {
       throw ApiError.unauthorized('User no longer exists');
+    }
+    const storedToken = user.refresh_token;
+    const tokensMatch = storedToken
+      && Buffer.byteLength(storedToken) === Buffer.byteLength(refreshToken)
+      && crypto.timingSafeEqual(Buffer.from(storedToken), Buffer.from(refreshToken));
+    if (!tokensMatch) {
+      throw ApiError.unauthorized('Refresh token has been revoked or rotated');
+    }
+    if (user.status !== 'active') {
+      throw ApiError.forbidden('This account is not active');
     }
 
     const newAccessToken = jwtUtils.generateAccessToken({ id: user.id, email: user.email, role: user.role_name });
