@@ -7,6 +7,8 @@ const passwordUtils = require('../utils/passwordUtils');
 const codeGenerator = require('../helpers/codeGenerator');
 const ApiError = require('../utils/apiError');
 const config = require('../config/env');
+const emailService = require('./emailService');
+const logger = require('../logs/logger');
 const { ROLES } = require('../constants/roles');
 
 class AuthService {
@@ -71,6 +73,18 @@ class AuthService {
     const accessToken = jwtUtils.generateAccessToken({ id: user.id, email: user.email, role: roleObj.name });
     const refreshToken = jwtUtils.generateRefreshToken({ id: user.id });
     await userRepository.updateRefreshToken(user.id, refreshToken);
+
+    // Send welcome email asynchronously
+    try {
+      emailService.sendWelcomeEmail({
+        email: user.email,
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+      }).catch(err => logger.error('Failed to send welcome email:', err));
+    } catch (emailError) {
+      logger.error('Error sending welcome email:', emailError);
+      // Don't throw - email is non-critical
+    }
 
     return {
       user: {

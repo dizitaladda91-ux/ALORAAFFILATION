@@ -73,4 +73,24 @@ module.exports = {
   trustProxy: process.env.TRUST_PROXY
     ? parseInt(process.env.TRUST_PROXY, 10)
     : (process.env.NODE_ENV === 'production' ? 1 : false),
+  // Email configuration
+  email: {
+    enabled: process.env.EMAIL_ENABLED !== 'false',
+    provider: process.env.EMAIL_PROVIDER || 'test', // 'smtp', 'sendgrid', 'gmail', 'test'
+    fromEmail: process.env.EMAIL_FROM || 'noreply@affiliatemanagement.com',
+    // SMTP Configuration
+    smtpHost: process.env.SMTP_HOST || 'smtp.example.com',
+    smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
+    smtpSecure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    smtpUser: process.env.SMTP_USER || '',
+    smtpPassword: process.env.SMTP_PASSWORD || '',
+    // SendGrid Configuration
+    sendgridApiKey: process.env.SENDGRID_API_KEY || '',
+    // Gmail Configuration
+    gmailUser: process.env.GMAIL_USER || '',
+    gmailPassword: process.env.GMAIL_PASSWORD || '', // Use app-specific password for Gmail
+    // Test Configuration (Ethereal)
+    testUser: process.env.EMAIL_TEST_USER || 'test@ethereal.email',
+    testPassword: process.env.EMAIL_TEST_PASSWORD || 'test-password',
+  },
 };

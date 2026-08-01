@@ -3,6 +3,9 @@ const ApiError = require('../utils/apiError');
 const walletRepository = require('../repositories/walletrepository');
 const withdrawalRepository = require('../repositories/withdrawal.repository');
 const bankAccountRepository = require('../repositories/bankAccount.repository');
+const userRepository = require('../repositories/userRepository');
+const emailService = require('./emailService');
+const logger = require('../logs/logger');
 
 class WithdrawalRequestService {
   async request(userId, { amount, bankAccountId, notes }) {
@@ -33,6 +36,22 @@ class WithdrawalRequestService {
         status: 'SUCCESS', createdBy: userId,
       }, client);
       await client.query('COMMIT');
+      // Send withdrawal request confirmation email asynchronously
+      try {
+        const user = await userRepository.findById(userId);
+        if (user && user.email) {
+          const bankAccount = await bankAccountRepository.findById(bankAccountId);
+          emailService.sendWithdrawalRequestEmail(user, {
+            amount: value,
+            status: 'pending',
+            requested_at: new Date(),
+            bank_account_number: bankAccount?.account_number || 'N/A',
+          }).catch(err => logger.error('Failed to send withdrawal email:', err));
+        }
+      } catch (emailError) {
+        logger.error('Error sending withdrawal confirmation email:', emailError);
+        // Don't throw - email is non-critical
+      }
       return withdrawal;
     } catch (error) {
       await client.query('ROLLBACK');

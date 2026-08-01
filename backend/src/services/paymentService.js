@@ -45,7 +45,11 @@ class PaymentService {
       if (!payment) throw ApiError.notFound('Payment order not found');
       const updated = await paymentRepository.updatePayment(client, payment.id, { paymentId, status, gatewayResponse });
       let result = null;
-      if (status === 'SUCCESS') result = await paymentRepository.createConversionAndCommission(client, { ...updated, affiliate_role: (await paymentRepository.findReferralContext(client, updated.referral_code, updated.click_id)).affiliate_role });
+      if (status === 'SUCCESS') {
+        const context = await paymentRepository.findReferralContext(client, updated.referral_code, updated.click_id);
+        if (!context) throw ApiError.badRequest('The referral context is no longer valid');
+        result = await paymentRepository.createConversionAndCommission(client, { ...updated, affiliate_role: context.affiliate_role });
+      }
       await client.query('COMMIT');
       return { payment: updated, conversion: result?.conversion || null, commission: result?.commission || null, pending: status !== 'SUCCESS' };
     } catch (error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }
@@ -66,6 +70,7 @@ class PaymentService {
     const entity = payload.payload?.payment?.entity || payload.payload?.order?.entity;
     if (payload.event === 'payment.captured' || payload.event === 'order.paid') await this.processGatewayPayment(entity.order_id || entity.id, entity.id || payload.payload?.payment?.entity?.id, 'SUCCESS', entity);
     else if (payload.event === 'payment.failed') await this.processGatewayPayment(entity.order_id, entity.id, 'FAILED', entity);
+    await paymentRepository.completeWebhook(db, payload.event_id);
     return { ignored: !['payment.captured', 'order.paid', 'payment.failed', 'refund.created', 'refund.processed', 'payment.authorized'].includes(payload.event) };
   }
 }

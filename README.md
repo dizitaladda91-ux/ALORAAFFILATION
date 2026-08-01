@@ -154,6 +154,30 @@ The API creates the conversion and pending commission. Sending the same
 `orderId` again is safe: it returns the already-recorded conversion and does
 not create a duplicate commission.
 
+### Razorpay storefront integration
+
+Payment-order creation and verification are **server-to-server** endpoints.
+Do not call them from a Vite/browser app and never expose
+`STOREFRONT_API_KEY` there. Configure the same long random key in the affiliate
+backend and the ecommerce storefront backend, then send it as:
+
+```http
+X-Storefront-Api-Key: <STOREFRONT_API_KEY>
+```
+
+The storefront backend calls `POST /payments/create-order` with `amount`,
+`currency`, `customer`, `referralCode`, and `clickId`. It opens Razorpay
+Checkout using the returned `keyId` and `orderId`, then sends the Razorpay
+response to `POST /payments/verify` from its server. In Razorpay Dashboard,
+set the webhook URL to:
+
+```text
+https://<your-render-service>/payments/webhook
+```
+
+Add `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and
+`RAZORPAY_WEBHOOK_SECRET` only to Render's backend environment variables.
+
 ### Docker
 ```bash
 docker-compose up --build
