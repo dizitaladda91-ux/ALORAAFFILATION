@@ -12,6 +12,7 @@ frontend/dist/
 .env.example
 frontend/.env.example
 backend/.env.example
+backend/.env.example.email
 
 # Logs
 *.log
