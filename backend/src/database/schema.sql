@@ -345,3 +345,5 @@ CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user_created ON wallet_transa
 CREATE INDEX IF NOT EXISTS idx_payouts_status_created ON payouts(status, created_at DESC);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token_hash TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token_hash TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expires_at TIMESTAMP WITH TIME ZONE;

@@ -6,6 +6,7 @@ const db = require('../database');
 const walletRepository = require('../repositories/walletrepository');
 const emailService = require('../services/emailService');
 const logger = require('../logs/logger');
+const logRepository = require('../repositories/logRepository');
 
 exports.list = asyncHandler(async (req, res) => {
   const page = Number(req.query.page || 1); const limit = Number(req.query.limit || 20); const filters = { status: req.query.status };
@@ -17,6 +18,7 @@ exports.approve = asyncHandler(async (req, res) => {
   if (!withdrawal) throw ApiError.notFound('Withdrawal request not found.');
   if (withdrawal.status !== 'pending') throw ApiError.badRequest('Only pending requests can be approved.');
   const approved = await withdrawalRepository.approve(req.params.id, req.user.id, req.body.notes);
+  await logRepository.createAuditLog({ actorId: req.user.id, targetUserId: withdrawal.user_id, action: 'WITHDRAWAL_APPROVED', changesJson: { withdrawalId: withdrawal.id, withdrawalNumber: withdrawal.withdrawal_number, notes: req.body.notes || null }, ipAddress: req.ip });
   // Send approval email asynchronously
   try {
     const user = await userRepository.findById(withdrawal.user_id);
@@ -45,6 +47,7 @@ exports.reject = asyncHandler(async (req, res) => {
     const result = await withdrawalRepository.reject(withdrawal.id, req.body.notes || 'Rejected by administrator.', req.user.id, client);
     await walletRepository.createTransaction({ walletId: lockedWallet.id, userId: withdrawal.user_id, type: 'WITHDRAWAL_RELEASE', referenceType: 'withdrawal', referenceId: String(withdrawal.id), amount: withdrawal.amount, openingBalance: lockedWallet.available_balance, closingBalance: updatedWallet.available_balance, description: `Withdrawal ${withdrawal.withdrawal_number} rejected`, status: 'SUCCESS', createdBy: req.user.id }, client);
     await client.query('COMMIT');
+    await logRepository.createAuditLog({ actorId: req.user.id, targetUserId: withdrawal.user_id, action: 'WITHDRAWAL_REJECTED', changesJson: { withdrawalId: withdrawal.id, withdrawalNumber: withdrawal.withdrawal_number, notes: req.body.notes || null }, ipAddress: req.ip });
     // Send rejection email asynchronously
     try {
       const user = await userRepository.findById(withdrawal.user_id);

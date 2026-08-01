@@ -26,6 +26,21 @@ if (env === 'production' && paymentsEnabled) {
     throw new Error('Razorpay credentials must be configured when PAYMENTS_ENABLED=true');
   }
 }
+const emailEnabled = process.env.EMAIL_ENABLED === 'true';
+const emailProvider = process.env.EMAIL_PROVIDER || 'test';
+if (env === 'production' && emailEnabled) {
+  if (!['smtp', 'sendgrid', 'gmail'].includes(emailProvider)) {
+    throw new Error('EMAIL_PROVIDER must be smtp, sendgrid, or gmail when EMAIL_ENABLED=true');
+  }
+  const providerCredentials = {
+    smtp: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD),
+    sendgrid: Boolean(process.env.SENDGRID_API_KEY),
+    gmail: Boolean(process.env.GMAIL_USER && process.env.GMAIL_PASSWORD),
+  };
+  if (!providerCredentials[emailProvider]) {
+    throw new Error(`Email credentials for provider '${emailProvider}' must be configured when EMAIL_ENABLED=true`);
+  }
+}
 
 module.exports = {
   env,
@@ -91,9 +106,9 @@ module.exports = {
     // Do not attempt delivery through placeholder test SMTP credentials in
     // production. Enable only after a real provider is configured.
     enabled: process.env.EMAIL_ENABLED
-      ? process.env.EMAIL_ENABLED === 'true'
+      ? emailEnabled
       : env !== 'production',
-    provider: process.env.EMAIL_PROVIDER || 'test', // 'smtp', 'sendgrid', 'gmail', 'test'
+    provider: emailProvider, // 'smtp', 'sendgrid', 'gmail', 'test'
     fromEmail: process.env.EMAIL_FROM || 'noreply@affiliatemanagement.com',
     // SMTP Configuration
     smtpHost: process.env.SMTP_HOST || 'smtp.example.com',

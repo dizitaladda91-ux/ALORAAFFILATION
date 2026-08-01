@@ -1,7 +1,17 @@
 const PayoutService = require("../services/payout.service");
 const asyncHandler = require("../utils/asyncHandler");
+const logRepository = require('../repositories/logRepository');
 
 class PayoutController {
+    async recordTransition(req, payout, action) {
+        await logRepository.createAuditLog({
+            actorId: req.user.id,
+            targetUserId: payout.user_id,
+            action,
+            changesJson: { payoutId: payout.id, payoutNumber: payout.payout_number, status: payout.status, remarks: payout.remarks || null },
+            ipAddress: req.ip,
+        });
+    }
 
     /**
      * Create Payout
@@ -21,6 +31,8 @@ class PayoutController {
                 initiatedBy: req.user.id
 
             });
+
+        await this.recordTransition(req, payout, 'PAYOUT_CREATED');
 
         return res.status(201).json({
 
@@ -111,6 +123,8 @@ class PayoutController {
                 req.user.id
             );
 
+        await this.recordTransition(req, payout, 'PAYOUT_PROCESSING');
+
         return res.status(200).json({
 
             success: true,
@@ -134,6 +148,8 @@ class PayoutController {
                 req.params.id,
                 { gatewayReference: req.body.gatewayReference, transactionReference: req.body.transactionReference }
             );
+
+        await this.recordTransition(req, payout, 'PAYOUT_COMPLETED');
 
         return res.status(200).json({
 
@@ -159,6 +175,8 @@ class PayoutController {
                 { failureReason: req.body.failureReason, processedBy: req.user.id }
             );
 
+        await this.recordTransition(req, payout, 'PAYOUT_FAILED');
+
         return res.status(200).json({
 
             success: true,
@@ -183,6 +201,8 @@ class PayoutController {
                 req.user.id
             );
 
+        await this.recordTransition(req, payout, 'PAYOUT_RETRY_INITIATED');
+
         return res.status(200).json({
 
             success: true,
@@ -206,6 +226,8 @@ class PayoutController {
                 req.params.id,
                 req.body.remarks
             );
+
+        await this.recordTransition(req, payout, 'PAYOUT_CANCELLED');
 
         return res.status(200).json({
 

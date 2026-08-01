@@ -5,6 +5,7 @@ import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
 import { useNotification } from '../hooks/useNotification';
 import { ROUTES } from '../constants/routes';
+import api from '../services/api';
 
 export const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -13,7 +14,7 @@ export const ForgotPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+    await api.post('/auth/forgot-password', { email });
     setSubmitted(true);
     showSuccess('Password reset link sent to your email.');
   };

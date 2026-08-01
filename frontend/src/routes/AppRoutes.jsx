@@ -9,6 +9,7 @@ import { Landing } from '../pages/Landing';
 import { Register } from '../pages/Register';
 import { ForgotPassword } from '../pages/ForgotPassword';
 import { ResetPassword } from '../pages/ResetPassword';
+import { VerifyEmail } from '../pages/VerifyEmail';
 import { RedirectRef } from '../pages/RedirectRef';
 import { Unauthorized } from '../pages/Unauthorized';
 import { NotFound } from '../pages/NotFound';
@@ -40,6 +41,7 @@ export const AppRoutes = () => {
       <Route path={ROUTES.REGISTER} element={<Register />} />
       <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
       <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
+      <Route path={ROUTES.VERIFY_EMAIL} element={<VerifyEmail />} />
       <Route path={ROUTES.REF_REDIRECT} element={<RedirectRef />} />
       <Route path={ROUTES.UNAUTHORIZED} element={<Unauthorized />} />
 

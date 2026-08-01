@@ -1,7 +1,17 @@
 const WalletService = require("../services/walletservice");
 const asyncHandler = require("../utils/asyncHandler");
+const logRepository = require('../repositories/logRepository');
 
 class WalletController {
+    async recordAdjustment(req, wallet, action) {
+        await logRepository.createAuditLog({
+            actorId: req.user.id,
+            targetUserId: wallet.user_id,
+            action,
+            changesJson: { walletId: wallet.id, amount: req.body.amount, description: req.body.description || null },
+            ipAddress: req.ip,
+        });
+    }
 
     /**
      * Get Wallet
@@ -117,6 +127,8 @@ class WalletController {
 
             });
 
+        await this.recordAdjustment(req, wallet, 'WALLET_MANUAL_CREDIT');
+
         return res.status(200).json({
             success: true,
             message: "Wallet credited successfully.",
@@ -141,6 +153,8 @@ class WalletController {
                 createdBy: req.user.id
 
             });
+
+        await this.recordAdjustment(req, wallet, 'WALLET_MANUAL_DEBIT');
 
         return res.status(200).json({
             success: true,
@@ -167,6 +181,8 @@ class WalletController {
 
             });
 
+        await this.recordAdjustment(req, wallet, 'WALLET_BALANCE_FROZEN');
+
         return res.status(200).json({
             success: true,
             message: "Balance frozen successfully.",
@@ -191,6 +207,8 @@ class WalletController {
                 createdBy: req.user.id
 
             });
+
+        await this.recordAdjustment(req, wallet, 'WALLET_BALANCE_RELEASED');
 
         return res.status(200).json({
             success: true,

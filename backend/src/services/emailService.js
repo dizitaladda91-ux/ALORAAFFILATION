@@ -302,6 +302,20 @@ class EmailService {
     return this.sendEmail(userEmail, subject, htmlContent);
   }
 
+  async sendEmailVerificationEmail(user, verificationToken) {
+    const verifyLink = `${config.frontendUrl}/verify-email/${verificationToken}`;
+    const subject = 'Verify Your Email Address';
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Verify your email</h2>
+        <p>Hi ${user.first_name || 'there'},</p>
+        <p>Confirm your email address to secure your affiliate account.</p>
+        <p><a href="${verifyLink}" style="background:#007bff;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block;">Verify email</a></p>
+        <p>This link expires in 24 hours. If you did not create this account, you can ignore this email.</p>
+      </div>`;
+    return this.sendEmail(user.email, subject, htmlContent);
+  }
+
   /**
    * Send admin notification for new affiliate registration
    */

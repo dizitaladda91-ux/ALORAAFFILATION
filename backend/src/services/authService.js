@@ -86,6 +86,7 @@ class AuthService {
       logger.error('Error sending welcome email:', emailError);
       // Don't throw - email is non-critical
     }
+    this.sendEmailVerification(user.id).catch(err => logger.error('Email verification setup failed', err));
 
     return {
       user: {
@@ -185,6 +186,30 @@ class AuthService {
     if (!user) throw ApiError.badRequest('Password reset link is invalid or expired');
     await userRepository.updatePassword(user.id, await passwordUtils.hashPassword(password));
     await userRepository.clearPasswordReset(user.id);
+  }
+
+  async sendEmailVerification(userId) {
+    const user = await userRepository.findById(userId);
+    if (!user) throw ApiError.notFound('User not found');
+    if (user.is_email_verified) return;
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    await userRepository.saveEmailVerification(user.id, tokenHash, new Date(Date.now() + 24 * 60 * 60 * 1000));
+    await emailService.sendEmailVerificationEmail(user, token);
+  }
+
+  async verifyEmail(token) {
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await userRepository.findByEmailVerificationToken(tokenHash);
+    if (!user) throw ApiError.badRequest('Email verification link is invalid or expired');
+    await userRepository.verifyEmail(user.id);
+    await logRepository.createActivityLog({
+      userId: user.id,
+      action: 'EMAIL_VERIFIED',
+      entityType: 'USER',
+      entityId: user.id,
+    });
   }
 }
 
