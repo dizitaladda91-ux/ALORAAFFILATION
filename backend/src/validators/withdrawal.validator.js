@@ -76,6 +76,11 @@ const processPayoutValidation = [
 
 ];
 
+const approvePayoutValidation = [
+    param('id').isUUID().withMessage('Valid payout ID is required.'),
+    body('notes').optional().trim().isLength({ max: 500 }).withMessage('Approval notes cannot exceed 500 characters.')
+];
+
 /**
  * Complete Payout Validation
  */
@@ -219,6 +224,7 @@ module.exports = {
     getPayoutValidation,
 
     processPayoutValidation,
+    approvePayoutValidation,
 
     completePayoutValidation,
 

@@ -19,6 +19,8 @@ const {
 
     processPayoutValidation,
 
+    approvePayoutValidation,
+
     completePayoutValidation,
 
     failPayoutValidation,
@@ -104,6 +106,15 @@ router.get(
  * Process Payout
  * PATCH /api/v1/payouts/:id/process
  */
+router.patch(
+    "/:id/approve",
+    authenticate,
+    authorizeRoles(ROLES.SUPER_ADMIN, ROLES.ADMIN),
+    approvePayoutValidation,
+    validate,
+    PayoutController.approvePayout
+);
+
 router.patch(
     "/:id/process",
     authenticate,

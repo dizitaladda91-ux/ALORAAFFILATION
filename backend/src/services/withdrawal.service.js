@@ -1,6 +1,7 @@
 const db = require("../database");
 
 const ApiError = require("../utils/apiError");
+const config = require('../config/env');
 
 const PayoutRepository = require("../repositories/payout.repository");
 const WithdrawalRepository = require("../repositories/withdrawal.repository");
@@ -254,6 +255,10 @@ class PayoutService {
                 );
             }
 
+            if (Number(payout.amount) >= config.payoutMakerCheckerMinimum && payout.approval_status !== 'APPROVED') {
+                throw ApiError.forbidden('This payout requires approval from a different administrator before processing.');
+            }
+
             if (
                 payout.status !==
                 PAYOUT_STATUS.PENDING
@@ -356,6 +361,17 @@ class PayoutService {
 
         }
 
+    }
+
+    async approvePayout(payoutId, approvedBy, notes = null) {
+        const payout = await PayoutRepository.findById(payoutId);
+        if (!payout) throw ApiError.notFound('Payout not found.');
+        if (payout.status !== PAYOUT_STATUS.PENDING) throw ApiError.badRequest('Only pending payouts can be approved.');
+        if (String(payout.processed_by) === String(approvedBy)) throw ApiError.forbidden('A payout creator cannot approve their own payout.');
+        if (Number(payout.amount) < config.payoutMakerCheckerMinimum) return payout;
+        const approved = await PayoutRepository.approve(payoutId, approvedBy, notes);
+        if (!approved) throw ApiError.conflict('Payout has already been approved.');
+        return approved;
     }
 
         /**

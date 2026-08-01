@@ -201,6 +201,16 @@ class PayoutRepository {
 
     }
 
+    async approve(id, approvedBy, approvalNotes = null, client = db) {
+        const { rows } = await client.query(
+            `UPDATE payouts SET approval_status='APPROVED', approved_by=$2, approved_at=NOW(),
+             approval_notes=$3, updated_at=NOW()
+             WHERE id=$1 AND deleted_at IS NULL AND approval_status='PENDING' RETURNING *`,
+            [id, approvedBy, approvalNotes]
+        );
+        return rows[0];
+    }
+
     /**
      * Mark Payout As Success
      */

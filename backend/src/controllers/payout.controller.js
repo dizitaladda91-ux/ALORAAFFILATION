@@ -124,6 +124,12 @@ class PayoutController {
 
     });
 
+    approvePayout = asyncHandler(async (req, res) => {
+        const payout = await PayoutService.approvePayout(req.params.id, req.user.id, req.body.notes || null);
+        await this.recordTransition(req, payout, 'PAYOUT_APPROVED');
+        return res.status(200).json({ success: true, message: 'Payout approved successfully.', data: payout });
+    });
+
     /**
      * Complete Payout
      * PATCH /payouts/:id/complete

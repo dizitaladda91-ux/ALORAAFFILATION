@@ -18,6 +18,7 @@ const accessSecret = requireProductionSecret('JWT_ACCESS_SECRET', 32) || 'defaul
 const refreshSecret = requireProductionSecret('JWT_REFRESH_SECRET', 32) || 'default_refresh_secret_for_dev_only';
 const storefrontApiKey = requireProductionSecret('STOREFRONT_API_KEY', 32) || '';
 const paymentsEnabled = process.env.PAYMENTS_ENABLED === 'true';
+const payoutMakerCheckerMinimum = Number(process.env.PAYOUT_MAKER_CHECKER_MIN_AMOUNT || '0');
 const razorpayKeyId = process.env.RAZORPAY_KEY_ID || '';
 const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || '';
 const razorpayWebhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
@@ -60,6 +61,7 @@ module.exports = {
     webhookSecret: razorpayWebhookSecret,
   },
   paymentsEnabled,
+  payoutMakerCheckerMinimum: Number.isFinite(payoutMakerCheckerMinimum) ? payoutMakerCheckerMinimum : 0,
   dbUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/affiliate_db',
   dbMax: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
   dbIdleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),

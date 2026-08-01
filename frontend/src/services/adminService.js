@@ -5,6 +5,7 @@ export const approveWithdrawal = async (id, notes = '') => (await api.patch(`/ad
 export const rejectWithdrawal = async (id, notes = '') => (await api.patch(`/admin/withdrawals/${id}/reject`, { notes })).data.data;
 export const fetchPayouts = async (params = {}) => (await api.get('/payouts', { params })).data.data;
 export const createPayout = async (data) => (await api.post('/payouts', data)).data.data;
+export const approvePayout = async (id, notes = '') => (await api.patch(`/payouts/${id}/approve`, { notes })).data.data;
 export const updatePayout = async (id, action, data = {}) => (await api.patch(`/payouts/${id}/${action}`, data)).data.data;
 
 export const fetchUsers = async (params) => {
