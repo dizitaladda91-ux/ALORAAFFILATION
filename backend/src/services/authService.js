@@ -10,6 +10,7 @@ const config = require('../config/env');
 const emailService = require('./emailService');
 const logger = require('../logs/logger');
 const { ROLES } = require('../constants/roles');
+const crypto = require('crypto');
 
 class AuthService {
   async register({ email, password, firstName, lastName, company = null, role = 'affiliate', parentAffiliateId = null, ipAddress = null }) {
@@ -171,6 +172,19 @@ class AuthService {
 
   async logout(userId) {
     await userRepository.updateRefreshToken(userId, null);
+  }
+  async requestPasswordReset(email) {
+    const user = await userRepository.findByEmail(email);
+    if (!user) return;
+    const token = crypto.randomBytes(32).toString('hex');
+    await userRepository.savePasswordReset(user.id, crypto.createHash('sha256').update(token).digest('hex'), new Date(Date.now() + 60 * 60 * 1000));
+    emailService.sendPasswordResetEmail(user, token).catch(err => logger.error('Password reset email failed', err));
+  }
+  async resetPassword(token, password) {
+    const user = await userRepository.findByPasswordResetToken(crypto.createHash('sha256').update(token).digest('hex'));
+    if (!user) throw ApiError.badRequest('Password reset link is invalid or expired');
+    await userRepository.updatePassword(user.id, await passwordUtils.hashPassword(password));
+    await userRepository.clearPasswordReset(user.id);
   }
 }
 

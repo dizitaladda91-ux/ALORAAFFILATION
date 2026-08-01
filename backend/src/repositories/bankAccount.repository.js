@@ -92,6 +92,16 @@ class BankAccountRepository {
     return result.rows[0] || null;
   }
 
+  async findAll({ status = null, limit = 50, offset = 0 } = {}) {
+    const values = [];
+    let query = `SELECT ba.*, u.email FROM affiliate_bank_accounts ba JOIN users u ON u.id = ba.user_id WHERE ba.deleted_at IS NULL`;
+    if (status) { values.push(status); query += ` AND ba.verification_status = $${values.length}`; }
+    values.push(limit, offset);
+    query += ` ORDER BY ba.created_at DESC LIMIT $${values.length - 1} OFFSET $${values.length}`;
+    const result = await db.query(query, values);
+    return result.rows;
+  }
+
   async exists(id) {
     const result = await db.query(
       `

@@ -7,6 +7,9 @@ const { globalRateLimiter } = require('./middlewares/rateLimiter');
 const errorHandler = require('./middlewares/errorMiddleware');
 const routesV1 = require('./routes/v1');
 const ApiError = require('./utils/apiError');
+const { writeHealthSnapshot } = require('./monitoring/healthcheck');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 
@@ -70,17 +73,35 @@ app.get('/', (req, res) => {
 // Health check endpoint
 app.get('/health', (req, res) => {
   return require('./database').query('SELECT 1')
-    .then(() => res.status(200).json({
-      status: 'UP',
-      database: 'UP',
-      environment: config.env,
-      timestamp: new Date().toISOString(),
-    }))
-    .catch(() => res.status(503).json({
-      status: 'DOWN',
-      database: 'DOWN',
-      timestamp: new Date().toISOString(),
-    }));
+    .then(() => {
+      const payload = {
+        status: 'UP',
+        database: 'UP',
+        environment: config.env,
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime().toFixed(2),
+      };
+      writeHealthSnapshot('UP', payload);
+      return res.status(200).json(payload);
+    })
+    .catch((error) => {
+      const payload = {
+        status: 'DOWN',
+        database: 'DOWN',
+        timestamp: new Date().toISOString(),
+        error: error.message,
+      };
+      writeHealthSnapshot('DOWN', payload);
+      return res.status(503).json(payload);
+    });
+});
+
+app.get('/docs', (req, res) => {
+  const docsPath = path.join(__dirname, 'docs', 'openapi.json');
+  if (fs.existsSync(docsPath)) {
+    return res.sendFile(docsPath);
+  }
+  return res.status(404).json({ message: 'OpenAPI document not found' });
 });
 
 // API Routes — no version prefix, e.g. POST /auth/login.

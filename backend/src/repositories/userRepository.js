@@ -60,6 +60,9 @@ class UserRepository {
       [passwordHash, userId]
     );
   }
+  async savePasswordReset(userId, tokenHash, expiresAt) { await db.query('UPDATE users SET password_reset_token_hash=$1, password_reset_expires_at=$2 WHERE id=$3', [tokenHash, expiresAt, userId]); }
+  async findByPasswordResetToken(tokenHash) { const res = await db.query(`SELECT u.*, p.first_name FROM users u LEFT JOIN profiles p ON p.user_id=u.id WHERE u.password_reset_token_hash=$1 AND u.password_reset_expires_at > CURRENT_TIMESTAMP AND u.deleted_at IS NULL`, [tokenHash]); return res.rows[0] || null; }
+  async clearPasswordReset(userId) { await db.query('UPDATE users SET password_reset_token_hash=NULL, password_reset_expires_at=NULL, refresh_token=NULL WHERE id=$1', [userId]); }
 
   async updateStatus(userId, status) {
     const res = await db.query(

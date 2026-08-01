@@ -1,6 +1,14 @@
 const bankAccountService = require("../services/bankAccount.service");
+const bankAccountRepository = require('../repositories/bankAccount.repository');
+const logRepository = require('../repositories/logRepository');
 
 class BankAccountController {
+  async getAllAccounts(req, res, next) {
+    try {
+      const accounts = await bankAccountRepository.findAll({ status: req.query.status, limit: Number(req.query.limit || 50) });
+      return res.status(200).json({ success: true, data: accounts });
+    } catch (error) { next(error); }
+  }
 
   async createBankAccount(req, res, next) {
     try {
@@ -129,6 +137,7 @@ class BankAccountController {
           id,
           adminId
         );
+      await logRepository.createAuditLog({ actorId: adminId, targetUserId: verifiedAccount.user_id, action: 'BANK_ACCOUNT_VERIFIED', changesJson: { bankAccountId: id }, ipAddress: req.ip });
 
       return res.status(200).json({
         success: true,
@@ -150,6 +159,7 @@ class BankAccountController {
           id,
           adminId
         );
+      await logRepository.createAuditLog({ actorId: adminId, targetUserId: rejectedAccount.user_id, action: 'BANK_ACCOUNT_REJECTED', changesJson: { bankAccountId: id }, ipAddress: req.ip });
 
       return res.status(200).json({
         success: true,

@@ -316,10 +316,11 @@ class PayoutService {
                 );
             }
 
-            if (
-                payout.status !==
-                PAYOUT_STATUS.PROCESSING
-            ) {
+            if (payout.status === PAYOUT_STATUS.SUCCESS) {
+                throw ApiError.conflict("Payout already completed.");
+            }
+
+            if (payout.status !== PAYOUT_STATUS.PROCESSING) {
                 throw ApiError.badRequest(
                     "Only processing payouts can be completed."
                 );

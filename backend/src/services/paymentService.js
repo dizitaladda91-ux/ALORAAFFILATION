@@ -8,6 +8,7 @@ const paymentRepository = require('../repositories/paymentRepository');
 class PaymentService {
   constructor() { this.client = null; }
   gateway() {
+    if (!config.paymentsEnabled) throw ApiError.notFound('Payments are not enabled');
     if (!config.razorpay.keyId || !config.razorpay.keySecret) throw ApiError.internal('Razorpay is not configured');
     return new Razorpay({ key_id: config.razorpay.keyId, key_secret: config.razorpay.keySecret });
   }

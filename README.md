@@ -183,3 +183,10 @@ Add `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and
 docker-compose up --build
 ```
 Starts full stack (PostgreSQL database + Express API) containerized environment.
+
+## Operational readiness
+- Health checks are available at `/health` and the backend writes a snapshot to `.health.json` for monitoring.
+- Structured logs are retained in `logs/api.log` and can be shipped to an external error tracker through `ERROR_TRACKING_URL`.
+- Database backup and restore helpers are available via `npm run backup:db` and `npm run restore:db`.
+- OpenAPI documentation is available at `/docs` and a storefront integration guide lives in [backend/src/docs/storefront-integration.md](backend/src/docs/storefront-integration.md).
+- CI now includes migration smoke tests, dependency audits, secret scanning, frontend unit tests, and Playwright browser tests.

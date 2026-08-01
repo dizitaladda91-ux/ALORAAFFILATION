@@ -14,6 +14,8 @@ const {
 
 const router = express.Router();
 
+router.get('/admin/all', authenticate, authorizeRoles(ROLES.ADMIN, ROLES.SUPER_ADMIN), bankAccountController.getAllAccounts);
+
 /*
 |--------------------------------------------------------------------------
 | Affiliate Bank Account Routes

@@ -17,6 +17,15 @@ const requireProductionSecret = (name, minimumLength = 1) => {
 const accessSecret = requireProductionSecret('JWT_ACCESS_SECRET', 32) || 'default_access_secret_for_dev_only';
 const refreshSecret = requireProductionSecret('JWT_REFRESH_SECRET', 32) || 'default_refresh_secret_for_dev_only';
 const storefrontApiKey = requireProductionSecret('STOREFRONT_API_KEY', 32) || '';
+const paymentsEnabled = process.env.PAYMENTS_ENABLED === 'true';
+const razorpayKeyId = process.env.RAZORPAY_KEY_ID || '';
+const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || '';
+const razorpayWebhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
+if (env === 'production' && paymentsEnabled) {
+  if (!razorpayKeyId || !razorpayKeySecret || !razorpayWebhookSecret) {
+    throw new Error('Razorpay credentials must be configured when PAYMENTS_ENABLED=true');
+  }
+}
 
 module.exports = {
   env,
@@ -31,13 +40,17 @@ module.exports = {
   // without changing application code.
   affiliateDiscountPercent: parseFloat(process.env.AFFILIATE_DISCOUNT_PERCENT || '10'),
   razorpay: {
-    keyId: process.env.RAZORPAY_KEY_ID || '',
-    keySecret: process.env.RAZORPAY_KEY_SECRET || '',
-    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+    keyId: razorpayKeyId,
+    keySecret: razorpayKeySecret,
+    webhookSecret: razorpayWebhookSecret,
   },
+  paymentsEnabled,
   dbUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/affiliate_db',
   dbMax: parseInt(process.env.DB_MAX_CONNECTIONS || '20', 10),
   dbIdleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10),
+  dbSslRejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED
+    ? process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true'
+    : env === 'production',
   jwt: {
     accessSecret,
     refreshSecret,
@@ -75,7 +88,11 @@ module.exports = {
     : (process.env.NODE_ENV === 'production' ? 1 : false),
   // Email configuration
   email: {
-    enabled: process.env.EMAIL_ENABLED !== 'false',
+    // Do not attempt delivery through placeholder test SMTP credentials in
+    // production. Enable only after a real provider is configured.
+    enabled: process.env.EMAIL_ENABLED
+      ? process.env.EMAIL_ENABLED === 'true'
+      : env !== 'production',
     provider: process.env.EMAIL_PROVIDER || 'test', // 'smtp', 'sendgrid', 'gmail', 'test'
     fromEmail: process.env.EMAIL_FROM || 'noreply@affiliatemanagement.com',
     // SMTP Configuration

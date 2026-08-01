@@ -15,7 +15,7 @@ const loginValidator = [
 ];
 
 const refreshTokenValidator = [
-  body('refreshToken').notEmpty().withMessage('Refresh token is required'),
+  body('refreshToken').optional().isString(),
 ];
 
 module.exports = {

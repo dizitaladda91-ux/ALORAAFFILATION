@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken, clearTokens } from '../utils/storage';
+import { getAccessToken, setAccessToken, clearTokens } from '../utils/storage';
 
 // Vite exposes environment variables at build time. Production must use the
 // actual deployed backend URL from Vercel; a guessed hostname causes Login and
@@ -9,6 +9,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -38,15 +39,12 @@ api.interceptors.response.use(
 
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      const refreshToken = getRefreshToken();
-
-      if (refreshToken) {
+      if (API_BASE_URL) {
         try {
-          const res = await axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken });
+          const res = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {}, { withCredentials: true });
           if (res.data.success) {
-            const { accessToken, refreshToken: newRefreshToken } = res.data.data;
+            const { accessToken } = res.data.data.tokens;
             setAccessToken(accessToken);
-            setRefreshToken(newRefreshToken);
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             return api(originalRequest);
           }

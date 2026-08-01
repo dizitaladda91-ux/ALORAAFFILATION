@@ -17,7 +17,7 @@ const pool = new Pool({
   max: config.dbMax,
   idleTimeoutMillis: config.dbIdleTimeout,
   connectionTimeoutMillis: 10000,
-  ssl: isRemoteDb ? { rejectUnauthorized: false } : false,
+  ssl: isRemoteDb ? { rejectUnauthorized: config.dbSslRejectUnauthorized } : false,
 });
 
 pool.on('error', (err) => {
