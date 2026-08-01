@@ -36,6 +36,7 @@ export const Sidebar = () => {
           { label: 'Commission Rules', path: ROUTES.COMMISSION_RULES, icon: Percent },
           { label: 'Audit Logs', path: ROUTES.AUDIT_LOGS, icon: FileText },
           { label: 'Withdrawals', path: ROUTES.ADMIN_WITHDRAWALS, icon: DollarSign },
+          { label: 'Bank Verification', path: ROUTES.ADMIN_BANK_ACCOUNTS, icon: Users },
         ];
       case ROLES.SUPER_AFFILIATE:
         return [

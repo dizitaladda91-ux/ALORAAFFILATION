@@ -11,8 +11,9 @@ export const ForgotPassword = () => {
   const [submitted, setSubmitted] = useState(false);
   const { showSuccess } = useNotification();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
     setSubmitted(true);
     showSuccess('Password reset link sent to your email.');
   };

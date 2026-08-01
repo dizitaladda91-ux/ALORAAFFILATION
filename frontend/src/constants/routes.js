@@ -3,7 +3,7 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   FORGOT_PASSWORD: '/forgot-password',
-  RESET_PASSWORD: '/reset-password',
+  RESET_PASSWORD: '/reset-password/:token',
   REF_REDIRECT: '/ref/:code',
   UNAUTHORIZED: '/unauthorized',
 
@@ -26,5 +26,6 @@ export const ROUTES = {
   AUDIT_LOGS: '/admin/audit-logs',
   SYSTEM_SETTINGS: '/admin/settings',
   ADMIN_WITHDRAWALS: '/admin/withdrawals',
+  ADMIN_BANK_ACCOUNTS: '/admin/bank-accounts',
   PROFILE: '/profile',
 };

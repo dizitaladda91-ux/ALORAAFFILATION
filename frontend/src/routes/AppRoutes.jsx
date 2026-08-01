@@ -8,6 +8,7 @@ import { Login } from '../pages/Login';
 import { Landing } from '../pages/Landing';
 import { Register } from '../pages/Register';
 import { ForgotPassword } from '../pages/ForgotPassword';
+import { ResetPassword } from '../pages/ResetPassword';
 import { RedirectRef } from '../pages/RedirectRef';
 import { Unauthorized } from '../pages/Unauthorized';
 import { NotFound } from '../pages/NotFound';
@@ -29,6 +30,7 @@ import { Wallet } from '../pages/Wallet';
 import { Withdrawals } from '../pages/Withdrawals';
 import { BankAccounts } from '../pages/BankAccounts';
 import { AdminWithdrawals } from '../pages/AdminWithdrawals';
+import { AdminBankAccounts } from '../pages/AdminBankAccounts';
 
 export const AppRoutes = () => {
   return (
@@ -37,6 +39,7 @@ export const AppRoutes = () => {
       <Route path={ROUTES.LOGIN} element={<Login />} />
       <Route path={ROUTES.REGISTER} element={<Register />} />
       <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
+      <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
       <Route path={ROUTES.REF_REDIRECT} element={<RedirectRef />} />
       <Route path={ROUTES.UNAUTHORIZED} element={<Unauthorized />} />
 
@@ -53,6 +56,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.COMMISSION_RULES} element={<CommissionRules />} />
         <Route path={ROUTES.AUDIT_LOGS} element={<AuditLogs />} />
         <Route path={ROUTES.ADMIN_WITHDRAWALS} element={<AdminWithdrawals />} />
+        <Route path={ROUTES.ADMIN_BANK_ACCOUNTS} element={<AdminBankAccounts />} />
       </Route>
 
       {/* Super Affiliate Protected Routes */}
