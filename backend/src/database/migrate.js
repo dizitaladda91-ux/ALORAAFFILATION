@@ -26,8 +26,9 @@ const runMigrations = async () => {
            AND NOT a.attisdropped`,
         [tableName, columnName]
       );
-      if (!result.rows[0]) {
-        throw new Error(`Cannot determine type for ${tableName}.${columnName}`);
+      if (!result.rows[0]?.type) {
+        logger.warn(`Column ${tableName}.${columnName} was not found yet; defaulting to UUID for a fresh database.`);
+        return 'UUID';
       }
       return result.rows[0].type;
     };

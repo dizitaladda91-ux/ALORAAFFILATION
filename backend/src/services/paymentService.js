@@ -57,22 +57,58 @@ class PaymentService {
   }
   async webhook(rawBody, signature) {
     if (!config.razorpay.webhookSecret) throw ApiError.internal('Razorpay webhook secret is not configured');
+
     const expected = crypto.createHmac('sha256', config.razorpay.webhookSecret).update(rawBody).digest('hex');
     const supplied = Buffer.from(signature || '', 'utf8');
-    if (supplied.length !== Buffer.byteLength(expected) || !crypto.timingSafeEqual(Buffer.from(expected), supplied)) throw ApiError.unauthorized('Invalid webhook signature');
-    const payload = JSON.parse(rawBody.toString('utf8'));
+    if (supplied.length !== Buffer.byteLength(expected) || !crypto.timingSafeEqual(Buffer.from(expected), supplied)) {
+      throw ApiError.unauthorized('Invalid webhook signature');
+    }
+
+    let payload;
+    try {
+      payload = JSON.parse(rawBody.toString('utf8'));
+    } catch (error) {
+      throw ApiError.badRequest('Invalid webhook payload');
+    }
+
+    if (!payload || typeof payload !== 'object' || !payload.event_id || !payload.event) {
+      throw ApiError.badRequest('Malformed webhook payload');
+    }
+
+    const supportedEvents = ['payment.captured', 'order.paid', 'payment.failed', 'refund.created', 'refund.processed', 'payment.authorized'];
+    if (!supportedEvents.includes(payload.event)) {
+      return { ignored: true, event: payload.event };
+    }
+
+    const entity = payload.payload?.payment?.entity || payload.payload?.order?.entity;
+    if (!entity || (!entity.order_id && !entity.id)) {
+      throw ApiError.badRequest('Webhook payload is missing payment/order entity');
+    }
+
     const client = await db.getClient();
     try {
       await client.query('BEGIN');
       const received = await paymentRepository.recordWebhook(client, payload.event_id, payload.event, payload);
-      if (!received) { await client.query('COMMIT'); return { duplicate: true }; }
+      if (!received) {
+        await client.query('COMMIT');
+        return { duplicate: true, event: payload.event };
+      }
       await client.query('COMMIT');
-    } catch (error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }
-    const entity = payload.payload?.payment?.entity || payload.payload?.order?.entity;
-    if (payload.event === 'payment.captured' || payload.event === 'order.paid') await this.processGatewayPayment(entity.order_id || entity.id, entity.id || payload.payload?.payment?.entity?.id, 'SUCCESS', entity);
-    else if (payload.event === 'payment.failed') await this.processGatewayPayment(entity.order_id, entity.id, 'FAILED', entity);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    if (payload.event === 'payment.captured' || payload.event === 'order.paid') {
+      await this.processGatewayPayment(entity.order_id || entity.id, entity.id || payload.payload?.payment?.entity?.id, 'SUCCESS', entity);
+    } else if (payload.event === 'payment.failed') {
+      await this.processGatewayPayment(entity.order_id, entity.id, 'FAILED', entity);
+    }
+
     await paymentRepository.completeWebhook(db, payload.event_id);
-    return { ignored: !['payment.captured', 'order.paid', 'payment.failed', 'refund.created', 'refund.processed', 'payment.authorized'].includes(payload.event) };
+    return { ignored: false, event: payload.event };
   }
 }
 module.exports = new PaymentService();

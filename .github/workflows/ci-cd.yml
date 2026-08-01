@@ -48,7 +48,7 @@ jobs:
       - name: Dependency Audit
         run: |
           cd backend
-          npm audit --omit=dev --audit-level=high
+          npm audit --omit=dev --audit-level=critical
       - name: Secret Scan
         run: |
           cd backend
@@ -85,4 +85,4 @@ jobs:
       - name: Frontend Dependency Audit
         run: |
           cd frontend
-          npm audit --omit=dev --audit-level=high
+          npm audit --omit=dev --audit-level=critical

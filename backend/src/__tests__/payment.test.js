@@ -49,6 +49,11 @@ describe('payment service', () => {
     await expect(paymentService.webhook(Buffer.from(JSON.stringify({ event: 'payment.captured' })), 'bad-signature')).rejects.toMatchObject({ statusCode: 401 });
   });
 
+  it('rejects malformed webhook payloads with a bad request error', async () => {
+    const body = Buffer.from('{not-json');
+    await expect(paymentService.webhook(body, crypto.createHmac('sha256', 'webhook-secret').update(body).digest('hex'))).rejects.toMatchObject({ statusCode: 400 });
+  });
+
   it('deduplicates duplicate webhook events', async () => {
     const body = Buffer.from(JSON.stringify({ event: 'payment.captured', event_id: 'evt-1', payload: { payment: { entity: { id: 'pay-1', order_id: 'order-1' } } } }));
     paymentRepository.recordWebhook.mockResolvedValue(null);
