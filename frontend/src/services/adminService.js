@@ -1,9 +1,9 @@
 import api from './api';
 import { API_ENDPOINTS } from '../constants/apiEndpoints';
-export const fetchAdminWithdrawals = async () => (await api.get('/admin/withdrawals')).data.data;
+export const fetchAdminWithdrawals = async (params = {}) => (await api.get('/admin/withdrawals', { params })).data.data;
 export const approveWithdrawal = async (id, notes = '') => (await api.patch(`/admin/withdrawals/${id}/approve`, { notes })).data.data;
 export const rejectWithdrawal = async (id, notes = '') => (await api.patch(`/admin/withdrawals/${id}/reject`, { notes })).data.data;
-export const fetchPayouts = async () => (await api.get('/payouts')).data.data;
+export const fetchPayouts = async (params = {}) => (await api.get('/payouts', { params })).data.data;
 export const createPayout = async (data) => (await api.post('/payouts', data)).data.data;
 export const updatePayout = async (id, action, data = {}) => (await api.patch(`/payouts/${id}/${action}`, data)).data.data;
 

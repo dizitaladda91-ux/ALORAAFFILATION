@@ -45,9 +45,11 @@ class UserRepository {
 
   async updateEmail(userId, email) {
     const res = await db.query(
-      `UPDATE users SET email = $1, updated_at = CURRENT_TIMESTAMP
+      `UPDATE users SET email = $1, is_email_verified = FALSE,
+       email_verification_token_hash = NULL, email_verification_expires_at = NULL,
+       updated_at = CURRENT_TIMESTAMP
        WHERE id = $2 AND deleted_at IS NULL
-       RETURNING id, email`,
+       RETURNING id, email, is_email_verified`,
       [email.toLowerCase(), userId]
     );
     return res.rows[0] || null;

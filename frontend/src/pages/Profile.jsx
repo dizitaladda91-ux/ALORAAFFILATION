@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Camera, UserRound } from 'lucide-react';
+import { Camera, CheckCircle2, MailCheck, UserRound } from 'lucide-react';
 import { Card } from '../components/common/Card';
 import { Input } from '../components/common/Input';
 import { Button } from '../components/common/Button';
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
 import { updateProfile } from '../services/profileService';
+import api from '../services/api';
 
 export const Profile = () => {
   const { user, setUser } = useAuth();
@@ -22,6 +23,7 @@ export const Profile = () => {
     confirmPassword: '',
   });
   const [loading, setLoading] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
 
   const change = (event) => setFormData((current) => ({ ...current, [event.target.name]: event.target.value }));
 
@@ -71,6 +73,19 @@ export const Profile = () => {
   };
 
   const initials = `${formData.firstName?.[0] || ''}${formData.lastName?.[0] || ''}`.toUpperCase() || 'A';
+  const isEmailVerified = Boolean(user?.is_email_verified);
+
+  const resendVerification = async () => {
+    setSendingVerification(true);
+    try {
+      await api.post('/auth/email-verification');
+      showSuccess('Verification link sent. Please check your inbox.');
+    } catch (error) {
+      showError(error.message || 'Unable to send a verification email.');
+    } finally {
+      setSendingVerification(false);
+    }
+  };
 
   return (
     <div className="profile-page">
@@ -96,6 +111,13 @@ export const Profile = () => {
             <Input label="Last name" name="lastName" value={formData.lastName} onChange={change} required />
           </div>
           <Input label="Email address" type="email" name="email" value={formData.email} onChange={change} required />
+          <div className={`email-verification-status ${isEmailVerified ? 'is-verified' : 'is-unverified'}`}>
+            <div>
+              {isEmailVerified ? <CheckCircle2 size={18} /> : <MailCheck size={18} />}
+              <span>{isEmailVerified ? 'Your email address is verified.' : 'Your email address is not verified yet.'}</span>
+            </div>
+            {!isEmailVerified && <Button type="button" variant="secondary" loading={sendingVerification} onClick={resendVerification}>Resend verification email</Button>}
+          </div>
           <div className="profile-two-columns">
             <Input label="Company or brand name" name="company" value={formData.company} onChange={change} />
             <Input label="Phone number" name="phone" value={formData.phone} onChange={change} />

@@ -2,6 +2,7 @@ const profileRepository = require('../repositories/profileRepository');
 const userRepository = require('../repositories/userRepository');
 const ApiError = require('../utils/apiError');
 const passwordUtils = require('../utils/passwordUtils');
+const authService = require('./authService');
 
 class ProfileService {
   async getProfile(userId) {
@@ -22,12 +23,14 @@ class ProfileService {
     if (email && !/^\S+@\S+\.\S+$/.test(email)) {
       throw ApiError.badRequest('Please provide a valid email address');
     }
+    let emailChanged = false;
     if (email && email !== user.email) {
       const existingUser = await userRepository.findByEmail(email);
       if (existingUser) {
         throw ApiError.conflict('Email address is already registered');
       }
       await userRepository.updateEmail(userId, email);
+      emailChanged = true;
     }
 
     if (data.newPassword) {
@@ -46,6 +49,9 @@ class ProfileService {
     }
 
     await profileRepository.update(userId, data);
+    if (emailChanged) {
+      await authService.sendEmailVerification(userId);
+    }
     return this.getProfile(userId);
   }
 }

@@ -73,32 +73,19 @@ class PayoutController {
      */
     getAllPayouts = asyncHandler(async (req, res) => {
 
-        const page = Number(req.query.page || 1);
-
-        const limit = Number(req.query.limit || 10);
-
-        const filters = {
-
+        const payouts = await PayoutService.getAllPayouts({
+            page: req.query.page,
+            limit: req.query.limit,
             status: req.query.status,
-
             gateway: req.query.gateway,
-
-            affiliateId: req.query.affiliateId,
-
-            withdrawalId: req.query.withdrawalId,
-
+            userId: req.query.userId,
+            withdrawRequestId: req.query.withdrawRequestId,
+            bankAccountId: req.query.bankAccountId,
             fromDate: req.query.fromDate,
-
-            toDate: req.query.toDate
-
-        };
-
-        const payouts =
-            await PayoutService.getAllPayouts(
-                filters,
-                page,
-                limit
-            );
+            toDate: req.query.toDate,
+            sortBy: req.query.sortBy,
+            sortOrder: req.query.sortOrder,
+        });
 
         return res.status(200).json({
 

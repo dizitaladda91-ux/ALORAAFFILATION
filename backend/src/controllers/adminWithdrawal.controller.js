@@ -9,9 +9,11 @@ const logger = require('../logs/logger');
 const logRepository = require('../repositories/logRepository');
 
 exports.list = asyncHandler(async (req, res) => {
-  const page = Number(req.query.page || 1); const limit = Number(req.query.limit || 20); const filters = { status: req.query.status };
+  const page = Math.max(1, Number(req.query.page || 1)); const limit = Math.min(100, Math.max(1, Number(req.query.limit || 20))); const filters = { status: req.query.status };
   const [items, total] = await Promise.all([withdrawalRepository.findAll(filters, limit, (page - 1) * limit), withdrawalRepository.count(filters)]);
-  res.json({ success: true, data: { items, pagination: { page, limit, total: Number(total) } } });
+  const totalRecords = Number(total);
+  const totalPages = Math.max(1, Math.ceil(totalRecords / limit));
+  res.json({ success: true, data: { items, pagination: { page, limit, total: totalRecords, totalPages, hasNextPage: page < totalPages } } });
 });
 exports.approve = asyncHandler(async (req, res) => {
   const withdrawal = await withdrawalRepository.findById(req.params.id);
