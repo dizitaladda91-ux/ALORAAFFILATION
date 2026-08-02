@@ -16,6 +16,7 @@ const requireProductionSecret = (name, minimumLength = 1) => {
 
 const accessSecret = requireProductionSecret('JWT_ACCESS_SECRET', 32) || 'default_access_secret_for_dev_only';
 const refreshSecret = requireProductionSecret('JWT_REFRESH_SECRET', 32) || 'default_refresh_secret_for_dev_only';
+const mfaEncryptionKey = requireProductionSecret('MFA_ENCRYPTION_KEY', 32) || 'development-only-mfa-encryption-key-change-me';
 const storefrontApiKey = requireProductionSecret('STOREFRONT_API_KEY', 32) || '';
 const paymentsEnabled = process.env.PAYMENTS_ENABLED === 'true';
 const payoutMakerCheckerMinimum = Number(process.env.PAYOUT_MAKER_CHECKER_MIN_AMOUNT || '0');
@@ -74,6 +75,7 @@ module.exports = {
     accessExpiration: process.env.JWT_ACCESS_EXPIRATION || '15m',
     refreshExpiration: process.env.JWT_REFRESH_EXPIRATION || '7d',
   },
+  mfaEncryptionKey,
   storefrontApiKey,
   // CORS_ORIGIN may contain a comma-separated list, e.g. the production
   // Vercel domain plus a preview domain. Falling back to FRONTEND_URL keeps

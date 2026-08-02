@@ -21,6 +21,12 @@ const verifyAccessToken = (token) => {
 const verifyRefreshToken = (token) => {
   return jwt.verify(token, config.jwt.refreshSecret);
 };
+const generateMfaToken = (payload, purpose) => jwt.sign({ ...payload, purpose }, config.jwt.accessSecret, { expiresIn: '10m' });
+const verifyMfaToken = (token, purpose) => {
+  const decoded = jwt.verify(token, config.jwt.accessSecret);
+  if (decoded.purpose !== purpose) throw new Error('Invalid MFA token purpose');
+  return decoded;
+};
 
 const hashPassword = async (password) => {
   const salt = await bcrypt.genSalt(10);
@@ -36,6 +42,8 @@ module.exports = {
   generateRefreshToken,
   verifyAccessToken,
   verifyRefreshToken,
+  generateMfaToken,
+  verifyMfaToken,
   hashPassword,
   comparePassword,
 };

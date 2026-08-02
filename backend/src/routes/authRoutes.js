@@ -8,6 +8,9 @@ const { authRateLimiter } = require('../middlewares/rateLimiter');
 
 router.post('/register', authRateLimiter, registerValidator, validate, authController.register);
 router.post('/login', authRateLimiter, loginValidator, validate, authController.login);
+router.post('/mfa/setup', authRateLimiter, [require('express-validator').body('mfaToken').isString().notEmpty()], validate, authController.beginMfaSetup);
+router.post('/mfa/enable', authRateLimiter, [require('express-validator').body('mfaToken').isString().notEmpty(), require('express-validator').body('secret').isString().notEmpty(), require('express-validator').body('code').isLength({ min: 6, max: 6 })], validate, authController.enableMfa);
+router.post('/mfa/verify-login', authRateLimiter, [require('express-validator').body('mfaToken').isString().notEmpty(), require('express-validator').body('code').isLength({ min: 6, max: 6 })], validate, authController.verifyMfaLogin);
 router.post('/refresh-token', refreshTokenValidator, validate, authController.refreshToken);
 router.post('/forgot-password', authRateLimiter, [require('express-validator').body('email').isEmail()], validate, authController.forgotPassword);
 router.post('/reset-password', authRateLimiter, [require('express-validator').body('token').notEmpty(), require('express-validator').body('password').isLength({ min: 8 })], validate, authController.resetPassword);

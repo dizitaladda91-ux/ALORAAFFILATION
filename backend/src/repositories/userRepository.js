@@ -81,13 +81,14 @@ class UserRepository {
 
   async findSessionUserById(id) {
     const res = await db.query(
-      `SELECT u.id, u.email, u.status, u.refresh_token, r.name AS role_name
+      `SELECT u.id, u.email, u.status, u.refresh_token, u.mfa_enabled, u.mfa_secret_encrypted, r.name AS role_name
        FROM users u JOIN roles r ON r.id = u.role_id
        WHERE u.id = $1 AND u.deleted_at IS NULL`,
       [id]
     );
     return res.rows[0] || null;
   }
+  async enableMfa(userId, encryptedSecret) { await db.query('UPDATE users SET mfa_enabled=TRUE, mfa_secret_encrypted=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2', [encryptedSecret, userId]); }
 
   async verifyEmail(userId) {
     await db.query(

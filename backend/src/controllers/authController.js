@@ -25,8 +25,12 @@ class AuthController {
       password: req.body.password,
       ipAddress: req.ip,
     });
+    if (result.mfaRequired) return sendSuccess(res, 'Authenticator verification required', result);
     return sendSuccess(res, 'Login successful', this.sanitizeTokens(result, res));
   });
+  beginMfaSetup = asyncHandler(async (req, res) => sendSuccess(res, 'Authenticator setup ready', await authService.beginMfaSetup(req.body.mfaToken)));
+  enableMfa = asyncHandler(async (req, res) => sendSuccess(res, 'Authenticator enabled', this.sanitizeTokens(await authService.enableMfa(req.body.mfaToken, req.body.secret, req.body.code, req.ip), res)));
+  verifyMfaLogin = asyncHandler(async (req, res) => sendSuccess(res, 'Login successful', this.sanitizeTokens(await authService.verifyMfaLogin(req.body.mfaToken, req.body.code, req.ip), res)));
 
   refreshToken = asyncHandler(async (req, res) => {
     const result = await authService.refreshTokens(req.cookies.refreshToken || req.body.refreshToken);

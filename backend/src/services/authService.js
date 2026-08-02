@@ -11,6 +11,7 @@ const emailService = require('./emailService');
 const logger = require('../logs/logger');
 const { ROLES } = require('../constants/roles');
 const crypto = require('crypto');
+const mfaService = require('./mfaService');
 
 class AuthService {
   async register({ email, password, firstName, lastName, company = null, role = 'affiliate', parentAffiliateId = null, ipAddress = null }) {
@@ -119,34 +120,18 @@ class AuthService {
       throw ApiError.unauthorized('Invalid email or password');
     }
 
-    const accessToken = jwtUtils.generateAccessToken({ id: user.id, email: user.email, role: user.role_name });
-    const refreshToken = jwtUtils.generateRefreshToken({ id: user.id });
-
-    await userRepository.updateRefreshToken(user.id, refreshToken);
-
-    const fullUser = await userRepository.findById(user.id);
-
-    await logRepository.createActivityLog({
-      userId: user.id,
-      action: 'USER_LOGIN',
-      entityType: 'USER',
-      entityId: user.id,
-      ipAddress,
-    });
-
-    return {
-      user: fullUser,
-      tokens: {
-        accessToken,
-        refreshToken,
-      },
-    };
+    if ([ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(user.role_name)) {
+      const purpose = user.mfa_enabled ? 'mfa-login' : 'mfa-setup';
+      return { mfaRequired: true, mfaSetupRequired: !user.mfa_enabled, mfaToken: jwtUtils.generateMfaToken({ id: user.id }, purpose) };
+    }
+    return this.issueLoginTokens(user, ipAddress);
   }
 
   async refreshTokens(refreshToken) {
     if (!refreshToken || typeof refreshToken !== 'string') {
       throw ApiError.unauthorized('Invalid or expired refresh token');
     }
+
     let decoded;
     try {
       decoded = jwtUtils.verifyRefreshToken(refreshToken);
@@ -174,10 +159,38 @@ class AuthService {
 
     await userRepository.updateRefreshToken(user.id, newRefreshToken);
 
-    return {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-    };
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  }
+
+  async issueLoginTokens(user, ipAddress = null) {
+    const accessToken = jwtUtils.generateAccessToken({ id: user.id, email: user.email, role: user.role_name });
+    const refreshToken = jwtUtils.generateRefreshToken({ id: user.id });
+    await userRepository.updateRefreshToken(user.id, refreshToken);
+    const fullUser = await userRepository.findById(user.id);
+    await logRepository.createActivityLog({ userId: user.id, action: 'USER_LOGIN', entityType: 'USER', entityId: user.id, ipAddress });
+    return { user: fullUser, tokens: { accessToken, refreshToken } };
+  }
+
+  async beginMfaSetup(mfaToken) {
+    const decoded = jwtUtils.verifyMfaToken(mfaToken, 'mfa-setup');
+    const user = await userRepository.findById(decoded.id);
+    if (!user || ![ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(user.role_name)) throw ApiError.unauthorized('Invalid MFA setup request');
+    return { secret: mfaService.generateSecret(), accountName: user.email, issuer: 'Affiliate Management' };
+  }
+
+  async enableMfa(mfaToken, secret, code, ipAddress = null) {
+    const decoded = jwtUtils.verifyMfaToken(mfaToken, 'mfa-setup');
+    const sessionUser = await userRepository.findSessionUserById(decoded.id);
+    if (!sessionUser || ![ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(sessionUser.role_name) || !mfaService.verifyCode(secret, code)) throw ApiError.unauthorized('Invalid authenticator code');
+    await userRepository.enableMfa(sessionUser.id, mfaService.encrypt(secret));
+    return this.issueLoginTokens(sessionUser, ipAddress);
+  }
+
+  async verifyMfaLogin(mfaToken, code, ipAddress = null) {
+    const decoded = jwtUtils.verifyMfaToken(mfaToken, 'mfa-login');
+    const user = await userRepository.findSessionUserById(decoded.id);
+    if (!user?.mfa_enabled || !user.mfa_secret_encrypted || !mfaService.verifyCode(mfaService.decrypt(user.mfa_secret_encrypted), code)) throw ApiError.unauthorized('Invalid authenticator code');
+    return this.issueLoginTokens(user, ipAddress);
   }
 
   async logout(userId) {
