@@ -18,6 +18,10 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
+      - key: MFA_ENCRYPTION_KEY
+        generateValue: true
+      - key: PAYOUT_MAKER_CHECKER_MIN_AMOUNT
+        value: "0"
       - key: FRONTEND_URL
         sync: false
       - key: CORS_ORIGIN

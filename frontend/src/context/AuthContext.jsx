@@ -26,9 +26,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const userData = await loginApi(email, password);
-    setUser(userData);
-    return userData;
+    const result = await loginApi(email, password);
+    if (result.user) setUser(result.user);
+    return result;
   };
 
   const register = async (formData) => {
