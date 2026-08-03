@@ -12,6 +12,7 @@ jest.mock('../repositories/commissionRepository', () => ({
   createConversion: jest.fn(),
   createCommission: jest.fn(),
   findActiveRule: jest.fn(),
+  findMatchingRule: jest.fn(),
 }));
 
 const referralService = require('../services/referralService');
@@ -36,7 +37,7 @@ describe('referral service', () => {
     commissionRepository.findConversionByOrderId.mockResolvedValue(null);
     commissionRepository.createConversion.mockResolvedValue({ id: 101 });
     commissionRepository.createCommission.mockResolvedValue({ id: 201, amount: '25.00' });
-    commissionRepository.findActiveRule.mockResolvedValue(null);
+    commissionRepository.findMatchingRule.mockResolvedValue({ id: 1, name: 'Shopping slab 0-1000', type: 'percentage', value: '10.00' });
 
     const result = await referralService.processConversion({ referralCode: 'AFF123', orderId: 'order-2', amount: 250 });
 

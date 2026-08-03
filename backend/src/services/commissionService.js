@@ -6,8 +6,9 @@ class CommissionService {
     return commissionRepository.findAllRules();
   }
 
-  async createRule({ name, type, value, createdBy }) {
-    return commissionRepository.createRule({ name, type, value, createdBy });
+  async createRule({ name, type, value, eventType, minimumAmount, maximumAmount, createdBy }) {
+    if (maximumAmount !== null && maximumAmount !== undefined && Number(maximumAmount) < Number(minimumAmount || 0)) throw ApiError.badRequest('Maximum amount must be greater than minimum amount');
+    return commissionRepository.createRule({ name, type, value, eventType, minimumAmount, maximumAmount, createdBy });
   }
 
   async updateCommissionStatus(commissionId, status) {

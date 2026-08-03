@@ -10,11 +10,14 @@ class CommissionController {
   });
 
   createRule = asyncHandler(async (req, res) => {
-    const { name, type, value } = req.body;
+    const { name, type, value, eventType, minimumAmount, maximumAmount } = req.body;
     const rule = await commissionService.createRule({
       name,
       type,
       value: parseFloat(value),
+      eventType,
+      minimumAmount: minimumAmount === undefined ? 0 : parseFloat(minimumAmount),
+      maximumAmount: maximumAmount === undefined || maximumAmount === '' ? null : parseFloat(maximumAmount),
       createdBy: req.user.id,
     });
     return sendSuccess(res, 'Commission rule created', rule, HTTP_STATUS.CREATED);

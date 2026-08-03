@@ -16,11 +16,14 @@ class ReferralController {
   });
 
   recordConversion = asyncHandler(async (req, res) => {
-    const { referralCode, orderId, amount, currency, clickId } = req.body;
+    const { referralCode, orderId, amount, grossAmount, discountAmount, eligibleAmount, currency, clickId } = req.body;
     const result = await referralService.processConversion({
       referralCode,
       orderId,
       amount: parseFloat(amount),
+      grossAmount: grossAmount === undefined ? parseFloat(amount) : parseFloat(grossAmount),
+      discountAmount: discountAmount === undefined ? 0 : parseFloat(discountAmount),
+      eligibleAmount: eligibleAmount === undefined ? parseFloat(amount) : parseFloat(eligibleAmount),
       currency,
       clickId,
     });

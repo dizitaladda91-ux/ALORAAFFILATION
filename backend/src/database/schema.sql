@@ -386,3 +386,24 @@ CREATE INDEX IF NOT EXISTS idx_click_events_link_type ON click_events(link_type,
 CREATE UNIQUE INDEX IF NOT EXISTS idx_affiliate_system_link_per_type
   ON affiliate_links(user_id, link_type)
   WHERE is_system_link = TRUE AND deleted_at IS NULL;
+
+-- Configurable commission slabs and a consistent money basis. `amount` stays
+-- as the legacy eligible/net value for backwards compatibility.
+ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS event_type VARCHAR(30) NOT NULL DEFAULT 'generic';
+ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS minimum_amount NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS maximum_amount NUMERIC(12,2);
+ALTER TABLE commission_rules ADD COLUMN IF NOT EXISTS commission_base VARCHAR(20) NOT NULL DEFAULT 'NET';
+ALTER TABLE conversion_events ADD COLUMN IF NOT EXISTS gross_amount NUMERIC(12,2);
+ALTER TABLE conversion_events ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE conversion_events ADD COLUMN IF NOT EXISTS eligible_amount NUMERIC(12,2);
+UPDATE conversion_events SET gross_amount=amount, eligible_amount=amount WHERE gross_amount IS NULL OR eligible_amount IS NULL;
+CREATE INDEX IF NOT EXISTS idx_commission_rules_matching ON commission_rules(event_type, is_active, minimum_amount, maximum_amount) WHERE deleted_at IS NULL;
+INSERT INTO commission_rules (name, type, value, event_type, minimum_amount, maximum_amount, commission_base, is_active)
+SELECT 'Shopping slab 0-1000', 'percentage', 10, 'shopping', 0, 1000, 'NET', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM commission_rules WHERE name='Shopping slab 0-1000' AND deleted_at IS NULL);
+INSERT INTO commission_rules (name, type, value, event_type, minimum_amount, maximum_amount, commission_base, is_active)
+SELECT 'Shopping slab 1000.01-1500', 'percentage', 15, 'shopping', 1000.01, 1500, 'NET', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM commission_rules WHERE name='Shopping slab 1000.01-1500' AND deleted_at IS NULL);
+INSERT INTO commission_rules (name, type, value, event_type, minimum_amount, maximum_amount, commission_base, is_active)
+SELECT 'Shopping slab 1500.01+', 'percentage', 20, 'shopping', 1500.01, NULL, 'NET', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM commission_rules WHERE name='Shopping slab 1500.01+' AND deleted_at IS NULL);

@@ -30,8 +30,11 @@ class PaymentRepository {
     if (existing.rows[0]) return { alreadyRecorded: true };
     const conversion = await client.query(`INSERT INTO conversion_events (click_id, affiliate_id, order_id, amount, currency) VALUES ($1,$2,$3,$4,$5) RETURNING *`, [payment.click_id, payment.affiliate_id, payment.gateway_order_id, payment.amount, payment.currency]);
     let rate = 15; let ruleId = null;
-    if (['affiliate', 'super_affiliate'].includes(payment.affiliate_role)) rate = payment.amount <= 1000 ? 10 : payment.amount <= 1500 ? 15 : 20;
-    else { const rule = await client.query(`SELECT * FROM commission_rules WHERE is_active=true AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`); if (rule.rows[0]) { rate = Number(rule.rows[0].value); ruleId = rule.rows[0].id; } }
+    if (['affiliate', 'super_affiliate'].includes(payment.affiliate_role)) {
+      const rule = await client.query(`SELECT * FROM commission_rules WHERE event_type='shopping' AND is_active=TRUE AND deleted_at IS NULL AND minimum_amount <= $1 AND (maximum_amount IS NULL OR maximum_amount >= $1) ORDER BY minimum_amount DESC LIMIT 1`, [payment.amount]);
+      if (!rule.rows[0]) throw new Error('No active shopping commission rule matches this payment');
+      rate = Number(rule.rows[0].value); ruleId = rule.rows[0].id;
+    } else { const rule = await client.query(`SELECT * FROM commission_rules WHERE event_type='generic' AND is_active=true AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`); if (rule.rows[0]) { rate = Number(rule.rows[0].value); ruleId = rule.rows[0].id; } }
     const commission = await client.query(`INSERT INTO commissions (affiliate_id,conversion_id,rule_id,amount,rate,status) VALUES ($1,$2,$3,$4,$5,'pending') RETURNING *`, [payment.affiliate_id, conversion.rows[0].id, ruleId, (Number(payment.amount) * rate / 100).toFixed(2), rate]);
     return { conversion: conversion.rows[0], commission: commission.rows[0], alreadyRecorded: false };
   }

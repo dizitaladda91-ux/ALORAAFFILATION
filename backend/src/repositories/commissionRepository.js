@@ -8,6 +8,15 @@ class CommissionRepository {
     return res.rows[0] || null;
   }
 
+  async findMatchingRule({ eventType = 'generic', eligibleAmount }) {
+    const res = await db.query(
+      `SELECT * FROM commission_rules WHERE event_type=$1 AND is_active=TRUE AND deleted_at IS NULL
+       AND minimum_amount <= $2 AND (maximum_amount IS NULL OR maximum_amount >= $2)
+       ORDER BY minimum_amount DESC LIMIT 1`, [eventType, eligibleAmount]
+    );
+    return res.rows[0] || null;
+  }
+
   async findAllRules() {
     const res = await db.query(
       `SELECT cr.*, p.first_name, p.last_name 
@@ -20,22 +29,22 @@ class CommissionRepository {
     return res.rows;
   }
 
-  async createRule({ name, type, value, createdBy }) {
+  async createRule({ name, type, value, eventType = 'generic', minimumAmount = 0, maximumAmount = null, commissionBase = 'NET', createdBy }) {
     const res = await db.query(
-      `INSERT INTO commission_rules (name, type, value, created_by)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO commission_rules (name, type, value, event_type, minimum_amount, maximum_amount, commission_base, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [name, type, value, createdBy]
+      [name, type, value, eventType, minimumAmount, maximumAmount, commissionBase, createdBy]
     );
     return res.rows[0];
   }
 
-  async createConversion({ clickId, referralId, affiliateId, orderId, amount, currency = 'USD' }) {
+  async createConversion({ clickId, referralId, affiliateId, orderId, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'USD' }) {
     const res = await db.query(
-      `INSERT INTO conversion_events (click_id, referral_id, affiliate_id, order_id, amount, currency)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO conversion_events (click_id, referral_id, affiliate_id, order_id, amount, gross_amount, discount_amount, eligible_amount, currency)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [clickId, referralId, affiliateId, orderId, amount, currency]
+      [clickId, referralId, affiliateId, orderId, amount, grossAmount, discountAmount, eligibleAmount, currency]
     );
     return res.rows[0];
   }

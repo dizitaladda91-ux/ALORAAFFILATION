@@ -75,7 +75,7 @@ class ReferralService {
     };
   }
 
-  async processConversion({ referralCode, orderId, amount, currency = 'USD', clickId = null }) {
+  async processConversion({ referralCode, orderId, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'USD', clickId = null }) {
     const link = await affiliateRepository.findLinkByCode(referralCode);
     if (!link || link.link_type !== 'SHOPPING' || !link.is_active || link.user_status !== 'active') {
       throw ApiError.notFound(`Invalid referral code: ${referralCode}`);
@@ -95,20 +95,20 @@ class ReferralService {
       affiliateId: link.user_id,
       orderId,
       amount,
+      grossAmount,
+      discountAmount,
+      eligibleAmount,
       currency,
     });
 
     // 2. Standard affiliates use the fixed purchase-value slabs. The highest
     // slab continues for orders above 2,000, so every eligible sale earns a
     // commission. Other affiliate roles keep using the admin-configured rule.
-    const standardTier = [ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(link.affiliate_role)
-      ? getStandardAffiliateTier(amount)
-      : null;
-    const rule = standardTier ? null : await commissionRepository.findActiveRule();
-    const commissionRate = standardTier
-      ? standardTier.rate
-      : (rule ? parseFloat(rule.value) : 15.0);
-    const commissionType = standardTier ? 'percentage' : (rule ? rule.type : 'percentage');
+    const isShoppingAffiliate = [ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(link.affiliate_role);
+    const rule = isShoppingAffiliate ? await commissionRepository.findMatchingRule({ eventType: 'shopping', eligibleAmount }) : await commissionRepository.findActiveRule();
+    if (!rule) throw ApiError.badRequest('No active commission rule matches this conversion');
+    const commissionRate = parseFloat(rule.value);
+    const commissionType = rule.type;
 
     let commissionAmount = 0;
     if (commissionType === 'percentage') {
@@ -121,7 +121,7 @@ class ReferralService {
     const commission = await commissionRepository.createCommission({
       affiliateId: link.user_id,
       conversionId: conversion.id,
-      ruleId: rule ? rule.id : null,
+      ruleId: rule.id,
       amount: commissionAmount.toFixed(2),
       rate: commissionRate,
       status: 'pending',
@@ -130,9 +130,7 @@ class ReferralService {
     return {
       conversion,
       commission,
-      commissionTier: standardTier
-        ? { label: standardTier.label, rate: standardTier.rate }
-        : null,
+      commissionTier: isShoppingAffiliate ? { label: rule.name, rate: commissionRate } : null,
       alreadyRecorded: false,
     };
   }
