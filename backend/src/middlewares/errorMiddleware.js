@@ -18,6 +18,7 @@ const errorHandler = (err, req, res, next) => {
     url: req.originalUrl,
     method: req.method,
     ip: req.ip,
+    errors: error.errors,
     stack: error.stack,
   });
 
