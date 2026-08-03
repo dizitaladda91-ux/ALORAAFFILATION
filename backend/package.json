@@ -9,6 +9,7 @@
     "build": "echo 'Backend build complete'",
     "db:migrate": "node src/database/migrate.js",
     "db:seed": "node src/database/seedRunner.js",
+    "settle:commissions": "node scripts/settle-commissions.js",
     "test": "jest --detectOpenHandles --runInBand",
     "test:coverage": "jest --detectOpenHandles --runInBand --coverage",
     "backup:db": "node scripts/backup-db.js",

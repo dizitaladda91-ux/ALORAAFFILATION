@@ -99,6 +99,19 @@ class CommissionRepository {
     return res.rows[0];
   }
 
+  async findMaturedPendingCommissions(holdDays = 7) {
+    const res = await db.query(
+      `SELECT c.*, w.id AS wallet_id
+       FROM commissions c
+       JOIN wallets w ON w.user_id = c.affiliate_id
+       WHERE c.status = 'pending'
+         AND c.created_at <= (CURRENT_TIMESTAMP - INTERVAL '1 day' * $1)
+         AND c.deleted_at IS NULL`,
+      [holdDays]
+    );
+    return res.rows;
+  }
+
   async getDashboardSummary(userId = null, role = null) {
     if (role === 'affiliate' || role === 'super_affiliate') {
       const statsRes = await db.query(

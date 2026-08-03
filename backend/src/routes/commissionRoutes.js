@@ -12,5 +12,6 @@ router.use(authenticate);
 router.get('/rules', commissionController.getRules);
 router.post('/rules', authorizeRoles(ROLES.SUPER_ADMIN, ROLES.ADMIN), createRuleValidator, validate, commissionController.createRule);
 router.patch('/:commissionId/status', authorizeRoles(ROLES.SUPER_ADMIN, ROLES.ADMIN), commissionController.updateStatus);
+router.post('/auto-settle', authorizeRoles(ROLES.SUPER_ADMIN, ROLES.ADMIN), commissionController.autoSettle);
 
 module.exports = router;

@@ -29,6 +29,12 @@ class CommissionController {
     const updated = await commissionService.updateCommissionStatus(commissionId, status);
     return sendSuccess(res, `Commission status updated to ${status}`, updated);
   });
+
+  autoSettle = asyncHandler(async (req, res) => {
+    const holdDays = parseInt(req.body.holdDays || '7', 10);
+    const result = await commissionService.autoSettleMaturedCommissions(holdDays);
+    return sendSuccess(res, 'Automated commission settlement completed', result);
+  });
 }
 
 module.exports = new CommissionController();
