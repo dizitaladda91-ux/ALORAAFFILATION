@@ -1,5 +1,6 @@
 import api from './api';
 import { API_ENDPOINTS } from '../constants/apiEndpoints';
+
 export const fetchAdminWithdrawals = async (params = {}) => (await api.get('/admin/withdrawals', { params })).data.data;
 export const approveWithdrawal = async (id, notes = '') => (await api.patch(`/admin/withdrawals/${id}/approve`, { notes })).data.data;
 export const rejectWithdrawal = async (id, notes = '') => (await api.patch(`/admin/withdrawals/${id}/reject`, { notes })).data.data;
@@ -25,5 +26,5 @@ export const deleteUser = async (userId) => {
 
 export const fetchAuditLogs = async (params) => {
   const res = await api.get(API_ENDPOINTS.ADMIN.AUDIT_LOGS, { params });
-  return res.data;
+  return res.data?.data || res.data || [];
 };

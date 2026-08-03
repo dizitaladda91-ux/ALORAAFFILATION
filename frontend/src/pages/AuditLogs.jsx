@@ -12,7 +12,7 @@ export const AuditLogs = () => {
     const loadLogs = async () => {
       try {
         const res = await fetchAuditLogs({ limit: 50 });
-        setLogs(res.data || []);
+        setLogs(Array.isArray(res) ? res : res.data || []);
       } catch (err) {
         console.error('Failed to load audit logs', err);
       } finally {
