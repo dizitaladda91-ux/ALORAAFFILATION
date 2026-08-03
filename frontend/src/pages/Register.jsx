@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Check, Eye, EyeOff, ShieldCheck, Sparkles } from 'lucide-react';
 import { AuthLayout } from '../components/layouts/AuthLayout';
 import { Input } from '../components/common/Input';
@@ -26,6 +26,7 @@ export const Register = () => {
   const { register } = useAuth();
   const { showSuccess, showError } = useNotification();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -39,7 +40,8 @@ export const Register = () => {
     }
     setLoading(true);
     try {
-      const user = await register(formData);
+      const recruitmentCode = searchParams.get('ref');
+      const user = await register({ ...formData, ...(recruitmentCode && { recruitmentCode }) });
       showSuccess('Account created successfully!');
 
       switch (user.role_name) {

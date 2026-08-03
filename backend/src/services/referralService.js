@@ -4,12 +4,9 @@ const commissionRepository = require('../repositories/commissionRepository');
 const ApiError = require('../utils/apiError');
 const config = require('../config/env');
 const { ROLES } = require('../constants/roles');
+const { SHOPPING_COMMISSION_TIERS, RECRUITMENT_TEAM_TIERS } = require('../constants/affiliateLink.constants');
 
-const STANDARD_AFFILIATE_TIERS = [
-  { maximumOrderAmount: 1000, rate: 10, label: 'Up to 1,000' },
-  { maximumOrderAmount: 1500, rate: 15, label: '1,001 to 1,500' },
-  { maximumOrderAmount: Infinity, rate: 20, label: '1,501 and above' },
-];
+const STANDARD_AFFILIATE_TIERS = SHOPPING_COMMISSION_TIERS;
 
 const getStandardAffiliateTier = (amount) =>
   STANDARD_AFFILIATE_TIERS.find((tier) => amount <= tier.maximumOrderAmount);
@@ -17,11 +14,13 @@ const getStandardAffiliateTier = (amount) =>
 class ReferralService {
   async trackClick({ referralCode, ipAddress, userAgent, referrerUrl }) {
     const link = await affiliateRepository.findLinkByCode(referralCode);
+    if (link && (!link.is_active || link.user_status !== 'active')) throw ApiError.notFound('Referral link is inactive');
     
     // Record click event regardless of link existing for tracking stats
     const click = await affiliateRepository.recordClick({
       affiliateLinkId: link ? link.id : null,
       referralCode,
+      linkType: link?.link_type || null,
       ipAddress,
       userAgent,
       referrerUrl,
@@ -65,7 +64,7 @@ class ReferralService {
 
   async getAffiliateDiscount(referralCode) {
     const link = await affiliateRepository.findLinkByCode(referralCode);
-    if (!link) {
+    if (!link || link.link_type !== 'SHOPPING' || !link.is_active || link.user_status !== 'active') {
       throw ApiError.notFound(`Invalid referral code: ${referralCode}`);
     }
 
@@ -78,7 +77,7 @@ class ReferralService {
 
   async processConversion({ referralCode, orderId, amount, currency = 'USD', clickId = null }) {
     const link = await affiliateRepository.findLinkByCode(referralCode);
-    if (!link) {
+    if (!link || link.link_type !== 'SHOPPING' || !link.is_active || link.user_status !== 'active') {
       throw ApiError.notFound(`Invalid referral code: ${referralCode}`);
     }
 
@@ -102,7 +101,7 @@ class ReferralService {
     // 2. Standard affiliates use the fixed purchase-value slabs. The highest
     // slab continues for orders above 2,000, so every eligible sale earns a
     // commission. Other affiliate roles keep using the admin-configured rule.
-    const standardTier = link.affiliate_role === ROLES.AFFILIATE
+    const standardTier = [ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(link.affiliate_role)
       ? getStandardAffiliateTier(amount)
       : null;
     const rule = standardTier ? null : await commissionRepository.findActiveRule();
@@ -138,8 +137,12 @@ class ReferralService {
     };
   }
 
-  async getTeamMembers(superAffiliateId) {
-    return referralRepository.findTeamMembers(superAffiliateId);
+  async getTeamMembers(superAffiliateId, role, { page = 1, limit = 20 } = {}) {
+    if (role !== ROLES.SUPER_AFFILIATE) throw ApiError.forbidden('Only super affiliates can access a recruitment team');
+    const safePage = Math.max(1, Number(page)); const safeLimit = Math.min(100, Math.max(1, Number(limit)));
+    const [items, stats] = await Promise.all([referralRepository.findTeamMembers(superAffiliateId, { limit: safeLimit, offset: (safePage - 1) * safeLimit }), referralRepository.getTeamStats(superAffiliateId)]);
+    const total = Number(stats.total_team_members); const tier = RECRUITMENT_TEAM_TIERS.find((item) => total <= item.maximumTeamMembers);
+    return { items, stats: { totalTeamMembers: total, totalAffiliates: Number(stats.total_affiliates), totalSuperAffiliates: Number(stats.total_super_affiliates), activeMembers: Number(stats.active_members), currentRecruitmentCommissionRate: tier.rate }, pagination: { page: safePage, limit: safeLimit, total, totalPages: Math.ceil(total / safeLimit) } };
   }
 }
 

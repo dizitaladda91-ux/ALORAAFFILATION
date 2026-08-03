@@ -1,6 +1,7 @@
 const userRepository = require('../repositories/userRepository');
 const profileRepository = require('../repositories/profileRepository');
 const affiliateRepository = require('../repositories/affiliateRepository');
+const referralRepository = require('../repositories/referralRepository');
 const logRepository = require('../repositories/logRepository');
 const jwtUtils = require('../utils/jwtUtils');
 const passwordUtils = require('../utils/passwordUtils');
@@ -14,7 +15,7 @@ const crypto = require('crypto');
 const mfaService = require('./mfaService');
 
 class AuthService {
-  async register({ email, password, firstName, lastName, company = null, role = 'affiliate', parentAffiliateId = null, ipAddress = null }) {
+  async register({ email, password, firstName, lastName, company = null, role = 'affiliate', recruitmentCode = null, ipAddress = null }) {
     if (![ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(role)) {
       throw ApiError.forbidden('Administrative accounts cannot be created through public registration');
     }
@@ -28,6 +29,13 @@ class AuthService {
       throw ApiError.badRequest(`Role '${role}' does not exist`);
     }
 
+    let parentAffiliateId = null;
+    let recruitmentLink = null;
+    if (recruitmentCode) {
+      recruitmentLink = await affiliateRepository.findLinkByCode(recruitmentCode);
+      if (!recruitmentLink || recruitmentLink.link_type !== 'RECRUITMENT' || recruitmentLink.affiliate_role !== ROLES.SUPER_AFFILIATE || recruitmentLink.user_status !== 'active' || !recruitmentLink.is_active) throw ApiError.badRequest('Recruitment referral code is invalid or inactive');
+      parentAffiliateId = recruitmentLink.user_id;
+    }
     const passwordHash = await passwordUtils.hashPassword(password);
     
     // Status is active by default, or pending if admin approval required
@@ -59,9 +67,15 @@ class AuthService {
         // All referral traffic should land on the public Alora Radiance store.
         // The portal URL is only the shareable tracking URL (/ref/:code).
         targetUrl: config.storefrontUrl,
-        title: 'Default Referral Link',
+        title: 'Default Shopping Link', linkType: 'SHOPPING', isSystemLink: true,
       });
+      if (role === ROLES.SUPER_AFFILIATE) {
+        const recruitmentReferralCode = codeGenerator.generateReferralCode('SUPTEAM');
+        await affiliateRepository.createLink({ userId: user.id, referralCode: recruitmentReferralCode, targetUrl: `${config.frontendUrl.replace(/\/$/, '')}/register?ref=${encodeURIComponent(recruitmentReferralCode)}`, title: 'Default Recruitment Link', linkType: 'RECRUITMENT', isSystemLink: true });
+      }
     }
+
+    if (recruitmentLink) await referralRepository.createReferral({ referrerId: recruitmentLink.user_id, referredUserId: user.id, referralCode: recruitmentLink.referral_code, status: 'converted' });
 
     // Log Activity
     await logRepository.createActivityLog({

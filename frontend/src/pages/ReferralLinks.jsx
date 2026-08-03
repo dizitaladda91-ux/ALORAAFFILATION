@@ -51,11 +51,11 @@ export const ReferralLinks = () => {
     }
   };
 
-  const copyLink = (code) => {
+  const copyLink = (link) => {
     // Use the public portal even if an administrator happens to generate a
     // link from a local development machine.
     const referralBaseUrl = (import.meta.env.VITE_REFERRAL_BASE_URL || 'https://affiliation.aloraradiance.com').replace(/\/$/, '');
-    const fullUrl = `${referralBaseUrl}/ref/${code}`;
+    const fullUrl = link.link_type === 'RECRUITMENT' ? link.target_url : `${referralBaseUrl}/ref/${link.referral_code}`;
     navigator.clipboard.writeText(fullUrl);
     showSuccess('Referral URL copied — customers using it get 10% off.');
   };
@@ -66,6 +66,7 @@ export const ReferralLinks = () => {
       accessor: 'title',
       render: (row) => <strong style={{ fontWeight: 700 }}>{row.title}</strong>,
     },
+    { header: 'Type', accessor: 'link_type', render: (row) => row.link_type === 'RECRUITMENT' ? 'Recruitment' : 'Shopping' },
     {
       header: 'Referral Code',
       accessor: 'referral_code',
@@ -85,7 +86,7 @@ export const ReferralLinks = () => {
       accessor: 'id',
       render: (row) => (
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => copyLink(row.referral_code)} style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}>
+          <Button variant="secondary" onClick={() => copyLink(row)} style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem' }}>
             <Copy size={14} /> Copy URL
           </Button>
         </div>

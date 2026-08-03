@@ -3,20 +3,24 @@ import { Card } from '../components/common/Card';
 import { Table } from '../components/common/Table';
 import { Button } from '../components/common/Button';
 import { fetchTeam } from '../services/referralService';
+import { fetchAffiliateLinks } from '../services/affiliateService';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { useNotification } from '../hooks/useNotification';
 import { UserPlus, Copy } from 'lucide-react';
 
 export const TeamManagement = () => {
   const [team, setTeam] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [recruitmentLink, setRecruitmentLink] = useState(null);
   const [loading, setLoading] = useState(true);
   const { showSuccess } = useNotification();
 
   useEffect(() => {
     const loadTeam = async () => {
       try {
-        const res = await fetchTeam();
-        setTeam(res);
+        const [res, links] = await Promise.all([fetchTeam(), fetchAffiliateLinks()]);
+        setTeam(res.items || []); setStats(res.stats || null);
+        setRecruitmentLink((links || []).find((link) => link.link_type === 'RECRUITMENT') || null);
       } catch (err) {
         console.error('Error fetching team', err);
       } finally {
@@ -27,7 +31,8 @@ export const TeamManagement = () => {
   }, []);
 
   const copyInviteLink = () => {
-    const inviteUrl = `${window.location.origin}/register`;
+    const inviteUrl = recruitmentLink?.target_url;
+    if (!inviteUrl) return;
     navigator.clipboard.writeText(inviteUrl);
     showSuccess('Team invite link copied to clipboard!');
   };
@@ -73,10 +78,12 @@ export const TeamManagement = () => {
             Invite sub-affiliates, track performance metrics, and monitor team earnings.
           </p>
         </div>
-        <Button onClick={copyInviteLink} icon={UserPlus}>
+        <Button onClick={copyInviteLink} disabled={!recruitmentLink} icon={UserPlus}>
           Copy Team Invite Link
         </Button>
       </div>
+
+      {stats && <Card style={{ marginBottom: '1rem' }}><strong>{stats.totalTeamMembers} team members</strong><p style={{ margin: '.4rem 0 0', color: 'var(--text-muted)' }}>{stats.totalAffiliates} Affiliates · {stats.totalSuperAffiliates} Super Affiliates · {stats.activeMembers} active · Team rate: {stats.currentRecruitmentCommissionRate}%</p></Card>}
 
       <Card>
         <Table columns={columns} data={team} loading={loading} emptyMessage="You haven't recruited any sub-affiliates yet." />

@@ -353,3 +353,36 @@ ALTER TABLE payouts ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZON
 ALTER TABLE payouts ADD COLUMN IF NOT EXISTS approval_notes TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret_encrypted TEXT;
+
+-- Affiliate-link classification for the two distinct business journeys.
+-- Existing links remain SHOPPING links; only system-managed links participate
+-- in the partial unique index so historical custom campaign links are kept.
+ALTER TABLE affiliate_links ADD COLUMN IF NOT EXISTS link_type VARCHAR(20) NOT NULL DEFAULT 'SHOPPING';
+ALTER TABLE affiliate_links ADD COLUMN IF NOT EXISTS is_system_link BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE click_events ADD COLUMN IF NOT EXISTS link_type VARCHAR(20);
+UPDATE affiliate_links
+SET is_system_link = TRUE
+WHERE title = 'Default Referral Link' AND deleted_at IS NULL AND is_system_link = FALSE;
+WITH ranked_system_links AS (
+  SELECT id, ROW_NUMBER() OVER (PARTITION BY user_id, link_type ORDER BY created_at, id) AS row_number
+  FROM affiliate_links
+  WHERE is_system_link = TRUE AND deleted_at IS NULL
+)
+UPDATE affiliate_links al
+SET is_system_link = FALSE
+FROM ranked_system_links ranked
+WHERE al.id = ranked.id AND ranked.row_number > 1;
+UPDATE click_events ce
+SET link_type = al.link_type
+FROM affiliate_links al
+WHERE ce.affiliate_link_id = al.id AND ce.link_type IS NULL;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'affiliate_links_link_type_check') THEN
+    ALTER TABLE affiliate_links ADD CONSTRAINT affiliate_links_link_type_check CHECK (link_type IN ('SHOPPING', 'RECRUITMENT'));
+  END IF;
+END $$;
+CREATE INDEX IF NOT EXISTS idx_affiliate_links_user_type ON affiliate_links(user_id, link_type) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_click_events_link_type ON click_events(link_type, created_at DESC) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_affiliate_system_link_per_type
+  ON affiliate_links(user_id, link_type)
+  WHERE is_system_link = TRUE AND deleted_at IS NULL;

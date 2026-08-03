@@ -7,6 +7,7 @@ const registerValidator = [
   body('lastName').notEmpty().withMessage('Last name is required').trim(),
   body('company').optional().trim(),
   body('role').optional().isIn(['super_affiliate', 'affiliate']).withMessage('Only affiliate roles can be registered publicly'),
+  body('recruitmentCode').optional().isString().trim().isLength({ max: 50 }),
 ];
 
 const loginValidator = [

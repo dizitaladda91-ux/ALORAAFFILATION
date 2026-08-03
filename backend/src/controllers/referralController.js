@@ -33,7 +33,7 @@ class ReferralController {
   });
 
   getTeam = asyncHandler(async (req, res) => {
-    const team = await referralService.getTeamMembers(req.user.id);
+    const team = await referralService.getTeamMembers(req.user.id, req.user.role_name, req.query);
     return sendSuccess(res, 'Sub-affiliate team members retrieved', team);
   });
 }

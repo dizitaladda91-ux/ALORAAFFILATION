@@ -1,12 +1,12 @@
 const db = require('../database');
 
 class AffiliateRepository {
-  async createLink({ userId, referralCode, targetUrl, title = 'Main Referral Link' }) {
+  async createLink({ userId, referralCode, targetUrl, title = 'Main Referral Link', linkType = 'SHOPPING', isSystemLink = false }) {
     const res = await db.query(
-      `INSERT INTO affiliate_links (user_id, referral_code, target_url, title)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO affiliate_links (user_id, referral_code, target_url, title, link_type, is_system_link)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [userId, referralCode, targetUrl, title]
+      [userId, referralCode, targetUrl, title, linkType, isSystemLink]
     );
     return res.rows[0];
   }
@@ -31,13 +31,21 @@ class AffiliateRepository {
     return res.rows;
   }
 
-  async recordClick({ affiliateLinkId, referralCode, ipAddress, userAgent, referrerUrl }) {
+  async findSystemLinkByUserAndType(userId, linkType) {
+    const res = await db.query(
+      `SELECT * FROM affiliate_links WHERE user_id=$1 AND link_type=$2 AND is_system_link=TRUE
+       AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1`, [userId, linkType]
+    );
+    return res.rows[0] || null;
+  }
+
+  async recordClick({ affiliateLinkId, referralCode, linkType = null, ipAddress, userAgent, referrerUrl }) {
     // 1. Insert click event
     const res = await db.query(
-      `INSERT INTO click_events (affiliate_link_id, referral_code, ip_address, user_agent, referrer_url)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO click_events (affiliate_link_id, referral_code, link_type, ip_address, user_agent, referrer_url)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [affiliateLinkId, referralCode, ipAddress, userAgent, referrerUrl]
+      [affiliateLinkId, referralCode, linkType, ipAddress, userAgent, referrerUrl]
     );
 
     // 2. Increment click count on affiliate link

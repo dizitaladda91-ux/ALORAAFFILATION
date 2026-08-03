@@ -7,7 +7,7 @@ class PaymentRepository {
        JOIN users u ON u.id = al.user_id AND u.status = 'active' AND u.deleted_at IS NULL
        JOIN roles r ON r.id = u.role_id
        JOIN click_events ce ON ce.id = $2 AND ce.affiliate_link_id = al.id AND ce.referral_code = al.referral_code AND ce.deleted_at IS NULL
-       WHERE al.referral_code = $1 AND al.is_active = true AND al.deleted_at IS NULL`, [referralCode, clickId]);
+       WHERE al.referral_code = $1 AND al.link_type = 'SHOPPING' AND al.is_active = true AND al.deleted_at IS NULL`, [referralCode, clickId]);
     return result.rows[0] || null;
   }
   async createPayment(client, payment) {
@@ -30,7 +30,7 @@ class PaymentRepository {
     if (existing.rows[0]) return { alreadyRecorded: true };
     const conversion = await client.query(`INSERT INTO conversion_events (click_id, affiliate_id, order_id, amount, currency) VALUES ($1,$2,$3,$4,$5) RETURNING *`, [payment.click_id, payment.affiliate_id, payment.gateway_order_id, payment.amount, payment.currency]);
     let rate = 15; let ruleId = null;
-    if (payment.affiliate_role === 'affiliate') rate = payment.amount <= 1000 ? 10 : payment.amount <= 1500 ? 15 : 20;
+    if (['affiliate', 'super_affiliate'].includes(payment.affiliate_role)) rate = payment.amount <= 1000 ? 10 : payment.amount <= 1500 ? 15 : 20;
     else { const rule = await client.query(`SELECT * FROM commission_rules WHERE is_active=true AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`); if (rule.rows[0]) { rate = Number(rule.rows[0].value); ruleId = rule.rows[0].id; } }
     const commission = await client.query(`INSERT INTO commissions (affiliate_id,conversion_id,rule_id,amount,rate,status) VALUES ($1,$2,$3,$4,$5,'pending') RETURNING *`, [payment.affiliate_id, conversion.rows[0].id, ruleId, (Number(payment.amount) * rate / 100).toFixed(2), rate]);
     return { conversion: conversion.rows[0], commission: commission.rows[0], alreadyRecorded: false };
