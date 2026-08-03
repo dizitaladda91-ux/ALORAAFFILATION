@@ -134,7 +134,7 @@ class AuthService {
       throw ApiError.unauthorized('Invalid email or password');
     }
 
-    if ([ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(user.role_name)) {
+    if (config.requireAdminMfa && [ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(user.role_name)) {
       const purpose = user.mfa_enabled ? 'mfa-login' : 'mfa-setup';
       return { mfaRequired: true, mfaSetupRequired: !user.mfa_enabled, mfaToken: jwtUtils.generateMfaToken({ id: user.id }, purpose) };
     }
