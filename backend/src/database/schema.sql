@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS withdraw_requests (
   amount NUMERIC(12, 2) NOT NULL,
   payment_method VARCHAR(50) NOT NULL DEFAULT 'bank_transfer',
   payment_details JSONB,
-  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'paid')),
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'paid', 'processing', 'cancelled', 'failed', 'under_review')),
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
