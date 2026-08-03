@@ -140,7 +140,7 @@ class EmailService {
     const { email: affiliateEmail, firstName } = affiliate;
     const { amount, referral_code, created_at } = commission;
 
-    const subject = `Commission Earned: $${amount.toFixed(2)}`;
+    const subject = `Commission Earned: $${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Commission Earned! 🎉</h2>
@@ -149,7 +149,7 @@ class EmailService {
         <p>Great news! You've earned a commission:</p>
         
         <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0;">
-          <p><strong>Commission Amount:</strong> $${amount.toFixed(2)}</p>
+          <p><strong>Commission Amount:</strong> $${Number(amount || 0).toFixed(2)}</p>
           <p><strong>Referral Code:</strong> ${referral_code}</p>
           <p><strong>Date:</strong> ${new Date(created_at).toLocaleDateString()}</p>
         </div>
@@ -178,7 +178,7 @@ class EmailService {
     const { email: userEmail, firstName } = user;
     const { amount, status, requested_at, bank_account_number } = withdrawal;
 
-    const subject = `Withdrawal Request Confirmation - $${amount.toFixed(2)}`;
+    const subject = `Withdrawal Request Confirmation - $${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Withdrawal Request Received</h2>
@@ -187,7 +187,7 @@ class EmailService {
         <p>Your withdrawal request has been received and is being processed:</p>
         
         <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0;">
-          <p><strong>Amount:</strong> $${amount.toFixed(2)}</p>
+          <p><strong>Amount:</strong> $${Number(amount || 0).toFixed(2)}</p>
           <p><strong>Status:</strong> <span style="color: #ffc107;">${status.toUpperCase()}</span></p>
           <p><strong>Bank Account (last 4):</strong> ****${bank_account_number.slice(-4)}</p>
           <p><strong>Requested on:</strong> ${new Date(requested_at).toLocaleDateString()}</p>
@@ -217,13 +217,13 @@ class EmailService {
     const { email: userEmail, firstName } = user;
     const { amount, approved_at } = withdrawal;
 
-    const subject = `Withdrawal Approved - $${amount.toFixed(2)}`;
+    const subject = `Withdrawal Approved - $${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Withdrawal Approved! ✅</h2>
         <p>Hi ${firstName},</p>
         
-        <p>Great news! Your withdrawal of <strong>$${amount.toFixed(2)}</strong> has been approved.</p>
+        <p>Great news! Your withdrawal of <strong>$${Number(amount || 0).toFixed(2)}</strong> has been approved.</p>
         
         <p>The funds should appear in your bank account within 2-5 business days.</p>
         
@@ -247,13 +247,13 @@ class EmailService {
     const { email: userEmail, firstName } = user;
     const { amount } = withdrawal;
 
-    const subject = `Withdrawal Request Declined - $${amount.toFixed(2)}`;
+    const subject = `Withdrawal Request Declined - $${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Withdrawal Request Declined</h2>
         <p>Hi ${firstName},</p>
         
-        <p>Unfortunately, your withdrawal request for <strong>$${amount.toFixed(2)}</strong> has been declined.</p>
+        <p>Unfortunately, your withdrawal request for <strong>$${Number(amount || 0).toFixed(2)}</strong> has been declined.</p>
         
         <div style="background-color: #f8d7da; padding: 15px; border-radius: 5px; border-left: 4px solid #dc3545; margin: 20px 0;">
           <p><strong>Reason:</strong> ${reason || 'Please contact support for details.'}</p>
