@@ -13,6 +13,7 @@ frontend/dist/
 frontend/.env.example
 backend/.env.example
 backend/.env.example.emai"
+backend/.env
 
 # Logs
 *.log
