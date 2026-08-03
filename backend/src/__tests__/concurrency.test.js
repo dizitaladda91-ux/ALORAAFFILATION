@@ -1,5 +1,6 @@
 jest.mock('../database', () => ({
   connect: jest.fn(),
+  getClient: jest.fn(),
 }));
 
 jest.mock('../repositories/payout.repository', () => ({
@@ -24,10 +25,12 @@ const db = require('../database');
 describe('payout concurrency guards', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    db.connect.mockResolvedValue({
+    const mockClient = {
       query: jest.fn().mockResolvedValue({}),
       release: jest.fn(),
-    });
+    };
+    db.connect.mockResolvedValue(mockClient);
+    db.getClient.mockResolvedValue(mockClient);
   });
 
   it('rejects completion when a payout is already completed', async () => {

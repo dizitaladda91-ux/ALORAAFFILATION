@@ -128,7 +128,7 @@ class PayoutService {
      */
     async createPayout(data, adminUserId) {
 
-        const client = await db.connect();
+        const client = await db.getClient();
 
         try {
 
@@ -233,11 +233,11 @@ class PayoutService {
      */
     async processPayout(
         payoutId,
-        data,
+        data = {},
         adminUserId
     ) {
 
-        const client = await db.connect();
+        const client = await db.getClient();
 
         try {
 
@@ -303,7 +303,7 @@ class PayoutService {
         data
     ) {
 
-        const client = await db.connect();
+        const client = await db.getClient();
 
         try {
 
@@ -382,7 +382,7 @@ class PayoutService {
         data
     ) {
 
-        const client = await db.connect();
+        const client = await db.getClient();
 
         try {
 
@@ -447,7 +447,7 @@ class PayoutService {
         remarks = null
     ) {
 
-        const client = await db.connect();
+        const client = await db.getClient();
 
         try {
 

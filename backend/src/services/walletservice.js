@@ -120,7 +120,7 @@ class WalletService {
      */
     async executeTransaction(callback) {
 
-        const client = await db.connect();
+        const client = await db.getClient();
 
         try {
 

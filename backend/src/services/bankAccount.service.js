@@ -20,7 +20,7 @@ class BankAccountService {
   }
 
      async createBankAccount(userId, data) {
-    const client = await db.connect();
+    const client = await db.getClient();
 
     try {
       await client.query("BEGIN");
@@ -172,7 +172,7 @@ class BankAccountService {
   }
 
   async setDefaultAccount(userId, accountId) {
-    const client = await db.connect();
+    const client = await db.getClient();
 
     try {
       await client.query("BEGIN");

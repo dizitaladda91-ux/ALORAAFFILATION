@@ -37,7 +37,7 @@ exports.approve = asyncHandler(async (req, res) => {
   res.json({ success: true, data: approved });
 });
 exports.reject = asyncHandler(async (req, res) => {
-  const client = await db.connect();
+  const client = await db.getClient();
   try {
     await client.query('BEGIN');
     const withdrawal = await withdrawalRepository.lockWithdrawal(req.params.id, client);

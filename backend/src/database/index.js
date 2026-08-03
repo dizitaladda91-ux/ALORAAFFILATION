@@ -51,5 +51,6 @@ const getClient = async () => {
 module.exports = {
   query,
   getClient,
+  connect: getClient, // Alias for backward compatibility & safety
   pool,
 };

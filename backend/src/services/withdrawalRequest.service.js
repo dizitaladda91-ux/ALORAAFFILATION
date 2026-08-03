@@ -9,7 +9,7 @@ const logger = require('../logs/logger');
 
 class WithdrawalRequestService {
   async request(userId, { amount, bankAccountId, notes }) {
-    const client = await db.connect();
+    const client = await db.getClient();
     try {
       await client.query('BEGIN');
       const account = await bankAccountRepository.findById(bankAccountId);
@@ -69,7 +69,7 @@ class WithdrawalRequestService {
   }
 
   async cancel(userId, id, notes) {
-    const client = await db.connect();
+    const client = await db.getClient();
     try {
       await client.query('BEGIN');
       const withdrawal = await withdrawalRepository.lockWithdrawal(id, client);
