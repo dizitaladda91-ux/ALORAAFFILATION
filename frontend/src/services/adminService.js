@@ -52,3 +52,13 @@ export const exportPayoutsCsv = async () => {
   link.remove();
   window.URL.revokeObjectURL(url);
 };
+
+export const createRazorpayPayoutOrder = async (withdrawalId) => {
+  const res = await api.post(`/admin/withdrawals/${withdrawalId}/razorpay-order`);
+  return res.data.data;
+};
+
+export const completeRazorpayPayout = async (withdrawalId, paymentId) => {
+  const res = await api.post(`/admin/withdrawals/${withdrawalId}/razorpay-complete`, { paymentId });
+  return res.data.data;
+};

@@ -90,3 +90,50 @@ exports.exportCsv = asyncHandler(async (req, res) => {
   return res.status(200).send(csvRows.join('\n'));
 });
 
+exports.createRazorpayPayoutOrder = asyncHandler(async (req, res) => {
+  const withdrawal = await withdrawalRepository.findById(req.params.id);
+  if (!withdrawal) throw ApiError.notFound('Withdrawal request not found.');
+  
+  const paymentService = require('../services/paymentService');
+  const user = await userRepository.findById(withdrawal.user_id);
+  
+  const order = await paymentService.createOrder({
+    amount: withdrawal.amount,
+    currency: 'INR',
+    referralCode: 'PAYOUT_SYSTEM',
+    clickId: withdrawal.id,
+    customer: {
+      name: user?.email ? user.email.split('@')[0] : 'Affiliate Partner',
+      email: user?.email || 'affiliate@aloraradiance.com'
+    }
+  });
+
+  res.json({ success: true, data: order });
+});
+
+exports.completeRazorpayPayout = asyncHandler(async (req, res) => {
+  const { paymentId } = req.body;
+  const withdrawal = await withdrawalRepository.markAsPaid(req.params.id, paymentId || `pay_admin_${Date.now()}`);
+  
+  await logRepository.createAuditLog({
+    actorId: req.user.id,
+    targetUserId: withdrawal.user_id,
+    action: 'WITHDRAWAL_PAID_RAZORPAY',
+    changesJson: { withdrawalId: withdrawal.id, paymentId },
+    ipAddress: req.ip
+  });
+
+  try {
+    const user = await userRepository.findById(withdrawal.user_id);
+    if (user && user.email) {
+      emailService.sendWithdrawalApprovedEmail(user, {
+        amount: withdrawal.amount,
+        approved_at: new Date()
+      }).catch(err => logger.error('Failed to send payout email:', err));
+    }
+  } catch (e) {}
+
+  res.json({ success: true, data: withdrawal });
+});
+
+
