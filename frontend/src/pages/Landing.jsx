@@ -1,32 +1,35 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BarChart3, CheckCircle2, Link2, ShieldCheck, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, BarChart3, CheckCircle2, ShieldCheck, Users, Zap, Link2 } from 'lucide-react';
 import { ROUTES } from '../constants/routes';
-import aloraLogo from '../assets/alora-radiance-logo.png';
 
 const features = [
-  { icon: Link2, title: 'Share with confidence', text: 'Create referral links that make every recommendation measurable.' },
-  { icon: BarChart3, title: 'See what is working', text: 'Track clicks, conversions, commissions, and growth in one clear view.' },
-  { icon: ShieldCheck, title: 'Built for momentum', text: 'A secure partner portal designed to keep your program moving.' },
+  { icon: Zap, title: 'Instant conversion tracking', text: 'Every click and sale tracked instantly with your personal referral links.' },
+  { icon: Users, title: 'Multi-tier network earnings', text: 'Build your team and earn secondary commissions from your sub-affiliate network.' },
+  { icon: ShieldCheck, title: 'Fast, reliable payouts', text: 'Transparent wallet balances, withdrawal requests, and automated direct payouts.' },
+  { icon: BarChart3, title: 'Clear analytics dashboard', text: 'Simple, modern reports so you always know your exact earnings and progress.' }
 ];
 
 export const Landing = () => (
   <main className="landing-page">
-    <div className="landing-grid" aria-hidden="true" />
-    <div className="landing-glow landing-glow-one" aria-hidden="true" />
-    <div className="landing-glow landing-glow-two" aria-hidden="true" />
+    <header className="landing-nav">
+      <div className="landing-nav-brand">
+        <span className="landing-nav-logo">A</span>
+        <div>
+          <strong>ALORA RADIANCE</strong>
+          <small>AFFILIATE NETWORK</small>
+        </div>
+      </div>
+      <div className="landing-nav-actions">
+        <Link className="landing-nav-link" to={ROUTES.LOGIN}>Sign in</Link>
+        <Link className="landing-nav-btn" to={ROUTES.REGISTER}>Join program</Link>
+      </div>
+    </header>
 
-    <nav className="landing-nav">
-      <Link className="landing-brand" to={ROUTES.HOME} aria-label="ALORA home">
-        <img className="landing-brand-logo" src={aloraLogo} alt="ALORA Radiance" />
-      </Link>
-      <Link className="landing-login-link" to={ROUTES.LOGIN}>Login <ArrowRight size={16} /></Link>
-    </nav>
-
-    <section className="landing-hero">
+    <section className="landing-hero" aria-label="Welcome banner">
       <div className="landing-copy">
-        <p className="landing-eyebrow"><Sparkles size={15} /> Affiliate software, made personal</p>
-        <h1>Turn every introduction into <span>growth.</span></h1>
+        <span className="landing-pill">New · Complete Affiliate & Partner Dashboard</span>
+        <h1>Grow your revenue with ALORA affiliate network</h1>
         <p className="landing-subhead">ALORA gives ambitious affiliates and team leaders one beautiful place to share, track, and grow their partnerships.</p>
         <div className="landing-actions">
           <Link className="landing-cta landing-cta-primary" to={ROUTES.REGISTER}>Become an affiliate <ArrowRight size={18} /></Link>
@@ -40,13 +43,13 @@ export const Landing = () => (
         <div className="landing-dashboard">
           <div className="dashboard-topbar"><span className="dashboard-logo">A</span><span>Overview</span><span className="dashboard-avatar">JD</span></div>
           <div className="dashboard-content">
-            <p className="dashboard-label">This month</p><p className="dashboard-amount">$8,420.50</p>
+            <p className="dashboard-label">This month</p><p className="dashboard-amount">₹8,420.50</p>
             <div className="dashboard-chart"><span /><span /><span /><span /><span /><span /><span /></div>
             <div className="dashboard-stats"><div><small>Clicks</small><strong>12.8k</strong></div><div><small>Conversions</small><strong>842</strong></div></div>
           </div>
         </div>
         <div className="landing-float-card landing-float-network"><Users size={18} /><span><strong>+24</strong> new partners</span></div>
-        <div className="landing-float-card landing-float-earnings"><span className="earning-dot" /><span><strong>Commission earned</strong><small>+$1,280.00</small></span></div>
+        <div className="landing-float-card landing-float-earnings"><span className="earning-dot" /><span><strong>Commission earned</strong><small>+₹1,280.00</small></span></div>
       </div>
     </section>
 

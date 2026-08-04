@@ -32,7 +32,6 @@ class EmailService {
           },
         });
       } else if (email.provider === 'sendgrid') {
-        // SendGrid SMTP configuration
         this.transporter = nodemailer.createTransport({
           host: 'smtp.sendgrid.net',
           port: 587,
@@ -43,7 +42,6 @@ class EmailService {
           },
         });
       } else if (email.provider === 'gmail') {
-        // Gmail configuration (requires app password)
         this.transporter = nodemailer.createTransport({
           service: 'gmail',
           auth: {
@@ -52,7 +50,6 @@ class EmailService {
           },
         });
       } else {
-        // Development: test account
         this.transporter = nodemailer.createTransport({
           host: 'smtp.ethereal.email',
           port: 587,
@@ -103,7 +100,7 @@ class EmailService {
    * Send welcome email for new affiliates
    */
   async sendWelcomeEmail(affiliate) {
-    const { email: affiliateEmail, firstName, lastName } = affiliate;
+    const { email: affiliateEmail, firstName } = affiliate;
     const subject = 'Welcome to Our Affiliate Program!';
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -140,7 +137,7 @@ class EmailService {
     const { email: affiliateEmail, firstName } = affiliate;
     const { amount, referral_code, created_at } = commission;
 
-    const subject = `Commission Earned: $${Number(amount || 0).toFixed(2)}`;
+    const subject = `Commission Earned: ₹${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Commission Earned! 🎉</h2>
@@ -149,7 +146,7 @@ class EmailService {
         <p>Great news! You've earned a commission:</p>
         
         <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0;">
-          <p><strong>Commission Amount:</strong> $${Number(amount || 0).toFixed(2)}</p>
+          <p><strong>Commission Amount:</strong> ₹${Number(amount || 0).toFixed(2)}</p>
           <p><strong>Referral Code:</strong> ${referral_code}</p>
           <p><strong>Date:</strong> ${new Date(created_at).toLocaleDateString()}</p>
         </div>
@@ -178,7 +175,7 @@ class EmailService {
     const { email: userEmail, firstName } = user;
     const { amount, status, requested_at, bank_account_number } = withdrawal;
 
-    const subject = `Withdrawal Request Confirmation - $${Number(amount || 0).toFixed(2)}`;
+    const subject = `Withdrawal Request Confirmation - ₹${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Withdrawal Request Received</h2>
@@ -187,9 +184,9 @@ class EmailService {
         <p>Your withdrawal request has been received and is being processed:</p>
         
         <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0;">
-          <p><strong>Amount:</strong> $${Number(amount || 0).toFixed(2)}</p>
+          <p><strong>Amount:</strong> ₹${Number(amount || 0).toFixed(2)}</p>
           <p><strong>Status:</strong> <span style="color: #ffc107;">${status.toUpperCase()}</span></p>
-          <p><strong>Bank Account (last 4):</strong> ****${bank_account_number.slice(-4)}</p>
+          <p><strong>Bank Account (last 4):</strong> ****${(bank_account_number || '').slice(-4)}</p>
           <p><strong>Requested on:</strong> ${new Date(requested_at).toLocaleDateString()}</p>
         </div>
         
@@ -217,18 +214,18 @@ class EmailService {
     const { email: userEmail, firstName } = user;
     const { amount, approved_at } = withdrawal;
 
-    const subject = `Withdrawal Approved - $${Number(amount || 0).toFixed(2)}`;
+    const subject = `Withdrawal Approved - ₹${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Withdrawal Approved! ✅</h2>
         <p>Hi ${firstName},</p>
         
-        <p>Great news! Your withdrawal of <strong>$${Number(amount || 0).toFixed(2)}</strong> has been approved.</p>
+        <p>Great news! Your withdrawal of <strong>₹${Number(amount || 0).toFixed(2)}</strong> has been approved.</p>
         
         <p>The funds should appear in your bank account within 2-5 business days.</p>
         
         <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; margin: 20px 0;">
-          <p><strong>Approved on:</strong> ${new Date(approved_at).toLocaleDateString()}</p>
+          <p><strong>Approved on:</strong> ${new Date(approved_at || Date.now()).toLocaleDateString()}</p>
         </div>
         
         <p>Thank you for being part of our affiliate program!</p>
@@ -247,13 +244,13 @@ class EmailService {
     const { email: userEmail, firstName } = user;
     const { amount } = withdrawal;
 
-    const subject = `Withdrawal Request Declined - $${Number(amount || 0).toFixed(2)}`;
+    const subject = `Withdrawal Request Declined - ₹${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Withdrawal Request Declined</h2>
         <p>Hi ${firstName},</p>
         
-        <p>Unfortunately, your withdrawal request for <strong>$${Number(amount || 0).toFixed(2)}</strong> has been declined.</p>
+        <p>Unfortunately, your withdrawal request for <strong>₹${Number(amount || 0).toFixed(2)}</strong> has been declined.</p>
         
         <div style="background-color: #f8d7da; padding: 15px; border-radius: 5px; border-left: 4px solid #dc3545; margin: 20px 0;">
           <p><strong>Reason:</strong> ${reason || 'Please contact support for details.'}</p>
@@ -281,20 +278,17 @@ class EmailService {
         <h2>Password Reset Request</h2>
         <p>Hi ${firstName},</p>
         
-        <p>We received a request to reset your password. Click the link below to set a new password:</p>
+        <p>You requested to reset your password. Click the button below to set a new password:</p>
         
-        <p>
+        <p style="margin: 25px 0;">
           <a href="${resetLink}" 
-             style="background-color: #007bff; color: white; padding: 10px 20px; 
+             style="background-color: #dc3545; color: white; padding: 12px 24px; 
                     text-decoration: none; border-radius: 5px; display: inline-block;">
             Reset Password
           </a>
         </p>
         
-        <p>This link will expire in 1 hour for security reasons.</p>
-        
-        <p>If you didn't request a password reset, you can safely ignore this email.</p>
-        
+        <p>This link is valid for 1 hour. If you didn't request this, please ignore this email.</p>
         <p>Best regards,<br/>The Affiliate Team</p>
       </div>
     `;
@@ -302,32 +296,36 @@ class EmailService {
     return this.sendEmail(userEmail, subject, htmlContent);
   }
 
-  async sendEmailVerificationEmail(user, verificationToken) {
+  /**
+   * Send email verification link
+   */
+  async sendVerificationEmail(user, verificationToken) {
     const verifyLink = `${config.frontendUrl}/verify-email/${verificationToken}`;
     const subject = 'Verify Your Email Address';
+
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Verify your email</h2>
+        <h2>Verify Your Email</h2>
         <p>Hi ${user.first_name || 'there'},</p>
-        <p>Confirm your email address to secure your affiliate account.</p>
+        <p>Please click the button below to verify your email address:</p>
         <p><a href="${verifyLink}" style="background:#007bff;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block;">Verify email</a></p>
-        <p>This link expires in 24 hours. If you did not create this account, you can ignore this email.</p>
-      </div>`;
+      </div>
+    `;
+
     return this.sendEmail(user.email, subject, htmlContent);
   }
 
   /**
-   * Send admin notification for new affiliate registration
+   * Send admin alert on new affiliate registration
    */
-  async sendNewAffiliateNotificationToAdmin(affiliate, adminEmail) {
-    const { email: affiliateEmail, firstName, lastName, company } = affiliate;
+  async sendAdminNewAffiliateAlert(adminEmail, affiliate) {
+    const { firstName, lastName, email: affiliateEmail, company } = affiliate;
     const subject = `New Affiliate Registration: ${firstName} ${lastName}`;
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>New Affiliate Registration</h2>
-        
-        <p>A new affiliate has registered:</p>
+        <p>A new affiliate has registered and requires your attention:</p>
         
         <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0;">
           <p><strong>Name:</strong> ${firstName} ${lastName}</p>
@@ -339,11 +337,9 @@ class EmailService {
           <a href="${config.frontendUrl}/admin/affiliates" 
              style="background-color: #007bff; color: white; padding: 10px 20px; 
                     text-decoration: none; border-radius: 5px;">
-            View in Dashboard
+            Review Affiliate
           </a>
         </p>
-        
-        <p>Best regards,<br/>The Affiliate System</p>
       </div>
     `;
 

@@ -64,7 +64,7 @@ export const CommissionRules = () => {
     {
       header: 'Rate / Value',
       accessor: 'value',
-      render: (row) => `${row.value}${row.type === 'percentage' ? '%' : ' USD'}`,
+      render: (row) => `${row.value}${row.type === 'percentage' ? '%' : ' ₹'}`,
     },
     {
       header: 'Status',
@@ -113,7 +113,7 @@ export const CommissionRules = () => {
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
             >
               <option value="percentage">Percentage (%)</option>
-              <option value="flat">Flat Amount ($)</option>
+              <option value="flat">Flat Amount (₹)</option>
             </select>
           </div>
           <Input

@@ -75,7 +75,7 @@ class ReferralService {
     };
   }
 
-  async processConversion({ referralCode, orderId, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'USD', clickId = null }) {
+  async processConversion({ referralCode, orderId, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'INR', clickId = null }) {
     const link = await affiliateRepository.findLinkByCode(referralCode);
     if (!link || link.link_type !== 'SHOPPING' || !link.is_active || link.user_status !== 'active') {
       throw ApiError.notFound(`Invalid referral code: ${referralCode}`);

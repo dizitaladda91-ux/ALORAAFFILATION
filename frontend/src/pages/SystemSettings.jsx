@@ -8,7 +8,7 @@ export const SystemSettings = () => {
   const [siteName, setSiteName] = useState('Affiliate Cloud SaaS');
   const [supportEmail, setSupportEmail] = useState('support@affiliatecloud.com');
   const [defaultCommission, setDefaultCommission] = useState(15);
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('INR');
   const [loading, setLoading] = useState(false);
 
   const { showSuccess } = useNotification();
@@ -53,10 +53,10 @@ export const SystemSettings = () => {
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
             >
+              <option value="INR">INR - Indian Rupee (₹)</option>
               <option value="USD">USD - US Dollar ($)</option>
               <option value="EUR">EUR - Euro (€)</option>
               <option value="GBP">GBP - British Pound (£)</option>
-              <option value="INR">INR - Indian Rupee (₹)</option>
             </select>
           </div>
           <Input

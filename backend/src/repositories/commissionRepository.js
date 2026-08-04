@@ -39,7 +39,7 @@ class CommissionRepository {
     return res.rows[0];
   }
 
-  async createConversion({ clickId, referralId, affiliateId, orderId, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'USD' }) {
+  async createConversion({ clickId, referralId, affiliateId, orderId, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'INR' }) {
     const res = await db.query(
       `INSERT INTO conversion_events (click_id, referral_id, affiliate_id, order_id, amount, gross_amount, discount_amount, eligible_amount, currency)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
