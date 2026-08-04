@@ -11,7 +11,7 @@ describe('Landing page', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/Affiliate software, made personal/i)).toBeInTheDocument();
+    expect(screen.getByText(/Grow your revenue with ALORA affiliate network/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Become an affiliate/i })).toBeInTheDocument();
   });
 });
