@@ -94,21 +94,36 @@ exports.createRazorpayPayoutOrder = asyncHandler(async (req, res) => {
   const withdrawal = await withdrawalRepository.findById(req.params.id);
   if (!withdrawal) throw ApiError.notFound('Withdrawal request not found.');
   
-  const paymentService = require('../services/paymentService');
+  const Razorpay = require('razorpay');
+  const razorpay = new Razorpay({
+    key_id: config.razorpay.keyId,
+    key_secret: config.razorpay.keySecret
+  });
+
+  const amountInPaise = Math.round(Number(withdrawal.amount) * 100);
   const user = await userRepository.findById(withdrawal.user_id);
-  
-  const order = await paymentService.createOrder({
-    amount: withdrawal.amount,
+
+  const order = await razorpay.orders.create({
+    amount: amountInPaise,
     currency: 'INR',
-    referralCode: 'PAYOUT_SYSTEM',
-    clickId: withdrawal.id,
-    customer: {
-      name: user?.email ? user.email.split('@')[0] : 'Affiliate Partner',
-      email: user?.email || 'affiliate@aloraradiance.com'
+    receipt: `payout_${(withdrawal.withdrawal_number || withdrawal.id).slice(0, 30)}`,
+    notes: {
+      withdrawalId: String(withdrawal.id),
+      withdrawalNumber: String(withdrawal.withdrawal_number || ''),
+      userId: String(withdrawal.user_id),
+      email: user?.email || ''
     }
   });
 
-  res.json({ success: true, data: order });
+  res.json({
+    success: true,
+    data: {
+      keyId: config.razorpay.keyId,
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency
+    }
+  });
 });
 
 exports.completeRazorpayPayout = asyncHandler(async (req, res) => {
