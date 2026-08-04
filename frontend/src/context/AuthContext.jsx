@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { getCurrentUser, loginUser as loginApi, registerUser as registerApi, logoutUser as logoutApi } from '../services/authService';
 import { getAccessToken, clearTokens } from '../utils/storage';
+import { ROUTES } from '../constants/routes';
 
 export const AuthContext = createContext();
 
@@ -38,8 +39,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await logoutApi();
-    setUser(null);
+    try {
+      await logoutApi().catch(() => {});
+    } finally {
+      clearTokens();
+      setUser(null);
+      window.location.href = ROUTES.LOGIN;
+    }
   };
 
   return (

@@ -167,6 +167,11 @@ export const Sidebar = () => {
   const displayName = user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user?.email || 'User';
   const initials = `${user?.first_name?.[0] || ''}${user?.last_name?.[0] || ''}`.toUpperCase() || 'A';
 
+  const handleLogout = async (e) => {
+    e?.preventDefault();
+    await logout();
+  };
+
   return (
     <aside className="premium-sidebar">
       {/* Brand Header */}
@@ -233,7 +238,7 @@ export const Sidebar = () => {
           <User size={16} className="sidebar-profile-icon" />
         </NavLink>
 
-        <button onClick={logout} className="sidebar-logout-btn" title="Sign Out">
+        <button type="button" onClick={handleLogout} className="sidebar-logout-btn" title="Sign Out">
           <LogOut size={16} />
         </button>
       </div>

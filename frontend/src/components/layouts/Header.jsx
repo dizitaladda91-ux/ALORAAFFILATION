@@ -171,6 +171,12 @@ export const Header = () => {
     }
   };
 
+  const handleLogout = async (e) => {
+    e?.preventDefault();
+    setProfileMenuOpen(false);
+    await logout();
+  };
+
   return (
     <header className="premium-header">
       {/* Search & Portal Indicator */}
@@ -314,7 +320,7 @@ export const Header = () => {
 
               <div className="dropdown-divider" />
 
-              <button type="button" onClick={logout} className="dropdown-item dropdown-logout">
+              <button type="button" onClick={handleLogout} className="dropdown-item dropdown-logout">
                 <LogOut size={16} /> Sign Out
               </button>
             </div>
