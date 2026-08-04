@@ -7,6 +7,7 @@ const walletRepository = require('../repositories/walletrepository');
 const emailService = require('../services/emailService');
 const logger = require('../logs/logger');
 const logRepository = require('../repositories/logRepository');
+const config = require('../config/env');
 
 exports.list = asyncHandler(async (req, res) => {
   const page = Math.max(1, Number(req.query.page || 1)); const limit = Math.min(100, Math.max(1, Number(req.query.limit || 20))); const filters = { status: req.query.status };
