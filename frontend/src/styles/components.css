@@ -889,6 +889,14 @@
 /* Landing-page wordmark */
 .landing-brand-logo { display: block; width: clamp(7.5rem, 13vw, 10.5rem); height: 2.65rem; object-fit: contain; object-position: left center; filter: brightness(0) invert(1); }
 
+/* Hero heading: slightly smaller and tighter for the landing hero */
+.landing-hero-heading {
+  font-size: clamp(1.8rem, 3.6vw, 2.6rem);
+  line-height: 1.03;
+  margin-top: 0.35rem;
+  font-weight: 800;
+}
+
 /* Use the tightly cropped logo asset so it is always visible at header size. */
 .alora-brand { width: clamp(9rem, 16vw, 12.5rem); }
 .auth-brand-logo { display: block; width: 100%; height: auto; filter: brightness(0) invert(1); }

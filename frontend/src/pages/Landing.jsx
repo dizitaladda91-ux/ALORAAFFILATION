@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart3, CheckCircle2, ShieldCheck, Users, Zap, Link2 } from 'lucide-react';
 import { ROUTES } from '../constants/routes';
+import aloraLogo from '../assets/alora-radiance-logo.png';
 
 const features = [
   { icon: Zap, title: 'Instant conversion tracking', text: 'Every click and sale tracked instantly with your personal referral links.' },
@@ -19,8 +20,7 @@ export const Landing = () => (
     {/* Navigation Header */}
     <header className="landing-nav">
       <Link className="landing-brand" to="/">
-        <span className="landing-brand-mark">A</span>
-        <span>ALORA RADIANCE</span>
+        <img className="landing-brand-logo" src={aloraLogo} alt="ALORA Radiance" />
       </Link>
       <div className="flex items-center gap-4">
         <Link className="landing-login-link" to={ROUTES.LOGIN}>Sign in</Link>
@@ -32,7 +32,7 @@ export const Landing = () => (
     <section className="landing-hero" aria-label="Welcome banner">
       <div className="landing-copy">
         <span className="landing-eyebrow">New · Complete Affiliate & Partner Dashboard</span>
-        <h1>Grow your revenue with <span>ALORA</span> affiliate network</h1>
+        <h1 className="landing-hero-heading">Grow your revenue with <span>ALORA</span> affiliate network</h1>
         <p className="landing-subhead">ALORA gives ambitious affiliates and team leaders one beautiful place to share, track, and grow their partnerships.</p>
         <div className="landing-actions">
           <Link className="landing-cta landing-cta-primary" to={ROUTES.REGISTER}>Become an affiliate <ArrowRight size={18} /></Link>
