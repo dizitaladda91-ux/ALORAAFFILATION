@@ -574,7 +574,7 @@ class WithdrawalRepository {
         let query = `
             SELECT wr.*, 
                    u.email as user_email, 
-                   aba.account_number, aba.ifsc_code, aba.account_name, aba.account_type, aba.upi_id, aba.bank_name
+                   aba.account_number, aba.ifsc_code, aba.account_holder_name as account_name, aba.account_type, aba.upi_id, aba.bank_name
             FROM withdraw_requests wr
             LEFT JOIN users u ON wr.user_id = u.id
             LEFT JOIN affiliate_bank_accounts aba ON wr.bank_account_id = aba.id
