@@ -95,6 +95,10 @@ exports.createRazorpayPayoutOrder = asyncHandler(async (req, res) => {
   const withdrawal = await withdrawalRepository.findById(req.params.id);
   if (!withdrawal) throw ApiError.notFound('Withdrawal request not found.');
   
+  if (!config.razorpay || !config.razorpay.keyId || !config.razorpay.keySecret) {
+    throw ApiError.badRequest('Razorpay credentials (RAZORPAY_KEY_ID & RAZORPAY_KEY_SECRET) are not configured in environment.');
+  }
+
   const Razorpay = require('razorpay');
   const razorpay = new Razorpay({
     key_id: config.razorpay.keyId,

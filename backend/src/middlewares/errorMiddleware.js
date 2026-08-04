@@ -12,8 +12,7 @@ const errorHandler = (err, req, res, next) => {
     error = new ApiError(statusCode, message, false, err.errors || [], err.stack);
   }
 
-  logger.error('API Error Encountered', {
-    message: error.message,
+  logger.error(`API Error Encountered: ${error.message} [${req.method} ${req.originalUrl}]`, {
     statusCode: error.statusCode,
     url: req.originalUrl,
     method: req.method,
@@ -21,6 +20,10 @@ const errorHandler = (err, req, res, next) => {
     errors: error.errors,
     stack: error.stack,
   });
+
+  if (error.stack) {
+    console.error(`[EXPLICIT ERROR TRACE] ${req.method} ${req.originalUrl}:`, error.stack);
+  }
 
   const responseBody = {
     success: false,
