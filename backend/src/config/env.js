@@ -20,9 +20,9 @@ const mfaEncryptionKey = requireProductionSecret('MFA_ENCRYPTION_KEY', 32) || 'd
 const storefrontApiKey = requireProductionSecret('STOREFRONT_API_KEY', 32) || '';
 const paymentsEnabled = process.env.PAYMENTS_ENABLED === 'true';
 const payoutMakerCheckerMinimum = Number(process.env.PAYOUT_MAKER_CHECKER_MIN_AMOUNT || '0');
-const razorpayKeyId = process.env.RAZORPAY_KEY_ID || '';
-const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || '';
-const razorpayWebhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
+const razorpayKeyId = (process.env.RAZORPAY_KEY_ID || '').trim();
+const razorpayKeySecret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+const razorpayWebhookSecret = (process.env.RAZORPAY_WEBHOOK_SECRET || '').trim();
 if (env === 'production' && paymentsEnabled) {
   if (!razorpayKeyId || !razorpayKeySecret || !razorpayWebhookSecret) {
     throw new Error('Razorpay credentials must be configured when PAYMENTS_ENABLED=true');

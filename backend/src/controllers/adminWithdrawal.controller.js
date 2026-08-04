@@ -124,7 +124,7 @@ exports.createRazorpayPayoutOrder = asyncHandler(async (req, res) => {
   } catch (rzpErr) {
     logger.error('Razorpay Order Creation Failed:', rzpErr);
     const detail = rzpErr?.error?.description || rzpErr?.message || 'Razorpay order creation failed';
-    throw ApiError.badRequest(`Razorpay Gateway Error: ${detail}`);
+    throw ApiError.badRequest(`Razorpay Authentication Error (${detail}): Please check your RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET on Render Environment settings.`);
   }
 
   res.json({
