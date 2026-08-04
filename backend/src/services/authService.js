@@ -38,8 +38,6 @@ class AuthService {
       parentAffiliateId = recruitmentLink.user_id;
     }
     const passwordHash = await passwordUtils.hashPassword(password);
-    
-    // Status is active by default, or pending if admin approval required
     const initialStatus = role === 'affiliate' ? 'active' : 'active';
 
     const user = await userRepository.create({
@@ -50,7 +48,6 @@ class AuthService {
       parentAffiliateId,
     });
 
-    // Create profile
     const profile = await profileRepository.create({
       userId: user.id,
       firstName,
@@ -58,15 +55,12 @@ class AuthService {
       company,
     });
 
-    // Automatically generate a primary affiliate link for affiliate roles
     let primaryLink = null;
     if (role === 'affiliate' || role === 'super_affiliate') {
       const referralCode = codeGenerator.generateReferralCode(role === 'super_affiliate' ? 'SUP' : 'AFF');
       primaryLink = await affiliateRepository.createLink({
         userId: user.id,
         referralCode,
-        // All referral traffic should land on the public Alora Radiance store.
-        // The portal URL is only the shareable tracking URL (/ref/:code).
         targetUrl: config.storefrontUrl,
         title: 'Default Shopping Link', linkType: 'SHOPPING', isSystemLink: true,
       });
@@ -91,36 +85,31 @@ class AuthService {
     const refreshToken = jwtUtils.generateRefreshToken({ id: user.id });
     await userRepository.updateRefreshToken(user.id, refreshToken);
 
-    // Send welcome email asynchronously
-    try {
-      emailService.sendWelcomeEmail({
-        email: user.email,
-        firstName: profile.first_name,
-        lastName: profile.last_name,
-      }).catch(err => logger.error('Failed to send welcome email:', err));
-    } catch (emailError) {
-      logger.error('Error sending welcome email:', emailError);
-      // Don't throw - email is non-critical
-    }
-    this.sendEmailVerification(user.id).catch(err => logger.error('Email verification setup failed', err));
+    // Non-blocking background side-effects (Emails, Notifications)
+    setImmediate(async () => {
+      try {
+        emailService.sendWelcomeEmail({
+          email: user.email,
+          firstName: profile.first_name,
+          lastName: profile.last_name,
+        }).catch(() => {});
 
-    // Send notifications to admins and new user
-    try {
-      notificationRepository.createForAdmins({
-        title: 'New Affiliate Joined',
-        message: `New ${role.replace('_', ' ')} ${profile.first_name} ${profile.last_name || ''} (${user.email}) registered on the platform.`,
-        type: 'new_affiliate',
-      }).catch(err => logger.error('Admin notification creation error:', err));
+        this.sendEmailVerification(user.id).catch(() => {});
 
-      notificationRepository.create({
-        userId: user.id,
-        title: 'Welcome to ALORA Radiance!',
-        message: 'Your affiliate account is active. Share your referral link to start earning commissions.',
-        type: 'welcome',
-      }).catch(err => logger.error('User welcome notification creation error:', err));
-    } catch (notifErr) {
-      logger.error('Failed to create registration notifications:', notifErr);
-    }
+        notificationRepository.createForAdmins({
+          title: 'New Affiliate Joined',
+          message: `New ${role.replace('_', ' ')} ${profile.first_name} ${profile.last_name || ''} (${user.email}) registered on the platform.`,
+          type: 'new_affiliate',
+        }).catch(() => {});
+
+        notificationRepository.create({
+          userId: user.id,
+          title: 'Welcome to ALORA Radiance!',
+          message: 'Your affiliate account is active. Share your referral link to start earning commissions.',
+          type: 'welcome',
+        }).catch(() => {});
+      } catch (err) {}
+    });
 
     return {
       user: {
@@ -198,9 +187,16 @@ class AuthService {
   async issueLoginTokens(user, ipAddress = null) {
     const accessToken = jwtUtils.generateAccessToken({ id: user.id, email: user.email, role: user.role_name });
     const refreshToken = jwtUtils.generateRefreshToken({ id: user.id });
-    await userRepository.updateRefreshToken(user.id, refreshToken);
-    const fullUser = await userRepository.findById(user.id);
-    await logRepository.createActivityLog({ userId: user.id, action: 'USER_LOGIN', entityType: 'USER', entityId: user.id, ipAddress });
+
+    const [_, fullUser] = await Promise.all([
+      userRepository.updateRefreshToken(user.id, refreshToken),
+      userRepository.findById(user.id),
+    ]);
+
+    setImmediate(() => {
+      logRepository.createActivityLog({ userId: user.id, action: 'USER_LOGIN', entityType: 'USER', entityId: user.id, ipAddress }).catch(() => {});
+    });
+
     return { user: fullUser, tokens: { accessToken, refreshToken } };
   }
 
@@ -219,52 +215,65 @@ class AuthService {
     return this.issueLoginTokens(sessionUser, ipAddress);
   }
 
-  async verifyMfaLogin(mfaToken, code, ipAddress = null) {
+  async verifyMfa(mfaToken, code, ipAddress = null) {
     const decoded = jwtUtils.verifyMfaToken(mfaToken, 'mfa-login');
-    const user = await userRepository.findSessionUserById(decoded.id);
-    if (!user?.mfa_enabled || !user.mfa_secret_encrypted || !mfaService.verifyCode(mfaService.decrypt(user.mfa_secret_encrypted), code)) throw ApiError.unauthorized('Invalid authenticator code');
-    return this.issueLoginTokens(user, ipAddress);
-  }
-
-  async logout(userId) {
-    await userRepository.updateRefreshToken(userId, null);
-  }
-  async requestPasswordReset(email) {
-    const user = await userRepository.findByEmail(email);
-    if (!user) return;
-    const token = crypto.randomBytes(32).toString('hex');
-    await userRepository.savePasswordReset(user.id, crypto.createHash('sha256').update(token).digest('hex'), new Date(Date.now() + 60 * 60 * 1000));
-    emailService.sendPasswordResetEmail(user, token).catch(err => logger.error('Password reset email failed', err));
-  }
-  async resetPassword(token, password) {
-    const user = await userRepository.findByPasswordResetToken(crypto.createHash('sha256').update(token).digest('hex'));
-    if (!user) throw ApiError.badRequest('Password reset link is invalid or expired');
-    await userRepository.updatePassword(user.id, await passwordUtils.hashPassword(password));
-    await userRepository.clearPasswordReset(user.id);
+    const sessionUser = await userRepository.findSessionUserById(decoded.id);
+    if (!sessionUser || ![ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(sessionUser.role_name) || !sessionUser.mfa_secret) throw ApiError.unauthorized('MFA is not configured for this account');
+    const decryptedSecret = mfaService.decrypt(sessionUser.mfa_secret);
+    if (!mfaService.verifyCode(decryptedSecret, code)) throw ApiError.unauthorized('Invalid authenticator code');
+    return this.issueLoginTokens(sessionUser, ipAddress);
   }
 
   async sendEmailVerification(userId) {
     const user = await userRepository.findById(userId);
     if (!user) throw ApiError.notFound('User not found');
-    if (user.is_email_verified) return;
+    if (user.email_verified) return { message: 'Email address is already verified' };
 
     const token = crypto.randomBytes(32).toString('hex');
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    await userRepository.saveEmailVerification(user.id, tokenHash, new Date(Date.now() + 24 * 60 * 60 * 1000));
-    await emailService.sendEmailVerificationEmail(user, token);
+    const hashed = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await userRepository.saveEmailVerificationToken(userId, hashed, expiresAt);
+    const verificationUrl = `${config.frontendUrl.replace(/\/$/, '')}/verify-email?token=${token}`;
+    emailService.sendEmailVerificationEmail(user, verificationUrl).catch(err => logger.error('Failed to send verification email', err));
+    return { message: 'Verification email sent successfully' };
   }
 
-  async verifyEmail(token) {
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    const user = await userRepository.findByEmailVerificationToken(tokenHash);
-    if (!user) throw ApiError.badRequest('Email verification link is invalid or expired');
-    await userRepository.verifyEmail(user.id);
-    await logRepository.createActivityLog({
-      userId: user.id,
-      action: 'EMAIL_VERIFIED',
-      entityType: 'USER',
-      entityId: user.id,
-    });
+  async verifyEmailToken(token) {
+    const hashed = crypto.createHash('sha256').update(token).digest('hex');
+    const record = await userRepository.findEmailVerificationToken(hashed);
+    if (!record || new Date(record.expires_at) < new Date()) {
+      throw ApiError.badRequest('Invalid or expired verification token');
+    }
+    await userRepository.markEmailVerified(record.user_id);
+    await userRepository.deleteEmailVerificationToken(record.user_id);
+    return { message: 'Email address verified successfully' };
+  }
+
+  async requestPasswordReset(email) {
+    const user = await userRepository.findByEmail(email);
+    if (!user) return { message: 'If that account exists, a reset link has been sent' };
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const hashed = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    await userRepository.savePasswordResetToken(user.id, hashed, expiresAt);
+    const resetUrl = `${config.frontendUrl.replace(/\/$/, '')}/reset-password?token=${token}`;
+    emailService.sendPasswordResetEmail(user, resetUrl).catch(err => logger.error('Failed to send reset email', err));
+    return { message: 'If that account exists, a reset link has been sent' };
+  }
+
+  async resetPassword(token, newPassword) {
+    const hashed = crypto.createHash('sha256').update(token).digest('hex');
+    const record = await userRepository.findPasswordResetToken(hashed);
+    if (!record || new Date(record.expires_at) < new Date()) {
+      throw ApiError.badRequest('Invalid or expired reset token');
+    }
+    const passwordHash = await passwordUtils.hashPassword(newPassword);
+    await userRepository.updatePassword(record.user_id, passwordHash);
+    await userRepository.deletePasswordResetToken(record.user_id);
+    return { message: 'Password has been reset successfully' };
   }
 }
 
