@@ -32,6 +32,7 @@ import { Withdrawals } from '../pages/Withdrawals';
 import { BankAccounts } from '../pages/BankAccounts';
 import { AdminWithdrawals } from '../pages/AdminWithdrawals';
 import { AdminBankAccounts } from '../pages/AdminBankAccounts';
+import { MarketingAssets } from '../pages/MarketingAssets';
 
 export const AppRoutes = () => {
   return (
@@ -76,6 +77,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.WITHDRAWALS} element={<Withdrawals />} />
         <Route path={ROUTES.BANK_ACCOUNTS} element={<BankAccounts />} />
         <Route path={ROUTES.PROFILE} element={<Profile />} />
+        <Route path={ROUTES.MARKETING_ASSETS} element={<MarketingAssets />} />
       </Route>
 
       <Route path={ROUTES.HOME} element={<Landing />} />

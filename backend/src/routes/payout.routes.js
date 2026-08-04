@@ -59,6 +59,13 @@ router.post(
  * GET /api/v1/payouts
  */
 router.get(
+    "/export",
+    authenticate,
+    authorizeRoles(ROLES.SUPER_ADMIN, ROLES.ADMIN),
+    PayoutController.exportCsv
+);
+
+router.get(
     "/",
     authenticate,
     authorizeRoles(

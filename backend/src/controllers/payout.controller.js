@@ -228,6 +228,10 @@ class PayoutController {
 
             message: "Payout cancelled successfully.",
 
+            success: true,
+
+            message: "Payout cancelled successfully.",
+
             data: payout
 
         });
@@ -251,6 +255,31 @@ class PayoutController {
 
         });
 
+    });
+
+    exportCsv = asyncHandler(async (req, res) => {
+        const result = await PayoutService.getAllPayouts({}, 1000, 0);
+        const items = result.items || [];
+        const header = ['ID', 'Payout Number', 'Amount', 'Currency', 'Gateway', 'Status', 'Transaction Ref', 'Created At'];
+        const csvRows = [header.join(',')];
+
+        for (const item of items) {
+            const row = [
+                `"${item.id}"`,
+                `"${item.payout_number || ''}"`,
+                `"${item.amount || 0}"`,
+                `"${item.currency || 'INR'}"`,
+                `"${item.gateway || ''}"`,
+                `"${item.status || ''}"`,
+                `"${item.transaction_reference || ''}"`,
+                `"${item.created_at || ''}"`
+            ];
+            csvRows.push(row.join(','));
+        }
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="payouts_export_${Date.now()}.csv"`);
+        return res.status(200).send(csvRows.join('\n'));
     });
 
 }

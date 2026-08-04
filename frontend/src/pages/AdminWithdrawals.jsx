@@ -65,8 +65,28 @@ export const AdminWithdrawals = () => {
       : dialog?.type === 'process' ? ['Process payout', 'Bank transaction reference']
         : ['Complete payout', 'Final transaction reference'];
 
+  const handleExportWithdrawals = () => {
+    window.open('/api/v1/admin/withdrawals/export', '_blank');
+    showSuccess('Exporting withdrawals CSV...');
+  };
+  const handleExportPayouts = () => {
+    window.open('/api/v1/payouts/export', '_blank');
+    showSuccess('Exporting payouts CSV...');
+  };
+
   return <div className="financial-admin-page">
-    <div className="page-heading"><h1>Withdrawal & Payout Management</h1><p>Review requests, keep references, and manage bank-transfer payouts.</p></div>
+    <div className="page-heading">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+        <div>
+          <h1>Withdrawal & Payout Management</h1>
+          <p>Review requests, keep references, and manage bank-transfer payouts.</p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <Button variant="secondary" size="sm" onClick={handleExportWithdrawals}>📥 Export Withdrawals CSV</Button>
+          <Button variant="secondary" size="sm" onClick={handleExportPayouts}>📥 Export Payouts CSV</Button>
+        </div>
+      </div>
+    </div>
     <Card><div className="financial-card-heading"><div><h2>Withdrawal requests</h2><p>Approve valid requests or reject them with a documented reason.</p></div><Filter size={18} /></div>
       <div className="financial-filters"><label>Status<select value={withdrawalStatus} onChange={(e) => { setWithdrawalStatus(e.target.value); setWithdrawalPage(1); }}>{withdrawalStatuses.map((status) => <option value={status} key={status || 'all'}>{status || 'All statuses'}</option>)}</select></label></div>
       <div className="admin-withdrawal-list">{withdrawals.items?.map((item) => <article className="bank-account-item financial-record" key={item.id}><div><strong>{formatCurrency(item.amount)} · {item.withdrawal_number}</strong><p>Affiliate ID: {item.user_id}</p><small>Requested {formatDate(item.created_at)}</small>{item.notes && <small>Note: {item.notes}</small>}</div><div className="bank-account-actions"><Badge status={item.status}>{item.status}</Badge>{item.status === 'pending' && <><Button onClick={() => approve(item)}>Approve</Button><Button variant="danger" onClick={() => openDialog('reject', item)}>Reject</Button></>}{item.status === 'approved' && <Button onClick={() => create(item)}>Create payout</Button>}</div></article>)}{!loading && withdrawals.items?.length === 0 && <p className="empty-state">No withdrawal requests match this filter.</p>}</div>

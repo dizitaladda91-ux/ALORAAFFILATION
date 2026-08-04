@@ -13,6 +13,7 @@ import {
   Settings,
   User,
   ShieldAlert,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -26,6 +27,7 @@ export const Sidebar = () => {
           { label: 'Dashboard', path: ROUTES.SUPER_ADMIN_DASHBOARD, icon: LayoutDashboard },
           { label: 'All Users', path: ROUTES.USER_MANAGEMENT, icon: Users },
           { label: 'Commission Rules', path: ROUTES.COMMISSION_RULES, icon: Percent },
+          { label: 'Marketing Banners', path: ROUTES.MARKETING_ASSETS, icon: ImageIcon },
           { label: 'Audit Logs', path: ROUTES.AUDIT_LOGS, icon: ShieldAlert },
           { label: 'System Settings', path: ROUTES.SYSTEM_SETTINGS, icon: Settings },
         ];
@@ -34,6 +36,7 @@ export const Sidebar = () => {
           { label: 'Dashboard', path: ROUTES.ADMIN_DASHBOARD, icon: LayoutDashboard },
           { label: 'Affiliates', path: ROUTES.USER_MANAGEMENT, icon: Users },
           { label: 'Commission Rules', path: ROUTES.COMMISSION_RULES, icon: Percent },
+          { label: 'Marketing Banners', path: ROUTES.MARKETING_ASSETS, icon: ImageIcon },
           { label: 'Audit Logs', path: ROUTES.AUDIT_LOGS, icon: FileText },
           { label: 'Withdrawals', path: ROUTES.ADMIN_WITHDRAWALS, icon: DollarSign },
           { label: 'Bank Verification', path: ROUTES.ADMIN_BANK_ACCOUNTS, icon: Users },
@@ -43,6 +46,7 @@ export const Sidebar = () => {
           { label: 'Dashboard', path: ROUTES.SUPER_AFFILIATE_DASHBOARD, icon: LayoutDashboard },
           { label: 'My Team', path: ROUTES.TEAM_TRACKING, icon: Users },
           { label: 'Referral Links', path: ROUTES.REFERRAL_LINKS, icon: Link },
+          { label: 'Marketing Banners', path: ROUTES.MARKETING_ASSETS, icon: ImageIcon },
           { label: 'Earnings', path: ROUTES.EARNINGS, icon: DollarSign },
           { label: 'Wallet', path: ROUTES.WALLET, icon: DollarSign },
           { label: 'Withdrawals', path: ROUTES.WITHDRAWALS, icon: FileText },
@@ -53,6 +57,7 @@ export const Sidebar = () => {
         return [
           { label: 'Dashboard', path: ROUTES.AFFILIATE_DASHBOARD, icon: LayoutDashboard },
           { label: 'Referral Links', path: ROUTES.REFERRAL_LINKS, icon: Link },
+          { label: 'Marketing Banners', path: ROUTES.MARKETING_ASSETS, icon: ImageIcon },
           { label: 'Earnings & Payouts', path: ROUTES.EARNINGS, icon: DollarSign },
           { label: 'Wallet', path: ROUTES.WALLET, icon: DollarSign },
           { label: 'Withdrawals', path: ROUTES.WITHDRAWALS, icon: FileText },

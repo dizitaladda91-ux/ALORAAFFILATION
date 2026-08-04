@@ -29,4 +29,5 @@ export const ROUTES = {
   ADMIN_WITHDRAWALS: '/admin/withdrawals',
   ADMIN_BANK_ACCOUNTS: '/admin/bank-accounts',
   PROFILE: '/profile',
+  MARKETING_ASSETS: '/marketing-assets',
 };

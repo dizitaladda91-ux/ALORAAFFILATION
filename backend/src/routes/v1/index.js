@@ -15,6 +15,7 @@ const bankAccountRoutes = require('../bankAccount.routes');
 const walletRoutes = require('../walletroutes');
 const withdrawalRoutes = require('../withdrawalroutes');
 const adminWithdrawalRoutes = require('../adminWithdrawalRoutes');
+const marketingAssetRoutes = require('../marketingAssetRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/admin', adminRoutes);
@@ -29,9 +30,7 @@ router.use('/withdrawals', withdrawalRoutes);
 router.use('/admin/withdrawals', adminWithdrawalRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/payments', paymentRoutes);
-router.use(
-    "/payouts",
-    payoutRoutes
-);
+router.use('/marketing-assets', marketingAssetRoutes);
+router.use('/payouts', payoutRoutes);
 
 module.exports = router;

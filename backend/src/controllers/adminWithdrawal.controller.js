@@ -65,3 +65,28 @@ exports.reject = asyncHandler(async (req, res) => {
     res.json({ success: true, data: result });
   } catch (error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }
 });
+
+exports.exportCsv = asyncHandler(async (req, res) => {
+  const items = await withdrawalRepository.findAll({}, 1000, 0);
+  const header = ['ID', 'Withdrawal Number', 'User Email', 'Amount', 'Payment Method', 'Status', 'Notes', 'Created At'];
+  const csvRows = [header.join(',')];
+
+  for (const item of items) {
+    const row = [
+      `"${item.id}"`,
+      `"${item.withdrawal_number || ''}"`,
+      `"${item.user_email || ''}"`,
+      `"${item.amount || 0}"`,
+      `"${item.payment_method || ''}"`,
+      `"${item.status || ''}"`,
+      `"${(item.notes || '').replace(/"/g, '""')}"`,
+      `"${item.created_at || ''}"`
+    ];
+    csvRows.push(row.join(','));
+  }
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="withdrawals_export_${Date.now()}.csv"`);
+  return res.status(200).send(csvRows.join('\n'));
+});
+
