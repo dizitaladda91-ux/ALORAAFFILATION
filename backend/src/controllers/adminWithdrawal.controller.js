@@ -99,6 +99,8 @@ exports.createRazorpayPayoutOrder = asyncHandler(async (req, res) => {
     throw ApiError.badRequest('Razorpay credentials (RAZORPAY_KEY_ID & RAZORPAY_KEY_SECRET) are not configured in environment.');
   }
 
+  logger.info(`Creating Razorpay Payout Order for ${withdrawal.withdrawal_number} using key: ${config.razorpay.keyId.substring(0, 10)}...`);
+
   const Razorpay = require('razorpay');
   const razorpay = new Razorpay({
     key_id: config.razorpay.keyId,
