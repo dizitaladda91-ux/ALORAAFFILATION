@@ -12,8 +12,10 @@ const isRemoteDb = config.dbUrl && (
   config.env === 'production'
 );
 
+const connectionString = (config.dbUrl || '').replace('sslmode=require', 'sslmode=verify-full');
+
 const pool = new Pool({
-  connectionString: config.dbUrl,
+  connectionString,
   max: config.dbMax,
   idleTimeoutMillis: config.dbIdleTimeout,
   connectionTimeoutMillis: 10000,
