@@ -12,6 +12,9 @@ frontend/dist/
 .env.example
 frontend/.env.example
 backend/.env.example
+frontend/docker-compose.override.yml
+frontend/IMPLEMENTATION.md
+frontend/render.yaml
 
 # Logs
 *.log
