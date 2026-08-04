@@ -512,8 +512,20 @@
 }
 
 .page-heading { margin-bottom: 1.5rem; }.page-heading h1 { font-size: 1.75rem; font-weight: 800; }.page-heading p { margin-top: .35rem; color: var(--text-muted); }.bank-account-form { display: grid; gap: .85rem; margin-top: 1rem; }.bank-account-list { display: grid; gap: .8rem; margin-top: 1rem; }.bank-account-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); }.bank-account-item p,.bank-account-item small,.empty-state { margin-top: .25rem; color: var(--text-muted); }.bank-account-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }.default-account { color: var(--success); font-size: .8rem; font-weight: 700; } @media (max-width: 680px) { .bank-account-item { align-items: flex-start; flex-direction: column; }.bank-account-actions { justify-content: flex-start; }.bank-account-actions .btn { flex: 1 1 auto; } }
+.auth-shell {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  background: #090d1b;
+  overflow: hidden;
+}
 .auth-orb { position: absolute; z-index: -1; width: 24rem; aspect-ratio: 1; border-radius: 50%; opacity: .45; animation: auth-float 10s ease-in-out infinite; }.auth-orb-one { top: -11rem; right: -7rem; background: #7255ff; }.auth-orb-two { bottom: -13rem; left: -8rem; background: #0ea5a4; animation-delay: -5s; }
-.auth-stage { width: min(100%, 1060px); display: grid; grid-template-columns: minmax(0,1fr) minmax(370px,440px); gap: clamp(3rem,8vw,7.5rem); align-items: center; }.auth-intro { color: #f8fafc; animation: auth-enter 700ms 100ms both; }.alora-brand { display: inline-flex; align-items: center; }.auth-brand-logo { display: block; width: clamp(9rem,16vw,12.5rem); height: 3.1rem; object-fit: contain; object-position: left center; filter: brightness(0) invert(1); }.auth-kicker,.auth-card-overline { margin-top: 2.25rem; color: #a89dff; font-size: .69rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }.auth-intro h1 { max-width: 9ch; margin-top: .85rem; font-size: clamp(2.5rem,5vw,4.3rem); line-height: .98; letter-spacing: -.065em; }.auth-intro-copy { max-width: 32rem; margin-top: 1.25rem; color: #aeb9d1; font-size: 1rem; line-height: 1.7; }
+.auth-stage { width: min(100%, 1120px); margin: 0 auto; display: grid; grid-template-columns: minmax(0,1fr) minmax(370px,440px); gap: clamp(3rem,6vw,6.5rem); align-items: center; }.auth-intro { color: #f8fafc; animation: auth-enter 700ms 100ms both; }.alora-brand { display: inline-flex; align-items: center; }.auth-brand-logo { display: block; width: clamp(9rem,16vw,12.5rem); height: 3.1rem; object-fit: contain; object-position: left center; filter: brightness(0) invert(1); }.auth-kicker,.auth-card-overline { margin-top: 2.25rem; color: #a89dff; font-size: .69rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }.auth-intro h1 { max-width: 9ch; margin-top: .85rem; font-size: clamp(2.5rem,5vw,4.3rem); line-height: .98; letter-spacing: -.065em; }.auth-intro-copy { max-width: 32rem; margin-top: 1.25rem; color: #aeb9d1; font-size: 1rem; line-height: 1.7; }
 .affiliate-guide { display: grid; gap: .7rem; margin-top: 2rem; max-width: 34rem; }.affiliate-type { display: flex; gap: .85rem; padding: .95rem 1rem; border: 1px solid rgba(255,255,255,.1); border-radius: .85rem; background: rgba(15,23,42,.36); backdrop-filter: blur(12px); animation: auth-enter 650ms both; }.affiliate-type-featured { border-color: rgba(167,139,250,.45); background: rgba(100,78,220,.15); animation-delay: 200ms; }.affiliate-type:not(.affiliate-type-featured) { animation-delay: 300ms; }.affiliate-type-icon { flex: 0 0 auto; display: grid; place-items: center; width: 2.15rem; height: 2.15rem; border-radius: .65rem; background: rgba(255,255,255,.1); color: #c4bcff; font-weight: 800; }.affiliate-type-label { margin-bottom: .18rem; color: #fff; font-size: .82rem; font-weight: 800; }.affiliate-type p:last-child { color: #b7c1d5; font-size: .77rem; line-height: 1.45; }
 .auth-card-wrap { animation: auth-enter 700ms 180ms both; }
 .auth-card {
