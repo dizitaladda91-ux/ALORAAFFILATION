@@ -24,22 +24,14 @@ app.use(helmet());
 app.use(
   cors({
     origin(origin, callback) {
-      // Payment providers and server-to-server integrations have no Origin.
-      // Every browser request must come from an explicitly configured origin.
       if (!origin || config.corsOrigins.includes(origin)) return callback(null, true);
       return callback(new Error('Origin is not allowed by CORS policy'));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
 
-
 // Body parser & Cookie parser
-// Razorpay's signature is calculated on the exact raw bytes. This must be
-// registered before the JSON parser and must remain unauthenticated.
-// This must match the mounted payments route even when API_PREFIX is set.
 const razorpayWebhookPath = `${config.apiPrefix || ''}/payments/webhook` || '/payments/webhook';
 app.use(razorpayWebhookPath, express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
@@ -49,24 +41,22 @@ app.use(cookieParser());
 // Rate Limiter
 app.use(globalRateLimiter);
 
-// Browsers may request this automatically when the API URL is opened directly.
-// There is no API favicon, so return an empty successful response without
-// sending the request through the 404 error handler.
+// Favicon
 app.get('/favicon.ico', (req, res) => {
   res.status(204).end();
 });
 
 // Root endpoint
-app.get('/', (req, res) => {
+app.get('/', (req, res, next) => {
+  const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+  if (fs.existsSync(frontendDistPath)) {
+    return res.sendFile(path.join(frontendDistPath, 'index.html'));
+  }
   res.status(200).json({
     success: true,
     application: 'Affiliate Management API',
     version: '1.0.0',
     environment: config.env,
-    api: config.apiPrefix || '/',
-    health: '/health',
-    documentation: config.apiPrefix || '/',
-    timestamp: new Date().toISOString(),
   });
 });
 
@@ -104,14 +94,26 @@ app.get('/docs', (req, res) => {
   return res.status(404).json({ message: 'OpenAPI document not found' });
 });
 
-// API Routes — no version prefix, e.g. POST /auth/login.
+// API Routes — e.g. /api/v1/auth/login or /auth/login
 if (config.apiPrefix) {
   app.use(config.apiPrefix, routesV1);
 } else {
   app.use(routesV1);
 }
 
-// Handle 404
+// Serve static frontend build assets and handle SPA client-side routing fallback
+const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.originalUrl.startsWith('/health') || req.originalUrl.startsWith('/docs') || (config.apiPrefix && req.originalUrl.startsWith(config.apiPrefix))) {
+      return next(ApiError.notFound(`Cannot find route ${req.originalUrl} on this server`));
+    }
+    return res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+}
+
+// Handle 404 for unhandled API requests
 app.use((req, res, next) => {
   next(ApiError.notFound(`Cannot find route ${req.originalUrl} on this server`));
 });
