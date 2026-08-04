@@ -59,7 +59,7 @@ export const Login = () => {
   return (
     <AuthLayout title="Welcome back" subtitle="Sign in to your Alora partner account." showAffiliateGuide>
       {mfa ? <form onSubmit={completeMfa}>
-        <p style={{ marginBottom: '1rem', color: 'var(--text-muted)' }}>{mfa.mfaSetupRequired ? `Add this secret to Google Authenticator, Microsoft Authenticator, or Authy: ${mfa.secret}` : 'Enter the six-digit code from your authenticator app.'}</p>
+        <p style={{ marginBottom: '1rem', color: '#94a3b8' }}>{mfa.mfaSetupRequired ? `Add this secret to Google Authenticator, Microsoft Authenticator, or Authy: ${mfa.secret}` : 'Enter the six-digit code from your authenticator app.'}</p>
         <Input label="Authenticator code" inputMode="numeric" maxLength="6" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} required />
         <Button type="submit" loading={loading} style={{ width: '100%' }}>{mfa.mfaSetupRequired ? 'Enable authenticator' : 'Verify and sign in'}</Button>
       </form> : <form onSubmit={handleSubmit}>
@@ -80,10 +80,10 @@ export const Login = () => {
           required
         />
         <div className="flex justify-between items-center" style={{ marginBottom: '1.5rem', fontSize: '0.8125rem' }}>
-          <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
+          <label className="flex items-center gap-2" style={{ cursor: 'pointer', color: '#cbd5e1' }}>
             <input type="checkbox" defaultChecked /> Remember me
           </label>
-          <Link to={ROUTES.FORGOT_PASSWORD} style={{ color: 'var(--primary)', fontWeight: 600 }}>
+          <Link to={ROUTES.FORGOT_PASSWORD} style={{ color: '#818cf8', fontWeight: 600 }}>
             Forgot password?
           </Link>
         </div>
@@ -91,9 +91,9 @@ export const Login = () => {
           Sign In
         </Button>
       </form>}
-      <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+      <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: '#94a3b8' }}>
         Don't have an account?{' '}
-        <Link to={ROUTES.REGISTER} style={{ color: 'var(--primary)', fontWeight: 700 }}>
+        <Link to={ROUTES.REGISTER} style={{ color: '#818cf8', fontWeight: 700 }}>
           Create an account
         </Link>
       </div>
