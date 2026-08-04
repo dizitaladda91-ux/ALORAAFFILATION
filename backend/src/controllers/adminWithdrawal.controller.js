@@ -108,17 +108,24 @@ exports.createRazorpayPayoutOrder = asyncHandler(async (req, res) => {
   const amountInPaise = Math.round(Number(withdrawal.amount) * 100);
   const user = await userRepository.findById(withdrawal.user_id);
 
-  const order = await razorpay.orders.create({
-    amount: amountInPaise,
-    currency: 'INR',
-    receipt: `payout_${(withdrawal.withdrawal_number || withdrawal.id).slice(0, 30)}`,
-    notes: {
-      withdrawalId: String(withdrawal.id),
-      withdrawalNumber: String(withdrawal.withdrawal_number || ''),
-      userId: String(withdrawal.user_id),
-      email: user?.email || ''
-    }
-  });
+  let order;
+  try {
+    order = await razorpay.orders.create({
+      amount: amountInPaise,
+      currency: 'INR',
+      receipt: `payout_${(withdrawal.withdrawal_number || withdrawal.id).slice(0, 30)}`,
+      notes: {
+        withdrawalId: String(withdrawal.id),
+        withdrawalNumber: String(withdrawal.withdrawal_number || ''),
+        userId: String(withdrawal.user_id),
+        email: user?.email || ''
+      }
+    });
+  } catch (rzpErr) {
+    logger.error('Razorpay Order Creation Failed:', rzpErr);
+    const detail = rzpErr?.error?.description || rzpErr?.message || 'Razorpay order creation failed';
+    throw ApiError.badRequest(`Razorpay Gateway Error: ${detail}`);
+  }
 
   res.json({
     success: true,
