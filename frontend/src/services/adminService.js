@@ -28,3 +28,27 @@ export const fetchAuditLogs = async (params) => {
   const res = await api.get(API_ENDPOINTS.ADMIN.AUDIT_LOGS, { params });
   return res.data?.data || res.data || [];
 };
+
+export const exportWithdrawalsCsv = async () => {
+  const res = await api.get('/admin/withdrawals/export', { responseType: 'blob' });
+  const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `withdrawals_export_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+export const exportPayoutsCsv = async () => {
+  const res = await api.get('/payouts/export', { responseType: 'blob' });
+  const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `payouts_export_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};

@@ -3,7 +3,7 @@ import { Filter, X } from 'lucide-react';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
-import { fetchAdminWithdrawals, approveWithdrawal, rejectWithdrawal, fetchPayouts, createPayout, approvePayout, updatePayout } from '../services/adminService';
+import { fetchAdminWithdrawals, approveWithdrawal, rejectWithdrawal, fetchPayouts, createPayout, approvePayout, updatePayout, exportWithdrawalsCsv, exportPayoutsCsv } from '../services/adminService';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { useNotification } from '../hooks/useNotification';
 
@@ -65,13 +65,21 @@ export const AdminWithdrawals = () => {
       : dialog?.type === 'process' ? ['Process payout', 'Bank transaction reference']
         : ['Complete payout', 'Final transaction reference'];
 
-  const handleExportWithdrawals = () => {
-    window.open('/api/v1/admin/withdrawals/export', '_blank');
-    showSuccess('Exporting withdrawals CSV...');
+  const handleExportWithdrawals = async () => {
+    try {
+      showSuccess('Downloading withdrawals CSV...');
+      await exportWithdrawalsCsv();
+    } catch (err) {
+      showError('Failed to export withdrawals CSV.');
+    }
   };
-  const handleExportPayouts = () => {
-    window.open('/api/v1/payouts/export', '_blank');
-    showSuccess('Exporting payouts CSV...');
+  const handleExportPayouts = async () => {
+    try {
+      showSuccess('Downloading payouts CSV...');
+      await exportPayoutsCsv();
+    } catch (err) {
+      showError('Failed to export payouts CSV.');
+    }
   };
 
   return <div className="financial-admin-page">
