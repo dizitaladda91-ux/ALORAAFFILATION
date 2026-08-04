@@ -22,7 +22,7 @@ exports.approve = asyncHandler(async (req, res) => {
   if (withdrawal.status !== 'pending') throw ApiError.badRequest('Only pending requests can be approved.');
   const approved = await withdrawalRepository.approve(req.params.id, req.user.id, req.body.notes);
   await logRepository.createAuditLog({ actorId: req.user.id, targetUserId: withdrawal.user_id, action: 'WITHDRAWAL_APPROVED', changesJson: { withdrawalId: withdrawal.id, withdrawalNumber: withdrawal.withdrawal_number, notes: req.body.notes || null }, ipAddress: req.ip });
-  // Send approval email asynchronously
+  // Send approval notification & email
   try {
     const user = await userRepository.findById(withdrawal.user_id);
     if (user && user.email) {
@@ -31,9 +31,14 @@ exports.approve = asyncHandler(async (req, res) => {
         approved_at: new Date(),
       }).catch(err => logger.error('Failed to send withdrawal approval email:', err));
     }
+    notificationRepository.create({
+      userId: withdrawal.user_id,
+      title: 'Withdrawal Approved! ✅',
+      message: `Your withdrawal request ${withdrawal.withdrawal_number || ''} of ₹${withdrawal.amount} has been approved by admin.`,
+      type: 'withdrawal',
+    }).catch(err => logger.error('Withdrawal approval notification error:', err));
   } catch (emailError) {
-    logger.error('Error sending withdrawal approval email:', emailError);
-    // Don't throw - email is non-critical
+    logger.error('Error sending withdrawal approval notification:', emailError);
   }
   res.json({ success: true, data: approved });
 });
@@ -51,7 +56,7 @@ exports.reject = asyncHandler(async (req, res) => {
     await walletRepository.createTransaction({ walletId: lockedWallet.id, userId: withdrawal.user_id, type: 'WITHDRAWAL_RELEASE', referenceType: 'withdrawal', referenceId: String(withdrawal.id), amount: withdrawal.amount, openingBalance: lockedWallet.available_balance, closingBalance: updatedWallet.available_balance, description: `Withdrawal ${withdrawal.withdrawal_number} rejected`, status: 'SUCCESS', createdBy: req.user.id }, client);
     await client.query('COMMIT');
     await logRepository.createAuditLog({ actorId: req.user.id, targetUserId: withdrawal.user_id, action: 'WITHDRAWAL_REJECTED', changesJson: { withdrawalId: withdrawal.id, withdrawalNumber: withdrawal.withdrawal_number, notes: req.body.notes || null }, ipAddress: req.ip });
-    // Send rejection email asynchronously
+    // Send rejection notification & email
     try {
       const user = await userRepository.findById(withdrawal.user_id);
       if (user && user.email) {
@@ -59,9 +64,14 @@ exports.reject = asyncHandler(async (req, res) => {
           amount: withdrawal.amount,
         }, req.body.notes || 'Rejected by administrator.').catch(err => logger.error('Failed to send withdrawal rejection email:', err));
       }
+      notificationRepository.create({
+        userId: withdrawal.user_id,
+        title: 'Withdrawal Request Declined ❌',
+        message: `Your withdrawal request ${withdrawal.withdrawal_number || ''} of ₹${withdrawal.amount} was declined. Reason: ${req.body.notes || 'Declined by admin'}`,
+        type: 'withdrawal',
+      }).catch(err => logger.error('Withdrawal rejection notification error:', err));
     } catch (emailError) {
-      logger.error('Error sending withdrawal rejection email:', emailError);
-      // Don't throw - email is non-critical
+      logger.error('Error sending withdrawal rejection notification:', emailError);
     }
     res.json({ success: true, data: result });
   } catch (error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }

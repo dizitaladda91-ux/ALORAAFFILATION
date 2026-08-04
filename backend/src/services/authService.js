@@ -10,6 +10,7 @@ const ApiError = require('../utils/apiError');
 const config = require('../config/env');
 const emailService = require('./emailService');
 const logger = require('../logs/logger');
+const notificationRepository = require('../repositories/notification.repository');
 const { ROLES } = require('../constants/roles');
 const crypto = require('crypto');
 const mfaService = require('./mfaService');
@@ -102,6 +103,24 @@ class AuthService {
       // Don't throw - email is non-critical
     }
     this.sendEmailVerification(user.id).catch(err => logger.error('Email verification setup failed', err));
+
+    // Send notifications to admins and new user
+    try {
+      notificationRepository.createForAdmins({
+        title: 'New Affiliate Joined',
+        message: `New ${role.replace('_', ' ')} ${profile.first_name} ${profile.last_name || ''} (${user.email}) registered on the platform.`,
+        type: 'new_affiliate',
+      }).catch(err => logger.error('Admin notification creation error:', err));
+
+      notificationRepository.create({
+        userId: user.id,
+        title: 'Welcome to ALORA Radiance!',
+        message: 'Your affiliate account is active. Share your referral link to start earning commissions.',
+        type: 'welcome',
+      }).catch(err => logger.error('User welcome notification creation error:', err));
+    } catch (notifErr) {
+      logger.error('Failed to create registration notifications:', notifErr);
+    }
 
     return {
       user: {

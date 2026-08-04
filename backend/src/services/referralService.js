@@ -3,11 +3,11 @@ const referralRepository = require('../repositories/referralRepository');
 const commissionRepository = require('../repositories/commissionRepository');
 const ApiError = require('../utils/apiError');
 const config = require('../config/env');
+const notificationRepository = require('../repositories/notification.repository');
 const { ROLES } = require('../constants/roles');
 const { SHOPPING_COMMISSION_TIERS, RECRUITMENT_TEAM_TIERS } = require('../constants/affiliateLink.constants');
 
 const STANDARD_AFFILIATE_TIERS = SHOPPING_COMMISSION_TIERS;
-
 const getStandardAffiliateTier = (amount) =>
   STANDARD_AFFILIATE_TIERS.find((tier) => amount <= tier.maximumOrderAmount);
 
@@ -16,56 +16,20 @@ class ReferralService {
     const link = await affiliateRepository.findLinkByCode(referralCode);
     if (link && (!link.is_active || link.user_status !== 'active')) throw ApiError.notFound('Referral link is inactive');
     
-    // Record click event regardless of link existing for tracking stats
     const click = await affiliateRepository.recordClick({
-      affiliateLinkId: link ? link.id : null,
       referralCode,
-      linkType: link?.link_type || null,
+      affiliateId: link ? link.user_id : null,
       ipAddress,
       userAgent,
       referrerUrl,
     });
-
-    // Older default links pointed back to /ref/:code, which would cause a
-    // redirect loop. Keep existing campaign links intact, but route those
-    // legacy defaults to the storefront.
-    const legacyReferralUrl = new RegExp(`/ref/${referralCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/?$`, 'i');
-    const destinationUrl = link && legacyReferralUrl.test(link.target_url)
-      ? config.storefrontUrl
-      : (link ? link.target_url : '/');
-
-    // Pass attribution through to the ecommerce storefront.  Its checkout
-    // integration can submit these two values to POST /referrals/conversion
-    // after payment is confirmed.
-    let targetUrl = destinationUrl;
-    try {
-      const url = new URL(destinationUrl);
-      url.searchParams.set('ref', referralCode);
-      url.searchParams.set('click_id', click.id);
-      // The storefront reads this verified referral context and applies the
-      // affiliate offer at cart/checkout. Do not add it for unknown links.
-      if (link) {
-        url.searchParams.set('affiliate_discount', String(config.affiliateDiscountPercent));
-      }
-      targetUrl = url.toString();
-    } catch (_) {
-      // A malformed custom destination must not stop click tracking.
-    }
-
-    return {
-      clickId: click.id,
-      targetUrl,
-      valid: !!link,
-      discount: link
-        ? { percent: config.affiliateDiscountPercent, source: 'affiliate_link' }
-        : null,
-    };
+    return { clickId: click.id, referralCode, valid: Boolean(link) };
   }
 
-  async getAffiliateDiscount(referralCode) {
+  async validateCode(referralCode) {
     const link = await affiliateRepository.findLinkByCode(referralCode);
     if (!link || link.link_type !== 'SHOPPING' || !link.is_active || link.user_status !== 'active') {
-      throw ApiError.notFound(`Invalid referral code: ${referralCode}`);
+      return { referralCode, valid: false, discountPercent: 0 };
     }
 
     return {
@@ -81,14 +45,16 @@ class ReferralService {
       throw ApiError.notFound(`Invalid referral code: ${referralCode}`);
     }
 
-    // A payment provider may retry its webhook.  One ecommerce order must
-    // create only one conversion and one commission.
     const existingConversion = await commissionRepository.findConversionByOrderId(orderId);
     if (existingConversion) {
-      return { conversion: existingConversion, commission: existingConversion.commission, alreadyRecorded: true };
+      return {
+        conversion: existingConversion,
+        commission: null,
+        commissionTier: null,
+        alreadyRecorded: true,
+      };
     }
 
-    // 1. Create conversion event
     const conversion = await commissionRepository.createConversion({
       clickId,
       referralId: null,
@@ -101,9 +67,6 @@ class ReferralService {
       currency,
     });
 
-    // 2. Standard affiliates use the fixed purchase-value slabs. The highest
-    // slab continues for orders above 2,000, so every eligible sale earns a
-    // commission. Other affiliate roles keep using the admin-configured rule.
     const isShoppingAffiliate = [ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(link.affiliate_role);
     const rule = isShoppingAffiliate ? await commissionRepository.findMatchingRule({ eventType: 'shopping', eligibleAmount }) : await commissionRepository.findActiveRule();
     if (!rule) throw ApiError.badRequest('No active commission rule matches this conversion');
@@ -117,7 +80,6 @@ class ReferralService {
       commissionAmount = commissionRate;
     }
 
-    // 3. Create commission record for direct affiliate
     const commission = await commissionRepository.createCommission({
       affiliateId: link.user_id,
       conversionId: conversion.id,
@@ -126,6 +88,15 @@ class ReferralService {
       rate: commissionRate,
       status: 'pending',
     });
+
+    try {
+      notificationRepository.create({
+        userId: link.user_id,
+        title: 'New Commission Earned! 🎉',
+        message: `You earned ₹${commissionAmount.toFixed(2)} commission on order #${orderId}.`,
+        type: 'conversion',
+      }).catch(() => {});
+    } catch (err) {}
 
     return {
       conversion,
