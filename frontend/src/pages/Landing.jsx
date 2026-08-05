@@ -32,7 +32,7 @@ export const Landing = () => (
     <section className="landing-hero" aria-label="Welcome banner">
       <div className="landing-copy">
         <span className="landing-eyebrow">New · Complete Affiliate & Partner Dashboard</span>
-        <h1 className="landing-hero-heading">Grow your revenue with <span>ALORA</span> affiliate network</h1>
+        <h1 className="landing-hero-heading">Grow with <span>ALORA</span> affiliate network</h1>
         <p className="landing-subhead">ALORA gives ambitious affiliates and team leaders one beautiful place to share, track, and grow their partnerships.</p>
         <div className="landing-actions">
           <Link className="landing-cta landing-cta-primary" to={ROUTES.REGISTER}>Become an affiliate <ArrowRight size={18} /></Link>
