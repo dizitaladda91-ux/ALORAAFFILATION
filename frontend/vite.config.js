@@ -3,7 +3,18 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: "async-css-links",
+      transformIndexHtml(html) {
+        return html.replace(
+          /<link rel="stylesheet"([^>]*)>/g,
+          (match, attrs) => `\n    <link rel="preload" as="style"${attrs} onload="this.onload=null;this.rel='stylesheet'">\n    <noscript>${match}</noscript>`
+        );
+      },
+    },
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
