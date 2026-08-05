@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart3, CheckCircle2, ShieldCheck, Users, Zap, Link2 } from 'lucide-react';
 import { ROUTES } from '../constants/routes';
-import aloraLogo from '../assets/alora-radiance-logo.png';
+import aloraLogo from '../assets/alora-radiance-logo.svg';
 
 const features = [
   { icon: Zap, title: 'Instant conversion tracking', text: 'Every click and sale tracked instantly with your personal referral links.' },
