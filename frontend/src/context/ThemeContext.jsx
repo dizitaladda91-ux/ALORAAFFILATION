@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useLayoutEffect } from 'react';
 
 export const ThemeContext = createContext();
 
@@ -7,8 +7,10 @@ export const ThemeProvider = ({ children }) => {
     return localStorage.getItem('affiliate_theme') || 'dark';
   });
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+  useLayoutEffect(() => {
+    if (document.documentElement.dataset.theme !== theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
     localStorage.setItem('affiliate_theme', theme);
   }, [theme]);
 

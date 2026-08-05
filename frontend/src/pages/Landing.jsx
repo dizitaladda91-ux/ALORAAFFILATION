@@ -20,7 +20,7 @@ export const Landing = () => (
     {/* Navigation Header */}
     <header className="landing-nav">
       <Link className="landing-brand" to="/">
-        <img className="landing-brand-logo" src={aloraLogo} alt="ALORA Radiance" />
+        <img className="landing-brand-logo" src={aloraLogo} alt="ALORA Radiance" fetchPriority="high" loading="eager" />
       </Link>
       <div className="flex items-center gap-4">
         <Link className="landing-login-link" to={ROUTES.LOGIN}>Sign in</Link>

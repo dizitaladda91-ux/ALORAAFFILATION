@@ -9,6 +9,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  build: {
+    target: "es2022",
+    cssTarget: "chrome90",
+  },
   server: {
     port: 3000,
   },

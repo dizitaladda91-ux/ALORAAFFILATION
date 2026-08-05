@@ -8,7 +8,7 @@ export const AuthLayout = ({ children, title, subtitle, showAffiliateGuide = fal
     <section className="auth-stage">
       <div className="auth-intro">
         <div className="alora-brand" aria-label="ALORA Radiance">
-          <img className="auth-brand-logo" src={aloraLogo} alt="ALORA Radiance" />
+          <img className="auth-brand-logo" src={aloraLogo} alt="ALORA Radiance" fetchPriority="high" loading="eager" />
         </div>
         <p className="auth-kicker">Affiliate partner portal</p>
         <h1>Build a network that grows with you.</h1>
