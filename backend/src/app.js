@@ -32,8 +32,8 @@ app.use(
 );
 
 // Body parser & Cookie parser
-const razorpayWebhookPath = `${config.apiPrefix || ''}/payments/webhook` || '/payments/webhook';
-app.use(razorpayWebhookPath, express.raw({ type: 'application/json' }));
+const razorpayWebhookPath = `${config.apiPrefix || ''}/payments/webhook`;
+app.use(razorpayWebhookPath, express.raw({ type: '*/*' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());

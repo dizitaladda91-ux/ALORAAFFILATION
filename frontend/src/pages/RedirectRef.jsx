@@ -13,19 +13,36 @@ export const RedirectRef = () => {
         if (code) {
           localStorage.setItem('affiliate_ref_code', code);
           const result = await trackReferralClick(code);
-          if (result.targetUrl && result.targetUrl.startsWith('http')) {
-            window.location.href = result.targetUrl;
-          } else {
-            window.location.href = storefrontUrl;
+
+          if (result?.clickId) localStorage.setItem('affiliate_click_id', result.clickId);
+          const discountVal = result?.discountPercent || 10;
+          localStorage.setItem('affiliate_discount_percent', String(discountVal));
+
+          let redirectUrl = result?.targetUrl;
+          if (!redirectUrl || !redirectUrl.startsWith('http')) {
+            const urlObj = new URL(storefrontUrl);
+            urlObj.searchParams.set('ref', code);
+            urlObj.searchParams.set('discount', String(discountVal));
+            if (result?.clickId) urlObj.searchParams.set('clickId', result.clickId);
+            redirectUrl = urlObj.toString();
           }
+
+          window.location.href = redirectUrl;
         } else {
           window.location.href = storefrontUrl;
         }
       } catch (err) {
         console.error('Failed to record click event', err);
-        // Do not strand a potential customer on the affiliate portal if
-        // click tracking is temporarily unavailable.
-        window.location.href = storefrontUrl;
+        try {
+          const fallbackUrl = new URL(storefrontUrl);
+          if (code) {
+            fallbackUrl.searchParams.set('ref', code);
+            fallbackUrl.searchParams.set('discount', '10');
+          }
+          window.location.href = fallbackUrl.toString();
+        } catch (e) {
+          window.location.href = storefrontUrl;
+        }
       }
     };
     processClick();

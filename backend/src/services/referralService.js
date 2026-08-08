@@ -23,7 +23,28 @@ class ReferralService {
       userAgent,
       referrerUrl,
     });
-    return { clickId: click.id, referralCode, valid: Boolean(link) };
+
+    const discountPercent = config.affiliateDiscountPercent || 10;
+    const baseTarget = (link && link.target_url) ? link.target_url : (config.storefrontUrl || 'https://aloraradiance.com');
+
+    let targetUrl = baseTarget;
+    try {
+      const urlObj = new URL(baseTarget.startsWith('http') ? baseTarget : `https://${baseTarget}`);
+      urlObj.searchParams.set('ref', referralCode);
+      urlObj.searchParams.set('discount', String(discountPercent));
+      urlObj.searchParams.set('clickId', click.id);
+      targetUrl = urlObj.toString();
+    } catch (e) {
+      targetUrl = `${baseTarget}${baseTarget.includes('?') ? '&' : '?'}ref=${referralCode}&discount=${discountPercent}&clickId=${click.id}`;
+    }
+
+    return {
+      clickId: click.id,
+      referralCode,
+      valid: Boolean(link),
+      targetUrl,
+      discountPercent,
+    };
   }
 
   async validateCode(referralCode) {
@@ -35,8 +56,12 @@ class ReferralService {
     return {
       referralCode: link.referral_code,
       valid: true,
-      discountPercent: config.affiliateDiscountPercent,
+      discountPercent: config.affiliateDiscountPercent || 10,
     };
+  }
+
+  async getAffiliateDiscount(referralCode) {
+    return this.validateCode(referralCode);
   }
 
   async processConversion({ referralCode, orderId, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'INR', clickId = null }) {

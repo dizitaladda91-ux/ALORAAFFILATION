@@ -58,17 +58,34 @@ class PaymentService {
   async webhook(rawBody, signature) {
     if (!config.razorpay.webhookSecret) throw ApiError.internal('Razorpay webhook secret is not configured');
 
-    const expected = crypto.createHmac('sha256', config.razorpay.webhookSecret).update(rawBody).digest('hex');
+    let bodyBuffer;
+    let payload;
+
+    if (Buffer.isBuffer(rawBody)) {
+      bodyBuffer = rawBody;
+      try {
+        payload = JSON.parse(rawBody.toString('utf8'));
+      } catch (error) {
+        throw ApiError.badRequest('Invalid webhook JSON payload');
+      }
+    } else if (typeof rawBody === 'string') {
+      bodyBuffer = Buffer.from(rawBody, 'utf8');
+      try {
+        payload = JSON.parse(rawBody);
+      } catch (error) {
+        throw ApiError.badRequest('Invalid webhook JSON payload');
+      }
+    } else if (typeof rawBody === 'object' && rawBody !== null) {
+      payload = rawBody;
+      bodyBuffer = Buffer.from(JSON.stringify(rawBody), 'utf8');
+    } else {
+      throw ApiError.badRequest('Empty or invalid webhook body');
+    }
+
+    const expected = crypto.createHmac('sha256', config.razorpay.webhookSecret).update(bodyBuffer).digest('hex');
     const supplied = Buffer.from(signature || '', 'utf8');
     if (supplied.length !== Buffer.byteLength(expected) || !crypto.timingSafeEqual(Buffer.from(expected), supplied)) {
       throw ApiError.unauthorized('Invalid webhook signature');
-    }
-
-    let payload;
-    try {
-      payload = JSON.parse(rawBody.toString('utf8'));
-    } catch (error) {
-      throw ApiError.badRequest('Invalid webhook payload');
     }
 
     if (!payload || typeof payload !== 'object' || !payload.event_id || !payload.event) {
