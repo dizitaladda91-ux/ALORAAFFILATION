@@ -11,6 +11,7 @@ const config = require('../config/env');
 const emailService = require('./emailService');
 const logger = require('../logs/logger');
 const notificationRepository = require('../repositories/notification.repository');
+const walletRepository = require('../repositories/walletrepository');
 const { ROLES } = require('../constants/roles');
 const crypto = require('crypto');
 const mfaService = require('./mfaService');
@@ -54,6 +55,10 @@ class AuthService {
       lastName,
       company,
     });
+
+    // Every affiliate account needs a wallet before it can receive a settled
+    // commission or open the Wallet page.
+    await walletRepository.findOrCreateByUserId(user.id);
 
     let primaryLink = null;
     if (role === 'affiliate' || role === 'super_affiliate') {

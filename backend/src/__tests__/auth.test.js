@@ -19,6 +19,10 @@ jest.mock('../repositories/affiliateRepository', () => ({
   createLink: jest.fn(),
 }));
 
+jest.mock('../repositories/walletrepository', () => ({
+  findOrCreateByUserId: jest.fn(),
+}));
+
 jest.mock('../repositories/logRepository', () => ({
   createActivityLog: jest.fn(),
 }));
@@ -51,6 +55,7 @@ const authService = require('../services/authService');
 const userRepository = require('../repositories/userRepository');
 const profileRepository = require('../repositories/profileRepository');
 const affiliateRepository = require('../repositories/affiliateRepository');
+const walletRepository = require('../repositories/walletrepository');
 const logRepository = require('../repositories/logRepository');
 const passwordUtils = require('../utils/passwordUtils');
 
@@ -65,6 +70,7 @@ describe('auth service', () => {
     userRepository.create.mockResolvedValueOnce({ id: 7, email: 'new@example.com', status: 'active' });
     profileRepository.create.mockResolvedValueOnce({ first_name: 'Ada', last_name: 'Lovelace' });
     affiliateRepository.createLink.mockResolvedValueOnce({ id: 11, referral_code: 'AFF123' });
+    walletRepository.findOrCreateByUserId.mockResolvedValueOnce({ id: 17, user_id: 7 });
 
     const result = await authService.register({
       email: 'new@example.com',
@@ -76,6 +82,7 @@ describe('auth service', () => {
     expect(result.tokens.accessToken).toBe('access-token');
     expect(result.user.email).toBe('new@example.com');
     expect(passwordUtils.hashPassword).toHaveBeenCalled();
+    expect(walletRepository.findOrCreateByUserId).toHaveBeenCalledWith(7);
     expect(logRepository.createActivityLog).toHaveBeenCalled();
   });
 

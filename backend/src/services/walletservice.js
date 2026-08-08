@@ -170,20 +170,16 @@ class WalletService {
 
     }
 
+    async ensureWallet(userId) {
+        return WalletRepository.findOrCreateByUserId(userId);
+    }
+
     /**
      * Get wallet
      */
     async getWallet(userId) {
 
-        const wallet =
-            await WalletRepository.findByUserId(userId);
-
-        if (!wallet) {
-            throw new ApiError(
-                404,
-                "Wallet not found."
-            );
-        }
+        const wallet = await this.ensureWallet(userId);
 
         return wallet;
 
@@ -194,15 +190,7 @@ class WalletService {
      */
     async getWalletSummary(userId) {
 
-        const wallet =
-            await WalletRepository.findByUserId(userId);
-
-        if (!wallet) {
-            throw new ApiError(
-                404,
-                "Wallet not found."
-            );
-        }
+        const wallet = await this.ensureWallet(userId);
 
         return WalletRepository.getWalletSummary(
             wallet.id
@@ -219,15 +207,7 @@ class WalletService {
         limit = 20
     ) {
 
-        const wallet =
-            await WalletRepository.findByUserId(userId);
-
-        if (!wallet) {
-            throw new ApiError(
-                404,
-                "Wallet not found."
-            );
-        }
+        const wallet = await this.ensureWallet(userId);
 
         page = Number(page);
         limit = Number(limit);

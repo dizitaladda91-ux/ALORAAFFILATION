@@ -44,7 +44,7 @@
     discountPercent: discountPercent,
     clickId: clickIdFromUrl || localStorage.getItem('alora_click_id') || '',
     calculateDiscountedPrice: function (price) {
-      const numericPrice = typeof price === 'number' ? price : parseFloat(String(price).replace(/[^0-9.]/g, ''));
+      const numericPrice = typeof price === 'number' ? price : parseFloat(Intl.NumberFormat().format(price).replace(/[^0-9.]/g, ''));
       if (isNaN(numericPrice)) return price;
       const discounted = numericPrice * (1 - discountPercent / 100);
       return Math.round(discounted * 100) / 100;

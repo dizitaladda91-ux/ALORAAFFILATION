@@ -21,6 +21,25 @@ class WalletRepository {
     }
 
     /**
+     * Return a user's wallet, creating it when older accounts do not yet have
+     * one. The unique user_id constraint makes this safe for concurrent calls.
+     */
+    async findOrCreateByUserId(userId, client = db) {
+        const query = `
+            INSERT INTO wallets (user_id)
+            VALUES ($1)
+            ON CONFLICT (user_id)
+            DO UPDATE SET
+                deleted_at = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING *;
+        `;
+
+        const { rows } = await client.query(query, [userId]);
+        return rows[0];
+    }
+
+    /**
      * Find wallet by wallet ID
      */
     async findById(walletId, client = db) {
