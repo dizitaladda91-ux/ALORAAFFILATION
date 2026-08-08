@@ -191,6 +191,17 @@
         element.style.color = '#c026d3';
         element.style.fontWeight = '700';
         element.dataset.aloraPriceApplied = 'true';
+
+        // Keep the offer badge outside the numeric price element. Cart code
+        // often reads this element's textContent to calculate totals.
+        if (!element.nextElementSibling?.classList.contains('alora-discount-badge')) {
+          const badge = document.createElement('span');
+          badge.className = 'alora-discount-badge';
+          badge.textContent = `${discountPercent}% OFF`;
+          badge.setAttribute('aria-label', `${discountPercent} percent affiliate discount`);
+          badge.style.cssText = 'display:inline-block;margin-left:6px;padding:2px 6px;border-radius:999px;background:#dcfce7;color:#166534;font:700 11px/1.35 system-ui,-apple-system,sans-serif;vertical-align:middle;white-space:nowrap;';
+          element.insertAdjacentElement('afterend', badge);
+        }
       });
   }
 
