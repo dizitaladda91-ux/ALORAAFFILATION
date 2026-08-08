@@ -137,7 +137,9 @@
   }
 
   // 6. Show the partner price wherever a storefront renders a product price.
-  // The original price is preserved and the 10% price is added alongside it.
+  // Keep only one numeric value inside the price element. Some storefront carts
+  // read textContent to calculate totals; rendering MRP and sale price together
+  // turns “499” + “449.10” into the invalid “499449.10” amount.
   const priceSelectors = [
     '[data-product-price]', '[data-price]', '.product-price', '.price', '.money',
     '.woocommerce-Price-amount', '[class*="product-price"]', '[class*="sale-price"]'
@@ -171,22 +173,10 @@
         const amount = getNumericPrice(originalText);
         if (!amount) return;
 
-        const original = document.createElement('span');
-        original.className = 'alora-original-price';
-        original.textContent = originalText;
-        original.style.cssText = 'text-decoration:line-through;opacity:.65;margin-right:6px;';
-
-        const sale = document.createElement('span');
-        sale.className = 'alora-discounted-price';
-        sale.textContent = formatDiscountedPrice(originalText, amount);
-        sale.style.cssText = 'color:#c026d3;font-weight:700;white-space:nowrap;';
-
-        const badge = document.createElement('small');
-        badge.textContent = ` ${discountPercent}% OFF`;
-        badge.style.cssText = 'color:#15803d;font-weight:700;margin-left:4px;white-space:nowrap;';
-
-        element.textContent = '';
-        element.append(original, sale, badge);
+        element.dataset.aloraOriginalPrice = originalText;
+        element.textContent = formatDiscountedPrice(originalText, amount);
+        element.style.color = '#c026d3';
+        element.style.fontWeight = '700';
         element.dataset.aloraPriceApplied = 'true';
       });
   }
