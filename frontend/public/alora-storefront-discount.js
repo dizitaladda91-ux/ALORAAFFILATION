@@ -2,7 +2,7 @@
  * ALORA RADIANCE - Storefront Auto-Discount & Referral Tracking SDK
  * Automatically detects referral parameters (?ref=CODE&discount=10),
  * displays a 10% OFF partner banner, calculates discounted product prices,
- * and persists referral context across shopping sessions.
+ * auto-applies 10% discount in Add to Cart & Checkout forms, and persists referral context.
  */
 (function () {
   'use strict';
@@ -91,7 +91,7 @@
     });
   }
 
-  // 5. Automatic Price Formatting on Webpage
+  // 5. Automatic Product Price Formatting
   function applyDiscountToPagePrices() {
     const priceSelectors = [
       '.price', '.product-price', '.current-price', '.amount', '.money',
@@ -122,17 +122,109 @@
     });
   }
 
-  // Run DOM injections when document is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      injectDiscountBanner();
-      applyDiscountToPagePrices();
+  // 6. Auto-Fill Coupon & Promo Code Inputs at Cart / Checkout
+  function autoFillCouponFields() {
+    const couponSelectors = [
+      'input[name="coupon"]', 'input[name="coupon_code"]', 'input[name="discount"]',
+      'input[name="promo_code"]', 'input[name="discount_code"]', '#coupon_code',
+      '#discount_code', '.checkout-discount-input', '.coupon-input'
+    ];
+
+    const couponInputs = document.querySelectorAll(couponSelectors.join(', '));
+    couponInputs.forEach(input => {
+      if (!input.value || input.dataset.aloraFilled !== activeRefCode) {
+        input.value = activeRefCode;
+        input.dataset.aloraFilled = activeRefCode;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+
+        const applyBtn = input.parentElement?.querySelector('button, input[type="submit"], .apply-btn, #apply-coupon');
+        if (applyBtn && !applyBtn.dataset.aloraClicked) {
+          applyBtn.dataset.aloraClicked = 'true';
+          setTimeout(() => applyBtn.click(), 500);
+        }
+      }
     });
-  } else {
-    injectDiscountBanner();
-    applyDiscountToPagePrices();
   }
 
-  // Periodically check for dynamically loaded products
-  setInterval(applyDiscountToPagePrices, 2000);
+  // 7. Auto-Update Cart Forms and Price Inputs
+  function updateCartFormInputs() {
+    const forms = document.querySelectorAll('form[action*="cart"], form[action*="checkout"], .product-form, #add-to-cart-form');
+    forms.forEach(form => {
+      if (!form.querySelector('input[name="alora_ref_code"]')) {
+        const refInput = document.createElement('input');
+        refInput.type = 'hidden';
+        refInput.name = 'alora_ref_code';
+        refInput.value = activeRefCode;
+        form.appendChild(refInput);
+      }
+      if (!form.querySelector('input[name="alora_discount_percent"]')) {
+        const discountInput = document.createElement('input');
+        discountInput.type = 'hidden';
+        discountInput.name = 'alora_discount_percent';
+        discountInput.value = String(discountPercent);
+        form.appendChild(discountInput);
+      }
+
+      const priceInputs = form.querySelectorAll('input[name="price"], input[name="amount"], input[name="unit_price"]');
+      priceInputs.forEach(input => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val) && val > 0 && !input.dataset.aloraDiscounted) {
+          const discountedVal = Math.round(val * (1 - discountPercent / 100));
+          input.value = String(discountedVal);
+          input.dataset.aloraDiscounted = 'true';
+        }
+      });
+    });
+  }
+
+  // 8. Auto-Calculate Cart Subtotals & Checkout Totals
+  function applyDiscountToCartTotals() {
+    const cartTotalSelectors = [
+      '.cart__subtotal', '.cart-subtotal', '.cart-total', '.order-total',
+      '.checkout-total', '#cart-total', '#subtotal', '.subtotal-price',
+      '[data-cart-subtotal]'
+    ];
+
+    const cartTotals = document.querySelectorAll(cartTotalSelectors.join(', '));
+    cartTotals.forEach(el => {
+      if (el.dataset.aloraProcessed) return;
+
+      const rawText = el.innerText || el.textContent;
+      const match = rawText.match(/(₹|\$|Rs\.?|INR)?\s*([0-9,]+(\.[0-9]{1,2})?)/i);
+
+      if (match && match[2]) {
+        const originalNum = parseFloat(match[2].replace(/,/g, ''));
+        if (!isNaN(originalNum) && originalNum > 0) {
+          const currencySymbol = match[1] || '₹';
+          const discountedNum = Math.round(originalNum * (1 - discountPercent / 100));
+
+          el.dataset.aloraProcessed = 'true';
+          el.innerHTML = `
+            <span style="text-decoration: line-through; opacity: 0.6; font-size: 0.88em; margin-right: 6px;">${currencySymbol}${originalNum.toLocaleString('en-IN')}</span>
+            <strong style="color: #10b981; font-size: 1.08em;">${currencySymbol}${discountedNum.toLocaleString('en-IN')}</strong>
+            <span style="background: #10b981; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${discountPercent}% OFF APPLIED</span>
+          `;
+        }
+      }
+    });
+  }
+
+  function runAllDiscountHelpers() {
+    injectDiscountBanner();
+    applyDiscountToPagePrices();
+    autoFillCouponFields();
+    updateCartFormInputs();
+    applyDiscountToCartTotals();
+  }
+
+  // Run DOM injections when document is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runAllDiscountHelpers);
+  } else {
+    runAllDiscountHelpers();
+  }
+
+  // Periodically check for dynamically loaded elements & cart updates
+  setInterval(runAllDiscountHelpers, 1500);
 })();
