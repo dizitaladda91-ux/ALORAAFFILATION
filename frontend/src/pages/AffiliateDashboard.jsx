@@ -26,6 +26,8 @@ export const AffiliateDashboard = () => {
       }
     };
     loadDashboard();
+    const refreshInterval = window.setInterval(loadDashboard, 30000);
+    return () => window.clearInterval(refreshInterval);
   }, []);
 
   const stats = data?.stats || {};

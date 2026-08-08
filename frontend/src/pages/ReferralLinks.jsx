@@ -74,7 +74,13 @@ export const ReferralLinks = () => {
     },
     {
       header: 'Clicks',
-      accessor: 'click_count',
+      accessor: 'tracked_clicks',
+      render: (row) => row.tracked_clicks ?? row.click_count ?? 0,
+    },
+    {
+      header: 'Conversions',
+      accessor: 'conversion_count',
+      render: (row) => row.conversion_count ?? 0,
     },
     {
       header: 'Created',

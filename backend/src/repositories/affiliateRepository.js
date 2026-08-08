@@ -25,7 +25,18 @@ class AffiliateRepository {
 
   async findLinksByUserId(userId) {
     const res = await db.query(
-      `SELECT * FROM affiliate_links WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC`,
+      `SELECT
+         al.*,
+         COUNT(DISTINCT ce.id)::INTEGER AS tracked_clicks,
+         COUNT(DISTINCT cv.id)::INTEGER AS conversion_count
+       FROM affiliate_links al
+       LEFT JOIN click_events ce
+         ON ce.affiliate_link_id = al.id AND ce.deleted_at IS NULL
+       LEFT JOIN conversion_events cv
+         ON cv.click_id = ce.id AND cv.deleted_at IS NULL
+       WHERE al.user_id = $1 AND al.deleted_at IS NULL
+       GROUP BY al.id
+       ORDER BY al.created_at DESC`,
       [userId]
     );
     return res.rows;

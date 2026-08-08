@@ -18,7 +18,8 @@ class ReferralService {
     
     const click = await affiliateRepository.recordClick({
       referralCode,
-      affiliateId: link ? link.user_id : null,
+      affiliateLinkId: link ? link.id : null,
+      linkType: link ? link.link_type : null,
       ipAddress,
       userAgent,
       referrerUrl,
