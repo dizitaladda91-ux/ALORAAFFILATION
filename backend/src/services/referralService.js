@@ -32,10 +32,13 @@ class ReferralService {
       const urlObj = new URL(baseTarget.startsWith('http') ? baseTarget : `https://${baseTarget}`);
       urlObj.searchParams.set('ref', referralCode);
       urlObj.searchParams.set('discount', String(discountPercent));
+      urlObj.searchParams.set('coupon', referralCode);
+      urlObj.searchParams.set('coupon_code', referralCode);
+      urlObj.searchParams.set('discount_code', referralCode);
       urlObj.searchParams.set('clickId', click.id);
       targetUrl = urlObj.toString();
     } catch (e) {
-      targetUrl = `${baseTarget}${baseTarget.includes('?') ? '&' : '?'}ref=${referralCode}&discount=${discountPercent}&clickId=${click.id}`;
+      targetUrl = `${baseTarget}${baseTarget.includes('?') ? '&' : '?'}ref=${referralCode}&discount=${discountPercent}&coupon=${referralCode}&coupon_code=${referralCode}&clickId=${click.id}`;
     }
 
     return {

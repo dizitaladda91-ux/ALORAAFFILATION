@@ -1,15 +1,15 @@
 /**
  * ALORA RADIANCE - Storefront Auto-Discount & Referral Tracking SDK
- * Automatically detects referral parameters (?ref=CODE&discount=10),
+ * Automatically detects referral parameters (?ref=CODE&discount=10&coupon=CODE),
  * displays a 10% OFF partner banner, persists referral context, and
- * auto-applies 10% discount to the bill amount at checkout before delivery charges.
+ * SILENTLY AUTO-APPLIES the 10% discount at checkout bill summary without requiring manual user input.
  */
 (function () {
   'use strict';
 
   // 1. Detect parameters from URL query string
   const urlParams = new URLSearchParams(window.location.search);
-  const refFromUrl = urlParams.get('ref') || urlParams.get('referral') || urlParams.get('affiliate');
+  const refFromUrl = urlParams.get('ref') || urlParams.get('referral') || urlParams.get('affiliate') || urlParams.get('coupon') || urlParams.get('coupon_code');
   const discountFromUrl = urlParams.get('discount') || urlParams.get('discountPercent');
   const clickIdFromUrl = urlParams.get('clickId') || urlParams.get('click_id');
 
@@ -91,7 +91,7 @@
     });
   }
 
-  // 5. Auto-Fill Coupon & Promo Code Inputs at Checkout Bill Summary
+  // 5. Silent Zero-Click Auto-Fill & Auto-Submit Coupon at Checkout
   function autoFillCouponFields() {
     const couponSelectors = [
       'input[placeholder*="COUPON" i]',
@@ -108,14 +108,17 @@
       if (!input.value || input.dataset.aloraFilled !== activeRefCode) {
         input.value = activeRefCode;
         input.dataset.aloraFilled = activeRefCode;
+
+        // Trigger input, change, and keypress events for React/Vue frameworks
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
+        input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'Enter' }));
 
         const parentContainer = input.parentElement || input.closest('div, form');
         const applyBtn = parentContainer?.querySelector('button, input[type="submit"], .apply-btn, #apply-coupon, [class*="apply" i]');
         if (applyBtn && !applyBtn.dataset.aloraClicked) {
           applyBtn.dataset.aloraClicked = 'true';
-          setTimeout(() => applyBtn.click(), 400);
+          setTimeout(() => applyBtn.click(), 300);
         }
       }
     });
@@ -156,5 +159,5 @@
   }
 
   // Periodically check for checkout form updates
-  setInterval(runCheckoutDiscountHelpers, 1500);
+  setInterval(runCheckoutDiscountHelpers, 1000);
 })();
