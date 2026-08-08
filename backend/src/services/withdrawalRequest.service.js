@@ -16,8 +16,7 @@ class WithdrawalRequestService {
       if (!account || account.user_id !== userId || account.verification_status !== 'VERIFIED') {
         throw ApiError.badRequest('Select one of your verified bank accounts.');
       }
-      const wallet = await walletRepository.findByUserId(userId, client);
-      if (!wallet) throw ApiError.badRequest('Wallet not found.');
+      const wallet = await walletRepository.findOrCreateByUserId(userId, client);
       const lockedWallet = await walletRepository.lockWallet(wallet.id, client);
       const value = Number(amount);
       if (!Number.isFinite(value) || value <= 0 || Number(lockedWallet.available_balance) < value) {
@@ -75,7 +74,7 @@ class WithdrawalRequestService {
       const withdrawal = await withdrawalRepository.lockWithdrawal(id, client);
       if (!withdrawal || withdrawal.user_id !== userId) throw ApiError.notFound('Withdrawal request not found.');
       if (withdrawal.status !== 'pending') throw ApiError.badRequest('Only pending withdrawal requests can be cancelled.');
-      const wallet = await walletRepository.findByUserId(userId, client);
+      const wallet = await walletRepository.findOrCreateByUserId(userId, client);
       const lockedWallet = await walletRepository.lockWallet(wallet.id, client);
       const updatedWallet = await walletRepository.releaseBalance(lockedWallet.id, Number(withdrawal.amount), client);
       const result = await withdrawalRepository.cancel(id, notes, client);

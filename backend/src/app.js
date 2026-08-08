@@ -51,6 +51,9 @@ app.get('/alora-storefront-discount.js', (req, res) => {
   const sdkPath = path.join(__dirname, '../../frontend/public/alora-storefront-discount.js');
   if (fs.existsSync(sdkPath)) {
     res.setHeader('Content-Type', 'application/javascript');
+    // The script controls checkout pricing display, so storefront visitors
+    // should receive updates immediately after a deployment.
+    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     return res.sendFile(sdkPath);
   }
   return res.status(404).send('// Alora SDK script not found');

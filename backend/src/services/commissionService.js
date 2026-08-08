@@ -2,6 +2,7 @@ const commissionRepository = require('../repositories/commissionRepository');
 const ApiError = require('../utils/apiError');
 const db = require('../database');
 const logger = require('../logs/logger');
+const walletRepository = require('../repositories/walletrepository');
 
 class CommissionService {
   async getRules() {
@@ -39,6 +40,12 @@ class CommissionService {
       let totalSettledAmount = 0;
 
       for (const comm of matured) {
+        // Covers old affiliates created before wallets were introduced.
+        const wallet = comm.wallet_id
+          ? await walletRepository.lockWallet(comm.wallet_id, client)
+          : await walletRepository.findOrCreateByUserId(comm.affiliate_id, client);
+        const openingBalance = Number(wallet.available_balance);
+
         // 1. Mark commission as approved
         await client.query(
           `UPDATE commissions SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
@@ -46,20 +53,21 @@ class CommissionService {
         );
 
         // 2. Add to available balance in wallet
-        await client.query(
+        const walletUpdate = await client.query(
           `UPDATE wallets 
            SET available_balance = available_balance + $1,
                lifetime_earnings = lifetime_earnings + $1,
                updated_at = CURRENT_TIMESTAMP
-           WHERE user_id = $2`,
-          [comm.amount, comm.affiliate_id]
+           WHERE id = $2
+           RETURNING available_balance`,
+          [comm.amount, wallet.id]
         );
 
         // 3. Record wallet transaction log
         await client.query(
           `INSERT INTO wallet_transactions (wallet_id, user_id, type, reference_type, reference_id, amount, opening_balance, closing_balance, description, status)
-           VALUES ($1, $2, 'COMMISSION_SETTLEMENT', 'COMMISSION', $3, $4, 0, $4, 'Automated Commission Settlement after Hold Window', 'SUCCESS')`,
-          [comm.wallet_id, comm.affiliate_id, comm.id, comm.amount]
+           VALUES ($1, $2, 'COMMISSION_SETTLEMENT', 'COMMISSION', $3, $4, $5, $6, 'Automated Commission Settlement after Hold Window', 'SUCCESS')`,
+          [wallet.id, comm.affiliate_id, comm.id, comm.amount, openingBalance, Number(walletUpdate.rows[0].available_balance)]
         );
 
         settledCount++;

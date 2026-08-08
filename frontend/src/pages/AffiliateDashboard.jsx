@@ -59,6 +59,11 @@ export const AffiliateDashboard = () => {
       render: (row) => formatCurrency(row.amount),
     },
     {
+      header: 'Source',
+      accessor: 'commission_type',
+      render: (row) => row.commission_type === 'TEAM' ? 'Team' : 'Direct',
+    },
+    {
       header: 'Status',
       accessor: 'status',
       render: (row) => <Badge status={row.status}>{row.status}</Badge>,

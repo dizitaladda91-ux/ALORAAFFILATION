@@ -10,7 +10,9 @@
 1. An affiliate shares `https://<affiliate-portal>/ref/<code>`.
 2. The portal calls `GET /referrals/click/:code`, records the click, and redirects
    the visitor to the storefront with `ref`, `clickId`, and `discount=10`.
-3. Add this script to the storefront layout, using the deployed affiliate API URL:
+3. Add this script once to the **global storefront layout/theme** (before
+   `</head>` or `</body>`). Do not add it only to the home page: it must load
+   on collection, product, cart, and checkout pages too.
 
 ```html
 <script src="https://<affiliate-api>/alora-storefront-discount.js" defer></script>

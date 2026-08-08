@@ -141,13 +141,26 @@
   // read textContent to calculate totals; rendering MRP and sale price together
   // turns “499” + “449.10” into the invalid “499449.10” amount.
   const priceSelectors = [
-    '[data-product-price]', '[data-price]', '.product-price', '.price', '.money',
-    '.woocommerce-Price-amount', '[class*="product-price"]', '[class*="sale-price"]'
+    // Generic React / custom storefronts
+    '[data-product-price]', '[data-product-price-value]', '[data-price]', '[data-money]',
+    '[data-cart-item-price]', '[data-cart-item-final-price]', '[data-cart-item-regular-price]',
+    '.product-price', '.product__price', '.product-price-current', '.price__current',
+    '.price', '.money', '.amount',
+    // Shopify and WooCommerce themes
+    '.price-item', '.price-item--regular', '.price-item--sale', '.price__sale',
+    '.woocommerce-Price-amount', '.woocommerce-Price-amount bdi',
+    // Common ecommerce component class names
+    '[class*="product-price"]', '[class*="sale-price"]', '[class*="current-price"]',
+    '[class*="cart-price"]', '[class*="item-price"]'
   ];
 
   function getNumericPrice(value) {
-    const normalized = String(value).replace(/[^0-9.,]/g, '').replace(/,/g, '');
-    const amount = Number.parseFloat(normalized);
+    const normalized = String(value).replace(/,/g, '');
+    // Read one price only. A product card may contain both MRP and sale text;
+    // removing all non-digits would concatenate them into an invalid amount.
+    const currencyMatch = normalized.match(/(?:₹|Rs\.?|INR|\$|€|£)\s*(\d+(?:\.\d{1,2})?)/i);
+    const numberMatch = normalized.match(/\b(\d+(?:\.\d{1,2})?)\b/);
+    const amount = Number.parseFloat(currencyMatch?.[1] || numberMatch?.[1]);
     return Number.isFinite(amount) && amount > 0 ? amount : null;
   }
 
@@ -227,4 +240,18 @@
       runCheckoutDiscountHelpers();
     });
   }).observe(document.documentElement, { childList: true, subtree: true });
+
+  // React/Next storefronts may replace the product grid without a full page
+  // load when visitors use Shop Now or Explore Now. Reapply immediately after
+  // client-side navigation as well as DOM mutations.
+  const rerunAfterNavigation = () => requestAnimationFrame(runCheckoutDiscountHelpers);
+  ['pushState', 'replaceState'].forEach((method) => {
+    const original = history[method];
+    history[method] = function (...args) {
+      const result = original.apply(this, args);
+      rerunAfterNavigation();
+      return result;
+    };
+  });
+  window.addEventListener('popstate', rerunAfterNavigation);
 })();

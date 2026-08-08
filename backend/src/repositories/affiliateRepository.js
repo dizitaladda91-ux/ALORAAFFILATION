@@ -13,7 +13,7 @@ class AffiliateRepository {
 
   async findLinkByCode(referralCode) {
     const res = await db.query(
-      `SELECT al.*, u.status as user_status, r.name AS affiliate_role
+      `SELECT al.*, u.status as user_status, u.parent_affiliate_id, r.name AS affiliate_role
        FROM affiliate_links al
        JOIN users u ON al.user_id = u.id
        JOIN roles r ON u.role_id = r.id

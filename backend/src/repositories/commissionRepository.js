@@ -69,12 +69,12 @@ class CommissionRepository {
     };
   }
 
-  async createCommission({ affiliateId, conversionId, ruleId, amount, rate, status = 'pending' }) {
+  async createCommission({ affiliateId, conversionId, ruleId, amount, rate, status = 'pending', commissionType = 'DIRECT' }) {
     const res = await db.query(
-      `INSERT INTO commissions (affiliate_id, conversion_id, rule_id, amount, rate, status)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO commissions (affiliate_id, conversion_id, rule_id, amount, rate, status, commission_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [affiliateId, conversionId, ruleId, amount, rate, status]
+      [affiliateId, conversionId, ruleId, amount, rate, status, commissionType]
     );
     return res.rows[0];
   }
@@ -103,7 +103,7 @@ class CommissionRepository {
     const res = await db.query(
       `SELECT c.*, w.id AS wallet_id
        FROM commissions c
-       JOIN wallets w ON w.user_id = c.affiliate_id
+       LEFT JOIN wallets w ON w.user_id = c.affiliate_id AND w.deleted_at IS NULL
        WHERE c.status = 'pending'
          AND c.created_at <= (CURRENT_TIMESTAMP - INTERVAL '1 day' * $1)
          AND c.deleted_at IS NULL`,

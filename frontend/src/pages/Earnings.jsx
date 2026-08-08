@@ -42,6 +42,11 @@ export const Earnings = () => {
       render: (row) => `${row.rate}%`,
     },
     {
+      header: 'Source',
+      accessor: 'commission_type',
+      render: (row) => row.commission_type === 'TEAM' ? 'Team referral' : 'Direct referral',
+    },
+    {
       header: 'Amount Earned',
       accessor: 'amount',
       render: (row) => formatCurrency(row.amount),

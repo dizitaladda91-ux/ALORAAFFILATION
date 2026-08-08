@@ -1,7 +1,7 @@
 class PaymentRepository {
   async findReferralContext(client, referralCode, clickId) {
     const result = await client.query(
-      `SELECT al.id AS affiliate_link_id, al.user_id AS affiliate_id, al.referral_code, r.name AS affiliate_role,
+      `SELECT al.id AS affiliate_link_id, al.user_id AS affiliate_id, u.parent_affiliate_id, al.referral_code, r.name AS affiliate_role,
               ce.id AS click_id
        FROM affiliate_links al
        JOIN users u ON u.id = al.user_id AND u.status = 'active' AND u.deleted_at IS NULL
@@ -35,8 +35,15 @@ class PaymentRepository {
       if (!rule.rows[0]) throw new Error('No active shopping commission rule matches this payment');
       rate = Number(rule.rows[0].value); ruleId = rule.rows[0].id;
     } else { const rule = await client.query(`SELECT * FROM commission_rules WHERE event_type='generic' AND is_active=true AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`); if (rule.rows[0]) { rate = Number(rule.rows[0].value); ruleId = rule.rows[0].id; } }
-    const commission = await client.query(`INSERT INTO commissions (affiliate_id,conversion_id,rule_id,amount,rate,status) VALUES ($1,$2,$3,$4,$5,'pending') RETURNING *`, [payment.affiliate_id, conversion.rows[0].id, ruleId, (Number(payment.amount) * rate / 100).toFixed(2), rate]);
-    return { conversion: conversion.rows[0], commission: commission.rows[0], alreadyRecorded: false };
+    const commission = await client.query(`INSERT INTO commissions (affiliate_id,conversion_id,rule_id,amount,rate,status,commission_type) VALUES ($1,$2,$3,$4,$5,'pending','DIRECT') RETURNING *`, [payment.affiliate_id, conversion.rows[0].id, ruleId, (Number(payment.amount) * rate / 100).toFixed(2), rate]);
+    let teamCommission = null;
+    if (payment.affiliate_role === 'affiliate' && payment.parent_affiliate_id) {
+      const team = await client.query(`SELECT COUNT(*)::INTEGER AS total FROM users WHERE parent_affiliate_id=$1 AND deleted_at IS NULL`, [payment.parent_affiliate_id]);
+      const teamRate = Number(team.rows[0].total) <= 15 ? 5 : 7;
+      const created = await client.query(`INSERT INTO commissions (affiliate_id,conversion_id,rule_id,amount,rate,status,commission_type) VALUES ($1,$2,NULL,$3,$4,'pending','TEAM') RETURNING *`, [payment.parent_affiliate_id, conversion.rows[0].id, (Number(payment.amount) * teamRate / 100).toFixed(2), teamRate]);
+      teamCommission = created.rows[0];
+    }
+    return { conversion: conversion.rows[0], commission: commission.rows[0], teamCommission, alreadyRecorded: false };
   }
 }
 module.exports = new PaymentRepository();

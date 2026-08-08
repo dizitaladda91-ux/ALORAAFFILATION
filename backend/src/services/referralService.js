@@ -14,19 +14,19 @@ const getStandardAffiliateTier = (amount) =>
 class ReferralService {
   async trackClick({ referralCode, ipAddress, userAgent, referrerUrl }) {
     const link = await affiliateRepository.findLinkByCode(referralCode);
-    if (link && (!link.is_active || link.user_status !== 'active')) throw ApiError.notFound('Referral link is inactive');
+    if (!link || !link.is_active || link.user_status !== 'active') throw ApiError.notFound('Referral link is invalid or inactive');
     
     const click = await affiliateRepository.recordClick({
       referralCode,
-      affiliateLinkId: link ? link.id : null,
-      linkType: link ? link.link_type : null,
+      affiliateLinkId: link.id,
+      linkType: link.link_type,
       ipAddress,
       userAgent,
       referrerUrl,
     });
 
     const discountPercent = config.affiliateDiscountPercent || 10;
-    const baseTarget = (link && link.target_url) ? link.target_url : (config.storefrontUrl || 'https://aloraradiance.com');
+    const baseTarget = link.target_url || config.storefrontUrl || 'https://aloraradiance.com';
 
     let targetUrl = baseTarget;
     try {
@@ -45,7 +45,7 @@ class ReferralService {
     return {
       clickId: click.id,
       referralCode,
-      valid: Boolean(link),
+      valid: true,
       targetUrl,
       discountPercent,
     };
@@ -116,7 +116,36 @@ class ReferralService {
       amount: commissionAmount.toFixed(2),
       rate: commissionRate,
       status: 'pending',
+      commissionType: 'DIRECT',
     });
+
+    // A recruited affiliate's sale also earns its parent Super Affiliate.
+    // Team size 1-15 earns 5%; size 16+ earns 7%.
+    let teamCommission = null;
+    if (link.affiliate_role === ROLES.AFFILIATE && link.parent_affiliate_id) {
+      const teamStats = await referralRepository.getTeamStats(link.parent_affiliate_id);
+      const teamSize = Number(teamStats?.total_team_members || 0);
+      const teamTier = RECRUITMENT_TEAM_TIERS.find((tier) => teamSize <= tier.maximumTeamMembers);
+      const teamRate = teamTier.rate;
+      const teamAmount = (amount * teamRate) / 100;
+
+      teamCommission = await commissionRepository.createCommission({
+        affiliateId: link.parent_affiliate_id,
+        conversionId: conversion.id,
+        ruleId: null,
+        amount: teamAmount.toFixed(2),
+        rate: teamRate,
+        status: 'pending',
+        commissionType: 'TEAM',
+      });
+
+      notificationRepository.create({
+        userId: link.parent_affiliate_id,
+        title: 'New Team Commission Earned!',
+        message: `You earned ${teamRate}% team commission on order #${orderId}.`,
+        type: 'team_conversion',
+      }).catch(() => {});
+    }
 
     try {
       notificationRepository.create({
@@ -130,6 +159,7 @@ class ReferralService {
     return {
       conversion,
       commission,
+      teamCommission,
       commissionTier: isShoppingAffiliate ? { label: rule.name, rate: commissionRate } : null,
       alreadyRecorded: false,
     };

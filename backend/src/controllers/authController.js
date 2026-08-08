@@ -39,7 +39,7 @@ class AuthController {
   forgotPassword = asyncHandler(async (req, res) => { await authService.requestPasswordReset(req.body.email); return sendSuccess(res, 'If that email exists, reset instructions have been sent'); });
   resetPassword = asyncHandler(async (req, res) => { await authService.resetPassword(req.body.token, req.body.password); return sendSuccess(res, 'Password reset successful'); });
   sendEmailVerification = asyncHandler(async (req, res) => { await authService.sendEmailVerification(req.user.id); return sendSuccess(res, 'Verification instructions have been sent'); });
-  verifyEmail = asyncHandler(async (req, res) => { await authService.verifyEmail(req.body.token); return sendSuccess(res, 'Email verified successfully'); });
+  verifyEmail = asyncHandler(async (req, res) => { await authService.verifyEmailToken(req.body.token); return sendSuccess(res, 'Email verified successfully'); });
 
   logout = asyncHandler(async (req, res) => {
     if (req.user) {
