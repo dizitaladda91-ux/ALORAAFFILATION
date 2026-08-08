@@ -46,6 +46,16 @@ app.get('/favicon.ico', (req, res) => {
   res.status(204).end();
 });
 
+// Serve Storefront Auto-Discount SDK Script
+app.get('/alora-storefront-discount.js', (req, res) => {
+  const sdkPath = path.join(__dirname, '../../frontend/public/alora-storefront-discount.js');
+  if (fs.existsSync(sdkPath)) {
+    res.setHeader('Content-Type', 'application/javascript');
+    return res.sendFile(sdkPath);
+  }
+  return res.status(404).send('// Alora SDK script not found');
+});
+
 // Root endpoint
 app.get('/', (req, res, next) => {
   const frontendDistPath = path.join(__dirname, '../../frontend/dist');
