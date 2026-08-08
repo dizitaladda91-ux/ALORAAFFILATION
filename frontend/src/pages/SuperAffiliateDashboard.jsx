@@ -17,7 +17,7 @@ export const SuperAffiliateDashboard = () => {
       try {
         const [overviewRes, teamRes] = await Promise.all([fetchDashboardOverview(), fetchTeam()]);
         setData(overviewRes);
-        setTeam(teamRes);
+        setTeam(teamRes?.items || []);
       } catch (err) {
         console.error('Error loading team dashboard', err);
       } finally {

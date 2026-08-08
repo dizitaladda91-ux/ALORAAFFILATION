@@ -5,7 +5,7 @@ import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
 import { Badge } from '../components/common/Badge';
-import { fetchCommissionRules, createCommissionRule } from '../services/referralService';
+import { fetchCommissionRules, createCommissionRule, settleMaturedCommissions } from '../services/referralService';
 import { useNotification } from '../hooks/useNotification';
 import { formatDate } from '../utils/formatters';
 import { Plus } from 'lucide-react';
@@ -16,6 +16,7 @@ export const CommissionRules = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', type: 'percentage', value: 15 });
   const [saving, setSaving] = useState(false);
+  const [settling, setSettling] = useState(false);
 
   const { showSuccess, showError } = useNotification();
 
@@ -47,6 +48,18 @@ export const CommissionRules = () => {
       showError(err.message || 'Failed to create rule');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSettlement = async () => {
+    setSettling(true);
+    try {
+      const result = await settleMaturedCommissions();
+      showSuccess(`${result.settledCount || 0} matured commissions moved to affiliate wallets.`);
+    } catch (err) {
+      showError(err.message || 'Unable to settle matured commissions');
+    } finally {
+      setSettling(false);
     }
   };
 
@@ -87,9 +100,14 @@ export const CommissionRules = () => {
             Configure global percentage or flat payouts awarded per conversion.
           </p>
         </div>
-        <Button onClick={() => setModalOpen(true)} icon={Plus}>
-          New Commission Rule
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={handleSettlement} loading={settling}>
+            Settle Matured Commissions
+          </Button>
+          <Button onClick={() => setModalOpen(true)} icon={Plus}>
+            New Commission Rule
+          </Button>
+        </div>
       </div>
 
       <Card>

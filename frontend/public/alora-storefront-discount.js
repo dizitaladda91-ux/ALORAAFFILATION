@@ -51,6 +51,12 @@
     },
   };
 
+  // The ecommerce storefront can use this event to persist referral data in
+  // its cart/session and send the final paid order from its server.
+  window.dispatchEvent(new CustomEvent('alora:referral-ready', {
+    detail: { ...window.AloraAffiliate },
+  }));
+
   // 4. Inject Top Announcement Banner for 10% OFF
   function injectDiscountBanner() {
     if (document.getElementById('alora-discount-banner')) return;

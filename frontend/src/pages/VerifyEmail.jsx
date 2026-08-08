@@ -1,19 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { AuthLayout } from '../components/layouts/AuthLayout';
 import { ROUTES } from '../constants/routes';
 
 export const VerifyEmail = () => {
   const { token } = useParams();
+  const [searchParams] = useSearchParams();
+  const verificationToken = token || searchParams.get('token');
   const [state, setState] = useState('verifying');
   const [message, setMessage] = useState('Verifying your email address…');
 
   useEffect(() => {
-    api.post('/auth/verify-email', { token })
+    if (!verificationToken) {
+      setState('error');
+      setMessage('This verification link is invalid or has expired.');
+      return;
+    }
+    api.post('/auth/verify-email', { token: verificationToken })
       .then(() => { setState('success'); setMessage('Your email has been verified. You can now sign in.'); })
       .catch((error) => { setState('error'); setMessage(error?.message || 'This verification link is invalid or has expired.'); });
-  }, [token]);
+  }, [verificationToken]);
 
   return <AuthLayout title="Email verification">
     <p style={{ color: state === 'error' ? 'var(--danger)' : 'var(--text-muted)' }}>{message}</p>

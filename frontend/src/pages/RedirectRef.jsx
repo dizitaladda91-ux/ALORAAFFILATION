@@ -14,6 +14,12 @@ export const RedirectRef = () => {
           localStorage.setItem('affiliate_ref_code', code);
           const result = await trackReferralClick(code);
 
+          // Invalid or inactive links must never unlock the storefront offer.
+          if (!result?.valid) {
+            window.location.replace(storefrontUrl);
+            return;
+          }
+
           if (result?.clickId) localStorage.setItem('affiliate_click_id', result.clickId);
           const discountVal = result?.discountPercent || 10;
           localStorage.setItem('affiliate_discount_percent', String(discountVal));
@@ -27,9 +33,9 @@ export const RedirectRef = () => {
             redirectUrl = urlObj.toString();
           }
 
-          window.location.href = redirectUrl;
+          window.location.replace(redirectUrl);
         } else {
-          window.location.href = storefrontUrl;
+          window.location.replace(storefrontUrl);
         }
       } catch (err) {
         console.error('Failed to record click event', err);
@@ -39,9 +45,9 @@ export const RedirectRef = () => {
             fallbackUrl.searchParams.set('ref', code);
             fallbackUrl.searchParams.set('discount', '10');
           }
-          window.location.href = fallbackUrl.toString();
+          window.location.replace(fallbackUrl.toString());
         } catch (e) {
-          window.location.href = storefrontUrl;
+          window.location.replace(storefrontUrl);
         }
       }
     };

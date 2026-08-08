@@ -20,3 +20,8 @@ export const createCommissionRule = async (ruleData) => {
   const res = await api.post(API_ENDPOINTS.COMMISSIONS.RULES, ruleData);
   return res.data.data;
 };
+
+export const settleMaturedCommissions = async (holdDays = 7) => {
+  const res = await api.post('/commissions/auto-settle', { holdDays });
+  return res.data.data;
+};
