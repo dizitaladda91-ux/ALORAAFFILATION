@@ -159,6 +159,12 @@
     const candidates = Array.from(document.querySelectorAll(priceSelectors.join(', ')));
     candidates
       .filter((element) => !element.dataset.aloraPriceApplied)
+      // Never process the price elements injected by this SDK. The storefront
+      // can re-render the cart after Add to Cart, which otherwise caused the
+      // old and discounted values to be concatenated repeatedly.
+      .filter((element) => !element.closest('[data-alora-price-applied]'))
+      .filter((element) => !element.classList.contains('alora-original-price'))
+      .filter((element) => !element.classList.contains('alora-discounted-price'))
       .filter((element) => !candidates.some((candidate) => candidate !== element && element.contains(candidate)))
       .forEach((element) => {
         const originalText = element.textContent.trim();
