@@ -91,6 +91,16 @@
     });
   }
 
+  // Helper to extract a single clean price number from raw text
+  function parseSinglePrice(text) {
+    if (!text) return null;
+    const match = text.trim().match(/(₹|\$|Rs\.?|INR)?\s*([0-9]{2,6}(\.[0-9]{1,2})?)/i);
+    if (!match || !match[2]) return null;
+    const val = parseFloat(match[2]);
+    if (isNaN(val) || val <= 0) return null;
+    return { symbol: match[1] || '₹', amount: val };
+  }
+
   // 5. Automatic Product Price Formatting
   function applyDiscountToPagePrices() {
     const priceSelectors = [
@@ -100,24 +110,38 @@
 
     const priceElements = document.querySelectorAll(priceSelectors.join(', '));
     priceElements.forEach(el => {
-      if (el.dataset.aloraProcessed) return;
+      // If already processed or contains our wrapper, skip!
+      if (el.dataset.aloraProcessed === 'true' || el.querySelector('.alora-price-tag') || el.closest('.alora-price-tag')) {
+        return;
+      }
 
-      const rawText = el.innerText || el.textContent;
-      const match = rawText.match(/(₹|\$|Rs\.?|INR)?\s*([0-9,]+(\.[0-9]{1,2})?)/i);
+      let originalNum = parseFloat(el.dataset.aloraOriginalPrice || '0');
+      let currencySymbol = el.dataset.aloraCurrencySymbol || '₹';
 
-      if (match && match[2]) {
-        const originalNum = parseFloat(match[2].replace(/,/g, ''));
-        if (!isNaN(originalNum) && originalNum > 0) {
-          const currencySymbol = match[1] || '₹';
-          const discountedNum = Math.round(originalNum * (1 - discountPercent / 100));
-
+      if (!originalNum) {
+        const rawText = el.innerText || el.textContent || '';
+        if (rawText.includes('OFF') || rawText.includes('line-through')) {
           el.dataset.aloraProcessed = 'true';
-          el.innerHTML = `
-            <span style="text-decoration: line-through; opacity: 0.6; font-size: 0.88em; margin-right: 6px;">${currencySymbol}${originalNum.toLocaleString('en-IN')}</span>
-            <strong style="color: #10b981; font-size: 1.05em;">${currencySymbol}${discountedNum.toLocaleString('en-IN')}</strong>
-            <span style="background: #10b981; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${discountPercent}% OFF</span>
-          `;
+          return;
         }
+
+        const parsed = parseSinglePrice(rawText);
+        if (!parsed) return;
+        originalNum = parsed.amount;
+        currencySymbol = parsed.symbol;
+        el.dataset.aloraOriginalPrice = String(originalNum);
+        el.dataset.aloraCurrencySymbol = currencySymbol;
+      }
+
+      if (originalNum > 0) {
+        const discountedNum = Math.round(originalNum * (1 - discountPercent / 100));
+        el.dataset.aloraProcessed = 'true';
+
+        el.innerHTML = `<span class="alora-price-tag" style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;">
+          <span style="text-decoration: line-through; opacity: 0.6; font-size: 0.88em; margin-right: 4px;">${currencySymbol}${originalNum.toLocaleString('en-IN')}</span>
+          <strong style="color: #10b981; font-size: 1.05em;">${currencySymbol}${discountedNum.toLocaleString('en-IN')}</strong>
+          <span style="background: #10b981; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${discountPercent}% OFF</span>
+        </span>`;
       }
     });
   }
@@ -125,6 +149,10 @@
   // 6. Auto-Fill Coupon & Promo Code Inputs at Cart / Checkout
   function autoFillCouponFields() {
     const couponSelectors = [
+      'input[placeholder*="COUPON" i]',
+      'input[placeholder*="coupon" i]',
+      'input[placeholder*="CODE" i]',
+      'input[placeholder*="code" i]',
       'input[name="coupon"]', 'input[name="coupon_code"]', 'input[name="discount"]',
       'input[name="promo_code"]', 'input[name="discount_code"]', '#coupon_code',
       '#discount_code', '.checkout-discount-input', '.coupon-input'
@@ -138,10 +166,11 @@
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
 
-        const applyBtn = input.parentElement?.querySelector('button, input[type="submit"], .apply-btn, #apply-coupon');
+        const parentContainer = input.parentElement || input.closest('div, form');
+        const applyBtn = parentContainer?.querySelector('button, input[type="submit"], .apply-btn, #apply-coupon, [class*="apply" i]');
         if (applyBtn && !applyBtn.dataset.aloraClicked) {
           applyBtn.dataset.aloraClicked = 'true';
-          setTimeout(() => applyBtn.click(), 500);
+          setTimeout(() => applyBtn.click(), 400);
         }
       }
     });
@@ -168,8 +197,9 @@
 
       const priceInputs = form.querySelectorAll('input[name="price"], input[name="amount"], input[name="unit_price"]');
       priceInputs.forEach(input => {
-        const val = parseFloat(input.value);
-        if (!isNaN(val) && val > 0 && !input.dataset.aloraDiscounted) {
+        let val = parseFloat(input.dataset.aloraOriginalValue || input.value);
+        if (!isNaN(val) && val > 0) {
+          if (!input.dataset.aloraOriginalValue) input.dataset.aloraOriginalValue = String(val);
           const discountedVal = Math.round(val * (1 - discountPercent / 100));
           input.value = String(discountedVal);
           input.dataset.aloraDiscounted = 'true';
@@ -188,25 +218,24 @@
 
     const cartTotals = document.querySelectorAll(cartTotalSelectors.join(', '));
     cartTotals.forEach(el => {
-      if (el.dataset.aloraProcessed) return;
+      if (el.dataset.aloraProcessed === 'true' || el.querySelector('.alora-cart-tag')) return;
 
-      const rawText = el.innerText || el.textContent;
-      const match = rawText.match(/(₹|\$|Rs\.?|INR)?\s*([0-9,]+(\.[0-9]{1,2})?)/i);
+      const rawText = el.innerText || el.textContent || '';
+      if (rawText.includes('OFF')) return;
 
-      if (match && match[2]) {
-        const originalNum = parseFloat(match[2].replace(/,/g, ''));
-        if (!isNaN(originalNum) && originalNum > 0) {
-          const currencySymbol = match[1] || '₹';
-          const discountedNum = Math.round(originalNum * (1 - discountPercent / 100));
+      const parsed = parseSinglePrice(rawText);
+      if (!parsed) return;
 
-          el.dataset.aloraProcessed = 'true';
-          el.innerHTML = `
-            <span style="text-decoration: line-through; opacity: 0.6; font-size: 0.88em; margin-right: 6px;">${currencySymbol}${originalNum.toLocaleString('en-IN')}</span>
-            <strong style="color: #10b981; font-size: 1.08em;">${currencySymbol}${discountedNum.toLocaleString('en-IN')}</strong>
-            <span style="background: #10b981; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${discountPercent}% OFF APPLIED</span>
-          `;
-        }
-      }
+      const originalNum = parsed.amount;
+      const currencySymbol = parsed.symbol;
+      const discountedNum = Math.round(originalNum * (1 - discountPercent / 100));
+
+      el.dataset.aloraProcessed = 'true';
+      el.innerHTML = `<span class="alora-cart-tag" style="display:inline-flex;align-items:center;gap:6px;">
+        <span style="text-decoration: line-through; opacity: 0.6; font-size: 0.88em;">${currencySymbol}${originalNum.toLocaleString('en-IN')}</span>
+        <strong style="color: #10b981; font-size: 1.08em;">${currencySymbol}${discountedNum.toLocaleString('en-IN')}</strong>
+        <span style="background: #10b981; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${discountPercent}% OFF APPLIED</span>
+      </span>`;
     });
   }
 
