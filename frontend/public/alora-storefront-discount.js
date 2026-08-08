@@ -1,8 +1,7 @@
 /**
  * ALORA RADIANCE - Storefront Auto-Discount & Referral Tracking SDK
- * Automatically detects referral parameters (?ref=CODE&discount=10&coupon=CODE),
- * displays a 10% OFF partner banner, persists referral context, and
- * SILENTLY AUTO-APPLIES the 10% discount at checkout bill summary without requiring manual user input.
+ * Automatically detects referral parameters, shows the 10% partner price on
+ * product cards, and applies the partner coupon at checkout.
  */
 (function () {
   'use strict';
@@ -10,8 +9,8 @@
   // 1. Detect parameters from URL query string
   const urlParams = new URLSearchParams(window.location.search);
   const refFromUrl = urlParams.get('ref') || urlParams.get('referral') || urlParams.get('affiliate') || urlParams.get('coupon') || urlParams.get('coupon_code');
-  const discountFromUrl = urlParams.get('discount') || urlParams.get('discountPercent');
   const clickIdFromUrl = urlParams.get('clickId') || urlParams.get('click_id');
+  const PARTNER_DISCOUNT_PERCENT = 10;
 
   // 2. Save referral context in Storage & Cookie
   if (refFromUrl) {
@@ -20,14 +19,11 @@
     document.cookie = `alora_ref_code=${encodeURIComponent(refFromUrl)}; path=/; max-age=2592000`; // 30 days
   }
 
-  const discountPercent = Number(
-    discountFromUrl ||
-    localStorage.getItem('alora_discount_percent') ||
-    sessionStorage.getItem('alora_discount_percent') ||
-    10
-  );
+  // The storefront display must always use the approved affiliate discount.
+  // Do not trust a discount value supplied in a shared URL.
+  const discountPercent = PARTNER_DISCOUNT_PERCENT;
 
-  if (refFromUrl || discountFromUrl) {
+  if (refFromUrl) {
     localStorage.setItem('alora_discount_percent', String(discountPercent));
     sessionStorage.setItem('alora_discount_percent', String(discountPercent));
   }
@@ -79,10 +75,20 @@
       gap: 12px;
     `;
 
-    banner.innerHTML = `
-      <span>🎉 <strong>${discountPercent}% Partner Discount Active!</strong> (Ref Code: <code style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:4px;">${activeRefCode}</code>) — Auto-applied at checkout!</span>
-      <button id="alora-close-banner" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;opacity:0.8;line-height:1;">&times;</button>
-    `;
+    const message = document.createElement('span');
+    const code = document.createElement('code');
+    code.textContent = activeRefCode;
+    code.style.cssText = 'background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:4px;';
+    message.append('🎉 ', `${discountPercent}% Partner Discount Active! (Ref Code: `);
+    message.append(code, ') — Auto-applied at checkout!');
+
+    const closeButton = document.createElement('button');
+    closeButton.id = 'alora-close-banner';
+    closeButton.type = 'button';
+    closeButton.setAttribute('aria-label', 'Close partner discount banner');
+    closeButton.textContent = '×';
+    closeButton.style.cssText = 'background:none;border:none;color:#fff;font-size:18px;cursor:pointer;opacity:0.8;line-height:1;';
+    banner.append(message, closeButton);
 
     document.body.insertBefore(banner, document.body.firstChild);
 
@@ -124,7 +130,56 @@
     });
   }
 
-  // 6. Auto-Inject Referral Context into Cart & Checkout Forms
+  // 6. Show the partner price wherever a storefront renders a product price.
+  // The original price is preserved and the 10% price is added alongside it.
+  const priceSelectors = [
+    '[data-product-price]', '[data-price]', '.product-price', '.price', '.money',
+    '.woocommerce-Price-amount', '[class*="product-price"]', '[class*="sale-price"]'
+  ];
+
+  function getNumericPrice(value) {
+    const normalized = String(value).replace(/[^0-9.,]/g, '').replace(/,/g, '');
+    const amount = Number.parseFloat(normalized);
+    return Number.isFinite(amount) && amount > 0 ? amount : null;
+  }
+
+  function formatDiscountedPrice(originalText, amount) {
+    const currency = originalText.match(/₹|Rs\.?|INR|\$|€|£/i)?.[0] || '₹';
+    const discounted = Math.round(amount * (1 - discountPercent / 100) * 100) / 100;
+    return `${currency}${discounted.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function showDiscountedProductPrices() {
+    const candidates = Array.from(document.querySelectorAll(priceSelectors.join(', ')));
+    candidates
+      .filter((element) => !element.dataset.aloraPriceApplied)
+      .filter((element) => !candidates.some((candidate) => candidate !== element && element.contains(candidate)))
+      .forEach((element) => {
+        const originalText = element.textContent.trim();
+        const amount = getNumericPrice(originalText);
+        if (!amount) return;
+
+        const original = document.createElement('span');
+        original.className = 'alora-original-price';
+        original.textContent = originalText;
+        original.style.cssText = 'text-decoration:line-through;opacity:.65;margin-right:6px;';
+
+        const sale = document.createElement('span');
+        sale.className = 'alora-discounted-price';
+        sale.textContent = formatDiscountedPrice(originalText, amount);
+        sale.style.cssText = 'color:#c026d3;font-weight:700;white-space:nowrap;';
+
+        const badge = document.createElement('small');
+        badge.textContent = ` ${discountPercent}% OFF`;
+        badge.style.cssText = 'color:#15803d;font-weight:700;margin-left:4px;white-space:nowrap;';
+
+        element.textContent = '';
+        element.append(original, sale, badge);
+        element.dataset.aloraPriceApplied = 'true';
+      });
+  }
+
+  // 7. Auto-inject referral context into cart and checkout forms.
   function updateCartFormInputs() {
     const forms = document.querySelectorAll('form[action*="cart"], form[action*="checkout"], .product-form, #add-to-cart-form');
     forms.forEach(form => {
@@ -147,6 +202,7 @@
 
   function runCheckoutDiscountHelpers() {
     injectDiscountBanner();
+    showDiscountedProductPrices();
     autoFillCouponFields();
     updateCartFormInputs();
   }
@@ -158,6 +214,15 @@
     runCheckoutDiscountHelpers();
   }
 
-  // Periodically check for checkout form updates
-  setInterval(runCheckoutDiscountHelpers, 1000);
+  // Storefronts commonly render products after page load. Observe those changes
+  // instead of continuously polling every second.
+  let scheduled = false;
+  new MutationObserver(() => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      runCheckoutDiscountHelpers();
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
 })();
