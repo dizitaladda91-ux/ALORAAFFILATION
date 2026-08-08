@@ -98,4 +98,10 @@ describe('auth service', () => {
 
     await expect(authService.refreshTokens('refresh-token')).rejects.toMatchObject({ statusCode: 401 });
   });
+
+  it('revokes the refresh token on logout', async () => {
+    await authService.logout(7);
+
+    expect(userRepository.updateRefreshToken).toHaveBeenCalledWith(7, null);
+  });
 });

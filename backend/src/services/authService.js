@@ -232,7 +232,7 @@ class AuthService {
   async sendEmailVerification(userId) {
     const user = await userRepository.findById(userId);
     if (!user) throw ApiError.notFound('User not found');
-    if (user.email_verified) return { message: 'Email address is already verified' };
+    if (user.is_email_verified) return { message: 'Email address is already verified' };
 
     const token = crypto.randomBytes(32).toString('hex');
     const hashed = crypto.createHash('sha256').update(token).digest('hex');
@@ -279,6 +279,13 @@ class AuthService {
     await userRepository.updatePassword(record.user_id, passwordHash);
     await userRepository.deletePasswordResetToken(record.user_id);
     return { message: 'Password has been reset successfully' };
+  }
+
+  async logout(userId) {
+    // Refresh-token rotation is stateful; clearing the stored token revokes
+    // this session immediately and makes subsequent refresh attempts fail.
+    await userRepository.updateRefreshToken(userId, null);
+    return { message: 'Logout successful' };
   }
 }
 

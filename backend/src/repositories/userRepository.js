@@ -65,6 +65,9 @@ class UserRepository {
   async savePasswordReset(userId, tokenHash, expiresAt) { await db.query('UPDATE users SET password_reset_token_hash=$1, password_reset_expires_at=$2 WHERE id=$3', [tokenHash, expiresAt, userId]); }
   async findByPasswordResetToken(tokenHash) { const res = await db.query(`SELECT u.*, p.first_name FROM users u LEFT JOIN profiles p ON p.user_id=u.id WHERE u.password_reset_token_hash=$1 AND u.password_reset_expires_at > CURRENT_TIMESTAMP AND u.deleted_at IS NULL`, [tokenHash]); return res.rows[0] || null; }
   async clearPasswordReset(userId) { await db.query('UPDATE users SET password_reset_token_hash=NULL, password_reset_expires_at=NULL, refresh_token=NULL WHERE id=$1', [userId]); }
+  async savePasswordResetToken(userId, tokenHash, expiresAt) { return this.savePasswordReset(userId, tokenHash, expiresAt); }
+  async findPasswordResetToken(tokenHash) { return this.findByPasswordResetToken(tokenHash); }
+  async deletePasswordResetToken(userId) { return this.clearPasswordReset(userId); }
 
   async saveEmailVerification(userId, tokenHash, expiresAt) {
     await db.query('UPDATE users SET email_verification_token_hash=$1, email_verification_expires_at=$2 WHERE id=$3', [tokenHash, expiresAt, userId]);
@@ -78,6 +81,7 @@ class UserRepository {
     );
     return res.rows[0] || null;
   }
+  async findEmailVerificationToken(tokenHash) { return this.findByEmailVerificationToken(tokenHash); }
 
   async findSessionUserById(id) {
     const res = await db.query(
@@ -94,6 +98,13 @@ class UserRepository {
     await db.query(
       `UPDATE users SET is_email_verified=TRUE, email_verification_token_hash=NULL,
        email_verification_expires_at=NULL, updated_at=CURRENT_TIMESTAMP WHERE id=$1`,
+      [userId]
+    );
+  }
+  async markEmailVerified(userId) { return this.verifyEmail(userId); }
+  async deleteEmailVerificationToken(userId) {
+    await db.query(
+      'UPDATE users SET email_verification_token_hash=NULL, email_verification_expires_at=NULL WHERE id=$1',
       [userId]
     );
   }
