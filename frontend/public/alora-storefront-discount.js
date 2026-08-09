@@ -170,8 +170,34 @@
     return `${currency}${discounted.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
+  function isOriginalMrp(element) {
+    if (['DEL', 'S', 'STRIKE'].includes(element.tagName)) return true;
+    const style = window.getComputedStyle(element);
+    return style.textDecorationLine.includes('line-through');
+  }
+
+  function findPriceCandidates() {
+    const selectorCandidates = Array.from(document.querySelectorAll(priceSelectors.join(', ')));
+    const known = new Set(selectorCandidates);
+
+    // Some storefronts use only utility CSS classes on Shop cards. In that
+    // case there is no semantic “price” selector, but the visible text is a
+    // standalone currency value such as “₹499”. Add those leaf elements while
+    // deliberately ignoring crossed-out MRP values.
+    document.querySelectorAll('body *').forEach((element) => {
+      if (known.has(element) || element.children.length > 0 || isOriginalMrp(element)) return;
+      const text = element.textContent.trim();
+      if (/^(?:₹|Rs\.?|INR|\$|€|£)\s*\d[\d,]*(?:\.\d{1,2})?$/i.test(text)) {
+        selectorCandidates.push(element);
+        known.add(element);
+      }
+    });
+
+    return selectorCandidates;
+  }
+
   function showDiscountedProductPrices() {
-    const candidates = Array.from(document.querySelectorAll(priceSelectors.join(', ')));
+    const candidates = findPriceCandidates();
     candidates
       .filter((element) => !element.dataset.aloraPriceApplied)
       .filter((element) => !element.closest('[data-alora-price-applied]'))
