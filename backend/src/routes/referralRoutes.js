@@ -14,6 +14,10 @@ router.get('/click/:code', referralController.trackClick);
 // customer-facing affiliate discount.
 router.get('/discount/:code', referralController.getDiscount);
 
+// The ecommerce backend checks this before applying a referral discount at
+// checkout. It is server-to-server because it contains customer identity.
+router.get('/coupon-status/:code', requireStorefrontApiKey, [query('customerEmail').isEmail().normalizeEmail()], validate, referralController.getCouponEligibility);
+
 // Endpoint for e-commerce or conversion webhooks to record a sale
 router.post('/conversion', requireStorefrontApiKey, conversionValidator, validate, referralController.recordConversion);
 

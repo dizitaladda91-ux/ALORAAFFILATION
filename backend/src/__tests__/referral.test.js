@@ -16,10 +16,16 @@ jest.mock('../repositories/commissionRepository', () => ({
   findMatchingRule: jest.fn(),
 }));
 
+jest.mock('../repositories/couponRedemptionRepository', () => ({
+  claim: jest.fn(),
+  attachConversion: jest.fn(),
+}));
+
 const referralService = require('../services/referralService');
 const affiliateRepository = require('../repositories/affiliateRepository');
 const commissionRepository = require('../repositories/commissionRepository');
 const referralRepository = require('../repositories/referralRepository');
+const couponRedemptionRepository = require('../repositories/couponRedemptionRepository');
 
 describe('referral service', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -40,8 +46,9 @@ describe('referral service', () => {
     commissionRepository.createConversion.mockResolvedValue({ id: 101 });
     commissionRepository.createCommission.mockResolvedValue({ id: 201, amount: '25.00' });
     commissionRepository.findMatchingRule.mockResolvedValue({ id: 1, name: 'Shopping slab 0-1000', type: 'percentage', value: '10.00' });
+    couponRedemptionRepository.claim.mockResolvedValue({ id: 501 });
 
-    const result = await referralService.processConversion({ referralCode: 'AFF123', orderId: 'order-2', amount: 250 });
+    const result = await referralService.processConversion({ referralCode: 'AFF123', orderId: 'order-2', customerEmail: 'buyer@example.com', amount: 250 });
 
     expect(result.alreadyRecorded).toBe(false);
     expect(commissionRepository.createCommission).toHaveBeenCalled();
@@ -57,10 +64,20 @@ describe('referral service', () => {
       .mockResolvedValueOnce({ id: 202, amount: '25.00' })
       .mockResolvedValueOnce({ id: 203, amount: '12.50', commission_type: 'TEAM' });
     referralRepository.getTeamStats.mockResolvedValue({ total_team_members: 10 });
+    couponRedemptionRepository.claim.mockResolvedValue({ id: 502 });
 
-    const result = await referralService.processConversion({ referralCode: 'AFF123', orderId: 'order-3', amount: 250 });
+    const result = await referralService.processConversion({ referralCode: 'AFF123', orderId: 'order-3', customerEmail: 'buyer@example.com', amount: 250 });
 
     expect(result.teamCommission.amount).toBe('12.50');
     expect(commissionRepository.createCommission).toHaveBeenLastCalledWith(expect.objectContaining({ affiliateId: 8, rate: 5, commissionType: 'TEAM' }));
+  });
+
+  it('rejects a coupon already redeemed by the same customer', async () => {
+    affiliateRepository.findLinkByCode.mockResolvedValue({ user_id: 3, referral_code: 'AFF123', affiliate_role: 'affiliate', link_type: 'SHOPPING', is_active: true, user_status: 'active' });
+    commissionRepository.findConversionByOrderId.mockResolvedValue(null);
+    couponRedemptionRepository.claim.mockResolvedValue(null);
+
+    await expect(referralService.processConversion({ referralCode: 'AFF123', orderId: 'order-4', customerEmail: 'buyer@example.com', amount: 250 })).rejects.toMatchObject({ statusCode: 409 });
+    expect(commissionRepository.createConversion).not.toHaveBeenCalled();
   });
 });

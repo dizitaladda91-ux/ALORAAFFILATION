@@ -16,10 +16,11 @@ class ReferralController {
   });
 
   recordConversion = asyncHandler(async (req, res) => {
-    const { referralCode, orderId, amount, grossAmount, discountAmount, eligibleAmount, currency, clickId } = req.body;
+    const { referralCode, orderId, customerEmail, amount, grossAmount, discountAmount, eligibleAmount, currency, clickId } = req.body;
     const result = await referralService.processConversion({
       referralCode,
       orderId,
+      customerEmail,
       amount: parseFloat(amount),
       grossAmount: grossAmount === undefined ? parseFloat(amount) : parseFloat(grossAmount),
       discountAmount: discountAmount === undefined ? 0 : parseFloat(discountAmount),
@@ -33,6 +34,11 @@ class ReferralController {
   getDiscount = asyncHandler(async (req, res) => {
     const discount = await referralService.getAffiliateDiscount(req.params.code);
     return sendSuccess(res, 'Affiliate discount verified', discount);
+  });
+
+  getCouponEligibility = asyncHandler(async (req, res) => {
+    const result = await referralService.getCouponEligibility(req.params.code, req.query.customerEmail);
+    return sendSuccess(res, 'Coupon eligibility checked', result);
   });
 
   getTeam = asyncHandler(async (req, res) => {

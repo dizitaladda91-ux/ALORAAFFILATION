@@ -210,6 +210,16 @@ CREATE TABLE IF NOT EXISTS payments (
 CREATE TABLE IF NOT EXISTS payment_logs (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), payment_id UUID REFERENCES payments(id) ON DELETE CASCADE, event_type VARCHAR(80) NOT NULL, payload JSONB, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS webhook_events (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), gateway_event_id VARCHAR(100) NOT NULL UNIQUE, event_type VARCHAR(80) NOT NULL, payload JSONB NOT NULL, status VARCHAR(20) NOT NULL, processed_at TIMESTAMP WITH TIME ZONE, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS refunds (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), payment_id UUID NOT NULL REFERENCES payments(id), gateway_refund_id VARCHAR(100) NOT NULL UNIQUE, amount NUMERIC(12,2) NOT NULL, status VARCHAR(30) NOT NULL, gateway_response JSONB, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS affiliate_coupon_redemptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  referral_code VARCHAR(50) NOT NULL,
+  customer_email VARCHAR(254) NOT NULL,
+  order_id VARCHAR(100) NOT NULL UNIQUE,
+  conversion_id UUID REFERENCES conversion_events(id) ON DELETE SET NULL,
+  redeemed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (referral_code, customer_email)
+);
+CREATE INDEX IF NOT EXISTS idx_affiliate_coupon_redemptions_customer ON affiliate_coupon_redemptions(customer_email);
 CREATE INDEX IF NOT EXISTS idx_payments_affiliate ON payments(affiliate_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status, created_at DESC);
 

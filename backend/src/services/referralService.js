@@ -4,6 +4,7 @@ const commissionRepository = require('../repositories/commissionRepository');
 const ApiError = require('../utils/apiError');
 const config = require('../config/env');
 const notificationRepository = require('../repositories/notification.repository');
+const couponRedemptionRepository = require('../repositories/couponRedemptionRepository');
 const { ROLES } = require('../constants/roles');
 const { SHOPPING_COMMISSION_TIERS, RECRUITMENT_TEAM_TIERS } = require('../constants/affiliateLink.constants');
 
@@ -68,7 +69,20 @@ class ReferralService {
     return this.validateCode(referralCode);
   }
 
-  async processConversion({ referralCode, orderId, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'INR', clickId = null }) {
+  async getCouponEligibility(referralCode, customerEmail) {
+    const discount = await this.validateCode(referralCode);
+    if (!discount.valid) return { ...discount, eligible: false, reason: 'INVALID_REFERRAL' };
+
+    const alreadyRedeemed = await couponRedemptionRepository.hasRedeemed({ referralCode, customerEmail });
+    return {
+      ...discount,
+      eligible: !alreadyRedeemed,
+      discountPercent: alreadyRedeemed ? 0 : discount.discountPercent,
+      reason: alreadyRedeemed ? 'ALREADY_REDEEMED' : null,
+    };
+  }
+
+  async processConversion({ referralCode, orderId, customerEmail, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'INR', clickId = null }) {
     const link = await affiliateRepository.findLinkByCode(referralCode);
     if (!link || link.link_type !== 'SHOPPING' || !link.is_active || link.user_status !== 'active') {
       throw ApiError.notFound(`Invalid referral code: ${referralCode}`);
@@ -84,6 +98,13 @@ class ReferralService {
       };
     }
 
+    // This atomic unique claim makes a referral coupon one-time per customer
+    // email, even if they open the link again in another browser/device.
+    const redemption = await couponRedemptionRepository.claim({ referralCode, customerEmail, orderId });
+    if (!redemption) {
+      throw ApiError.conflict('This referral coupon has already been used by this customer.');
+    }
+
     const conversion = await commissionRepository.createConversion({
       clickId,
       referralId: null,
@@ -95,6 +116,7 @@ class ReferralService {
       eligibleAmount,
       currency,
     });
+    await couponRedemptionRepository.attachConversion(redemption.id, conversion.id);
 
     const isShoppingAffiliate = [ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(link.affiliate_role);
     const rule = isShoppingAffiliate ? await commissionRepository.findMatchingRule({ eventType: 'shopping', eligibleAmount }) : await commissionRepository.findActiveRule();

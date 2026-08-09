@@ -1,16 +1,23 @@
 /**
  * ALORA RADIANCE - Storefront Auto-Discount & Referral Tracking SDK
- * Automatically detects referral parameters, shows the 10% partner price on
- * product cards, and applies the partner coupon at checkout.
+ * Automatically detects referral parameters (?ref=CODE), shows partner discounts
+ * on product cards across Home, Shop, Collections & Cart, auto-propagates referral
+ * parameters on internal navigation links, and applies partner coupons at checkout.
  */
 (function () {
   'use strict';
 
-  // 1. Detect parameters from URL query string
+  // 1. Detect parameters from URL query string, LocalStorage, SessionStorage, or Cookies
   const urlParams = new URLSearchParams(window.location.search);
   const refFromUrl = urlParams.get('ref') || urlParams.get('referral') || urlParams.get('affiliate') || urlParams.get('coupon') || urlParams.get('coupon_code');
   const clickIdFromUrl = urlParams.get('clickId') || urlParams.get('click_id');
   const PARTNER_DISCOUNT_PERCENT = 10;
+
+  // Helper to read cookies
+  function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? decodeURIComponent(match[2]) : null;
+  }
 
   // 2. Save referral context in Storage & Cookie
   if (refFromUrl) {
@@ -19,8 +26,6 @@
     document.cookie = `alora_ref_code=${encodeURIComponent(refFromUrl)}; path=/; max-age=2592000`; // 30 days
   }
 
-  // The storefront display must always use the approved affiliate discount.
-  // Do not trust a discount value supplied in a shared URL.
   const discountPercent = PARTNER_DISCOUNT_PERCENT;
 
   if (refFromUrl) {
@@ -33,7 +38,10 @@
     sessionStorage.setItem('alora_click_id', clickIdFromUrl);
   }
 
-  const activeRefCode = refFromUrl || localStorage.getItem('alora_ref_code') || sessionStorage.getItem('alora_ref_code');
+  const activeRefCode = refFromUrl ||
+    localStorage.getItem('alora_ref_code') ||
+    sessionStorage.getItem('alora_ref_code') ||
+    getCookie('alora_ref_code');
 
   // If no referral active, exit quietly
   if (!activeRefCode) return;
@@ -44,15 +52,13 @@
     discountPercent: discountPercent,
     clickId: clickIdFromUrl || localStorage.getItem('alora_click_id') || '',
     calculateDiscountedPrice: function (price) {
-      const numericPrice = typeof price === 'number' ? price : parseFloat(Intl.NumberFormat().format(price).replace(/[^0-9.]/g, ''));
+      const numericPrice = typeof price === 'number' ? price : parseFloat(String(price).replace(/[^0-9.]/g, ''));
       if (isNaN(numericPrice)) return price;
       const discounted = numericPrice * (1 - discountPercent / 100);
       return Math.round(discounted * 100) / 100;
     },
   };
 
-  // The ecommerce storefront can use this event to persist referral data in
-  // its cart/session and send the final paid order from its server.
   window.dispatchEvent(new CustomEvent('alora:referral-ready', {
     detail: { ...window.AloraAffiliate },
   }));
@@ -121,7 +127,6 @@
         input.value = activeRefCode;
         input.dataset.aloraFilled = activeRefCode;
 
-        // Trigger input, change, and keypress events for React/Vue frameworks
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
         input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'Enter' }));
@@ -136,32 +141,27 @@
     });
   }
 
-  // 6. Show the partner price wherever a storefront renders a product price.
-  // Keep only one numeric value inside the price element. Some storefront carts
-  // read textContent to calculate totals; rendering MRP and sale price together
-  // turns “499” + “449.10” into the invalid “499449.10” amount.
+  // 6. Format Product Prices across Home, Shop, Collections & Cart Pages
   const priceSelectors = [
-    // Generic React / custom storefronts
     '[data-product-price]', '[data-product-price-value]', '[data-price]', '[data-money]',
     '[data-cart-item-price]', '[data-cart-item-final-price]', '[data-cart-item-regular-price]',
     '.product-price', '.product__price', '.product-price-current', '.price__current',
     '.price', '.money', '.amount',
-    // Shopify and WooCommerce themes
+    '.product-card__price', '.grid-view-item__meta', '.card-information', '.price-container',
+    '.product-grid-item-price', '.card-price', '.item-price', '.grid-price',
     '.price-item', '.price-item--regular', '.price-item--sale', '.price__sale',
     '.woocommerce-Price-amount', '.woocommerce-Price-amount bdi',
-    // Common ecommerce component class names
     '[class*="product-price"]', '[class*="sale-price"]', '[class*="current-price"]',
-    '[class*="cart-price"]', '[class*="item-price"]'
+    '[class*="cart-price"]', '[class*="item-price"]', '[class*="grid-price"]'
   ];
 
   function getNumericPrice(value) {
+    if (!value) return null;
     const normalized = String(value).replace(/,/g, '');
-    // Read one price only. A product card may contain both MRP and sale text;
-    // removing all non-digits would concatenate them into an invalid amount.
     const currencyMatch = normalized.match(/(?:₹|Rs\.?|INR|\$|€|£)\s*(\d+(?:\.\d{1,2})?)/i);
     const numberMatch = normalized.match(/\b(\d+(?:\.\d{1,2})?)\b/);
     const amount = Number.parseFloat(currencyMatch?.[1] || numberMatch?.[1]);
-    return Number.isFinite(amount) && amount > 0 ? amount : null;
+    return Number.isFinite(amount) && amount > 0 && amount < 1000000 ? amount : null;
   }
 
   function formatDiscountedPrice(originalText, amount) {
@@ -174,9 +174,6 @@
     const candidates = Array.from(document.querySelectorAll(priceSelectors.join(', ')));
     candidates
       .filter((element) => !element.dataset.aloraPriceApplied)
-      // Never process the price elements injected by this SDK. The storefront
-      // can re-render the cart after Add to Cart, which otherwise caused the
-      // old and discounted values to be concatenated repeatedly.
       .filter((element) => !element.closest('[data-alora-price-applied]'))
       .filter((element) => !element.classList.contains('alora-original-price'))
       .filter((element) => !element.classList.contains('alora-discounted-price'))
@@ -192,8 +189,6 @@
         element.style.fontWeight = '700';
         element.dataset.aloraPriceApplied = 'true';
 
-        // Keep the offer badge outside the numeric price element. Cart code
-        // often reads this element's textContent to calculate totals.
         if (!element.nextElementSibling?.classList.contains('alora-discount-badge')) {
           const badge = document.createElement('span');
           badge.className = 'alora-discount-badge';
@@ -205,7 +200,26 @@
       });
   }
 
-  // 7. Auto-inject referral context into cart and checkout forms.
+  // 7. Auto-propagate ?ref=CODE to internal links so navigation to /shop, /collections etc. retains referral context in the URL
+  function propagateReferralToInternalLinks() {
+    if (!activeRefCode) return;
+    const links = document.querySelectorAll('a[href]');
+    links.forEach(a => {
+      const href = a.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+      try {
+        const url = new URL(href, window.location.origin);
+        if (url.origin === window.location.origin) {
+          if (!url.searchParams.has('ref')) {
+            url.searchParams.set('ref', activeRefCode);
+            a.setAttribute('href', url.pathname + url.search + url.hash);
+          }
+        }
+      } catch (e) {}
+    });
+  }
+
+  // 8. Auto-inject referral context into cart and checkout forms.
   function updateCartFormInputs() {
     const forms = document.querySelectorAll('form[action*="cart"], form[action*="checkout"], .product-form, #add-to-cart-form');
     forms.forEach(form => {
@@ -231,6 +245,7 @@
     showDiscountedProductPrices();
     autoFillCouponFields();
     updateCartFormInputs();
+    propagateReferralToInternalLinks();
   }
 
   // Run DOM injections when document is ready
@@ -240,8 +255,7 @@
     runCheckoutDiscountHelpers();
   }
 
-  // Storefronts commonly render products after page load. Observe those changes
-  // instead of continuously polling every second.
+  // Observe DOM mutations so dynamically loaded products on /shop or category pages get formatted immediately
   let scheduled = false;
   new MutationObserver(() => {
     if (scheduled) return;
@@ -252,9 +266,7 @@
     });
   }).observe(document.documentElement, { childList: true, subtree: true });
 
-  // React/Next storefronts may replace the product grid without a full page
-  // load when visitors use Shop Now or Explore Now. Reapply immediately after
-  // client-side navigation as well as DOM mutations.
+  // Reapply after client-side navigation (e.g. clicking Shop, Explore, Pagination)
   const rerunAfterNavigation = () => requestAnimationFrame(runCheckoutDiscountHelpers);
   ['pushState', 'replaceState'].forEach((method) => {
     const original = history[method];

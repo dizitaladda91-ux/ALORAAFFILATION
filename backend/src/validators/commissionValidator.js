@@ -12,6 +12,7 @@ const createRuleValidator = [
 const conversionValidator = [
   body('referralCode').notEmpty().trim().isLength({ max: 50 }).withMessage('Referral code is required'),
   body('orderId').notEmpty().trim().isLength({ max: 100 }).withMessage('A valid order ID is required'),
+  body('customerEmail').isEmail().normalizeEmail().withMessage('Customer email is required to validate one-time coupon use'),
   body('amount').isFloat({ min: 0.01 }).withMessage('Amount must be greater than 0'),
   body('grossAmount').optional().isFloat({ min: 0.01 }),
   body('discountAmount').optional().isFloat({ min: 0 }),

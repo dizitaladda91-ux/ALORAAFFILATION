@@ -4,6 +4,7 @@ const db = require('../database');
 const config = require('../config/env');
 const ApiError = require('../utils/apiError');
 const paymentRepository = require('../repositories/paymentRepository');
+const couponRedemptionRepository = require('../repositories/couponRedemptionRepository');
 
 class PaymentService {
   constructor() { this.client = null; }
@@ -44,12 +45,29 @@ class PaymentService {
       await client.query('BEGIN');
       const payment = await paymentRepository.findByGatewayOrderId(client, orderId);
       if (!payment) throw ApiError.notFound('Payment order not found');
+      if (payment.status === 'SUCCESS' && status === 'SUCCESS') {
+        await client.query('COMMIT');
+        return { payment, conversion: null, commission: null, pending: false, alreadyProcessed: true };
+      }
       const updated = await paymentRepository.updatePayment(client, payment.id, { paymentId, status, gatewayResponse });
       let result = null;
       if (status === 'SUCCESS') {
         const context = await paymentRepository.findReferralContext(client, updated.referral_code, updated.click_id);
         if (!context) throw ApiError.badRequest('The referral context is no longer valid');
-        result = await paymentRepository.createConversionAndCommission(client, { ...updated, affiliate_role: context.affiliate_role });
+        const customerEmail = updated.customer?.email;
+        if (!customerEmail) throw ApiError.badRequest('Customer email is required for one-time coupon validation');
+        const redemption = await couponRedemptionRepository.claim({
+          referralCode: updated.referral_code,
+          customerEmail,
+          orderId: updated.gateway_order_id,
+        }, client);
+        if (!redemption) throw ApiError.conflict('This referral coupon has already been used by this customer.');
+        result = await paymentRepository.createConversionAndCommission(client, {
+          ...updated,
+          affiliate_role: context.affiliate_role,
+          parent_affiliate_id: context.parent_affiliate_id,
+        });
+        if (result?.conversion) await couponRedemptionRepository.attachConversion(redemption.id, result.conversion.id, client);
       }
       await client.query('COMMIT');
       return { payment: updated, conversion: result?.conversion || null, commission: result?.commission || null, pending: status !== 'SUCCESS' };

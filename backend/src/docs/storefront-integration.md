@@ -28,8 +28,16 @@ window.addEventListener('alora:referral-ready', ({ detail }) => {
 ```
 
 5. Before calculating the checkout total, the storefront backend validates the
-   referral code with `GET /referrals/discount/:code`. Apply the returned
-   `discountPercent` only when `data.valid === true`.
+   referral code and one-time eligibility with:
+
+```http
+GET /referrals/coupon-status/:code?customerEmail=<customer-email>
+X-Storefront-Api-Key: <STOREFRONT_API_KEY>
+```
+
+   Apply the returned `discountPercent` only when `data.valid === true` and
+   `data.eligible === true`. Once an order is completed, the same customer
+   email and referral coupon receive `ALREADY_REDEEMED` and a 0% discount.
 6. After a successful payment, the storefront backend calls `POST /referrals/conversion`
    with `X-Storefront-Api-Key`, `referralCode`, `clickId`, its own immutable
    `orderId`, and the final paid amount. This creates exactly one pending commission.
@@ -51,6 +59,7 @@ await fetch(`${process.env.AFFILIATE_API_URL}/referrals/conversion`, {
     referralCode,
     clickId,
     orderId: order.id,
+    customerEmail: order.customer.email,
     amount: order.finalPaidAmount,
     grossAmount: order.subtotal,
     discountAmount: order.affiliateDiscount,
