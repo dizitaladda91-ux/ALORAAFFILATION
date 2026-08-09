@@ -23,6 +23,16 @@ export default defineConfig({
   build: {
     target: "es2022",
     cssTarget: "chrome90",
+    minify: 'esbuild',
+    cssMinify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          icons: ['lucide-react'],
+        },
+      },
+    },
   },
   server: {
     port: 3000,

@@ -1,42 +1,43 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { ROUTES } from '../constants/routes';
 import { ROLES } from '../constants/roles';
 
-import { Login } from '../pages/Login';
-import { Landing } from '../pages/Landing';
-import { Register } from '../pages/Register';
-import { ForgotPassword } from '../pages/ForgotPassword';
-import { ResetPassword } from '../pages/ResetPassword';
-import { VerifyEmail } from '../pages/VerifyEmail';
-import { RedirectRef } from '../pages/RedirectRef';
-import { Unauthorized } from '../pages/Unauthorized';
-import { NotFound } from '../pages/NotFound';
-
-import { SuperAdminDashboard } from '../pages/SuperAdminDashboard';
-import { AdminDashboard } from '../pages/AdminDashboard';
-import { SuperAffiliateDashboard } from '../pages/SuperAffiliateDashboard';
-import { AffiliateDashboard } from '../pages/AffiliateDashboard';
-
-import { UserManagement } from '../pages/UserManagement';
-import { CommissionRules } from '../pages/CommissionRules';
-import { ReferralLinks } from '../pages/ReferralLinks';
-import { Earnings } from '../pages/Earnings';
-import { TeamManagement } from '../pages/TeamManagement';
-import { AuditLogs } from '../pages/AuditLogs';
-import { SystemSettings } from '../pages/SystemSettings';
-import { Profile } from '../pages/Profile';
-import { Wallet } from '../pages/Wallet';
-import { Withdrawals } from '../pages/Withdrawals';
-import { BankAccounts } from '../pages/BankAccounts';
-import { AdminWithdrawals } from '../pages/AdminWithdrawals';
-import { AdminBankAccounts } from '../pages/AdminBankAccounts';
-import { MarketingAssets } from '../pages/MarketingAssets';
+// Keep the public landing page lean. Dashboard modules are loaded only after a
+// user navigates to them instead of becoming part of every visitor's first JS.
+const Login = lazy(() => import('../pages/Login').then(({ Login: Page }) => ({ default: Page })));
+const Landing = lazy(() => import('../pages/Landing').then(({ Landing: Page }) => ({ default: Page })));
+const Register = lazy(() => import('../pages/Register').then(({ Register: Page }) => ({ default: Page })));
+const ForgotPassword = lazy(() => import('../pages/ForgotPassword').then(({ ForgotPassword: Page }) => ({ default: Page })));
+const ResetPassword = lazy(() => import('../pages/ResetPassword').then(({ ResetPassword: Page }) => ({ default: Page })));
+const VerifyEmail = lazy(() => import('../pages/VerifyEmail').then(({ VerifyEmail: Page }) => ({ default: Page })));
+const RedirectRef = lazy(() => import('../pages/RedirectRef').then(({ RedirectRef: Page }) => ({ default: Page })));
+const Unauthorized = lazy(() => import('../pages/Unauthorized').then(({ Unauthorized: Page }) => ({ default: Page })));
+const NotFound = lazy(() => import('../pages/NotFound').then(({ NotFound: Page }) => ({ default: Page })));
+const SuperAdminDashboard = lazy(() => import('../pages/SuperAdminDashboard').then(({ SuperAdminDashboard: Page }) => ({ default: Page })));
+const AdminDashboard = lazy(() => import('../pages/AdminDashboard').then(({ AdminDashboard: Page }) => ({ default: Page })));
+const SuperAffiliateDashboard = lazy(() => import('../pages/SuperAffiliateDashboard').then(({ SuperAffiliateDashboard: Page }) => ({ default: Page })));
+const AffiliateDashboard = lazy(() => import('../pages/AffiliateDashboard').then(({ AffiliateDashboard: Page }) => ({ default: Page })));
+const UserManagement = lazy(() => import('../pages/UserManagement').then(({ UserManagement: Page }) => ({ default: Page })));
+const CommissionRules = lazy(() => import('../pages/CommissionRules').then(({ CommissionRules: Page }) => ({ default: Page })));
+const ReferralLinks = lazy(() => import('../pages/ReferralLinks').then(({ ReferralLinks: Page }) => ({ default: Page })));
+const Earnings = lazy(() => import('../pages/Earnings').then(({ Earnings: Page }) => ({ default: Page })));
+const TeamManagement = lazy(() => import('../pages/TeamManagement').then(({ TeamManagement: Page }) => ({ default: Page })));
+const AuditLogs = lazy(() => import('../pages/AuditLogs').then(({ AuditLogs: Page }) => ({ default: Page })));
+const SystemSettings = lazy(() => import('../pages/SystemSettings').then(({ SystemSettings: Page }) => ({ default: Page })));
+const Profile = lazy(() => import('../pages/Profile').then(({ Profile: Page }) => ({ default: Page })));
+const Wallet = lazy(() => import('../pages/Wallet').then(({ Wallet: Page }) => ({ default: Page })));
+const Withdrawals = lazy(() => import('../pages/Withdrawals').then(({ Withdrawals: Page }) => ({ default: Page })));
+const BankAccounts = lazy(() => import('../pages/BankAccounts').then(({ BankAccounts: Page }) => ({ default: Page })));
+const AdminWithdrawals = lazy(() => import('../pages/AdminWithdrawals').then(({ AdminWithdrawals: Page }) => ({ default: Page })));
+const AdminBankAccounts = lazy(() => import('../pages/AdminBankAccounts').then(({ AdminBankAccounts: Page }) => ({ default: Page })));
+const MarketingAssets = lazy(() => import('../pages/MarketingAssets').then(({ MarketingAssets: Page }) => ({ default: Page })));
 
 export const AppRoutes = () => {
   return (
-    <Routes>
+    <Suspense fallback={<main aria-busy="true" />}>
+      <Routes>
       {/* Public Routes */}
       <Route path={ROUTES.LOGIN} element={<Login />} />
       <Route path={ROUTES.REGISTER} element={<Register />} />
@@ -82,6 +83,7 @@ export const AppRoutes = () => {
 
       <Route path={ROUTES.HOME} element={<Landing />} />
       <Route path="*" element={<NotFound />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 };
