@@ -56,7 +56,11 @@ app.get('/alora-storefront-discount.js', (req, res) => {
     res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     return res.sendFile(sdkPath);
   }
-  return res.status(404).send('// Alora SDK script not found');
+  // Render deploys the backend with backend/ as the root directory, so the
+  // frontend source tree is not present there. The Vercel frontend publishes
+  // the same versioned static SDK; redirect rather than silently returning a
+  // 404 to every storefront visitor.
+  return res.redirect(302, new URL('/alora-storefront-discount.js', config.frontendUrl).toString());
 });
 
 // Root endpoint
