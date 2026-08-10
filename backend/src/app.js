@@ -48,12 +48,13 @@ app.get('/favicon.ico', (req, res) => {
 
 // Serve Storefront Auto-Discount SDK Script
 app.get('/alora-storefront-discount.js', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'application/javascript');
+  // The script controls checkout pricing display, so storefront visitors
+  // should receive updates immediately after a deployment.
+  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
   const sdkPath = path.join(__dirname, '../../frontend/public/alora-storefront-discount.js');
   if (fs.existsSync(sdkPath)) {
-    res.setHeader('Content-Type', 'application/javascript');
-    // The script controls checkout pricing display, so storefront visitors
-    // should receive updates immediately after a deployment.
-    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     return res.sendFile(sdkPath);
   }
   // Render deploys the backend with backend/ as the root directory, so the

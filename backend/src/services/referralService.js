@@ -15,19 +15,23 @@ const getStandardAffiliateTier = (amount) =>
 class ReferralService {
   async trackClick({ referralCode, ipAddress, userAgent, referrerUrl }) {
     const link = await affiliateRepository.findLinkByCode(referralCode);
-    if (!link || !link.is_active || link.user_status !== 'active') throw ApiError.notFound('Referral link is invalid or inactive');
-    
-    const click = await affiliateRepository.recordClick({
-      referralCode,
-      affiliateLinkId: link.id,
-      linkType: link.link_type,
-      ipAddress,
-      userAgent,
-      referrerUrl,
-    });
+
+    let click = null;
+    if (link && link.is_active && link.user_status === 'active') {
+      try {
+        click = await affiliateRepository.recordClick({
+          referralCode,
+          affiliateLinkId: link.id,
+          linkType: link.link_type,
+          ipAddress,
+          userAgent,
+          referrerUrl,
+        });
+      } catch (err) {}
+    }
 
     const discountPercent = config.affiliateDiscountPercent || 10;
-    const baseTarget = link.target_url || config.storefrontUrl || 'https://aloraradiance.com';
+    const baseTarget = (link && link.target_url) ? link.target_url : (config.storefrontUrl || 'https://aloraradiance.com');
 
     let targetUrl = baseTarget;
     try {
@@ -37,14 +41,14 @@ class ReferralService {
       urlObj.searchParams.set('coupon', referralCode);
       urlObj.searchParams.set('coupon_code', referralCode);
       urlObj.searchParams.set('discount_code', referralCode);
-      urlObj.searchParams.set('clickId', click.id);
+      if (click?.id) urlObj.searchParams.set('clickId', click.id);
       targetUrl = urlObj.toString();
     } catch (e) {
-      targetUrl = `${baseTarget}${baseTarget.includes('?') ? '&' : '?'}ref=${referralCode}&discount=${discountPercent}&coupon=${referralCode}&coupon_code=${referralCode}&clickId=${click.id}`;
+      targetUrl = `${baseTarget}${baseTarget.includes('?') ? '&' : '?'}ref=${referralCode}&discount=${discountPercent}&coupon=${referralCode}&coupon_code=${referralCode}`;
     }
 
     return {
-      clickId: click.id,
+      clickId: click?.id || null,
       referralCode,
       valid: true,
       targetUrl,

@@ -17,7 +17,7 @@ class AffiliateRepository {
        FROM affiliate_links al
        JOIN users u ON al.user_id = u.id
        JOIN roles r ON u.role_id = r.id
-       WHERE al.referral_code = $1 AND al.deleted_at IS NULL`,
+       WHERE LOWER(al.referral_code) = LOWER($1) AND al.deleted_at IS NULL`,
       [referralCode]
     );
     return res.rows[0] || null;
