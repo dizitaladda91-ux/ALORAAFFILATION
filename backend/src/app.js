@@ -57,11 +57,55 @@ app.get('/alora-storefront-discount.js', (req, res) => {
   if (fs.existsSync(sdkPath)) {
     return res.sendFile(sdkPath);
   }
-  // Render deploys the backend with backend/ as the root directory, so the
-  // frontend source tree is not present there. The Vercel frontend publishes
-  // the same versioned static SDK; redirect rather than silently returning a
-  // 404 to every storefront visitor.
-  return res.redirect(302, new URL('/alora-storefront-discount.js', config.frontendUrl).toString());
+  // Render can deploy only backend/, where frontend/public is unavailable.
+  // Do not redirect to another host: that made storefronts receive a stale SDK
+  // (or a cached redirect) and the referral discount disappeared on Shop pages.
+  return res.send(`(function () {
+    'use strict';
+    var params = new URLSearchParams(window.location.search);
+    var ref = params.get('ref') || params.get('referral') || params.get('affiliate') || params.get('coupon') || params.get('coupon_code') || params.get('discount_code') || localStorage.getItem('alora_ref_code') || sessionStorage.getItem('alora_ref_code');
+    if (!ref) return;
+    localStorage.setItem('alora_ref_code', ref);
+    sessionStorage.setItem('alora_ref_code', ref);
+    document.cookie = 'alora_ref_code=' + encodeURIComponent(ref) + '; path=/; max-age=2592000; SameSite=Lax';
+    var discount = 10;
+    function keepReferral(event) {
+      var link = event.target.closest && event.target.closest('a[href]');
+      if (!link) return;
+      var href = link.getAttribute('href');
+      if (!href || /^(#|javascript:|mailto:|tel:)/i.test(href)) return;
+      try {
+        var destination = new URL(href, window.location.origin);
+        if (destination.origin === window.location.origin && !destination.searchParams.has('ref')) {
+          destination.searchParams.set('ref', ref);
+          link.href = destination.toString();
+        }
+      } catch (_) {}
+    }
+    function discountedPrices() {
+      document.querySelectorAll('body *').forEach(function (element) {
+        if (element.children.length || element.dataset.aloraPriceApplied || ['DEL', 'S', 'STRIKE'].includes(element.tagName)) return;
+        if (window.getComputedStyle(element).textDecorationLine.includes('line-through')) return;
+        var match = element.textContent.trim().match(/^(?:₹|Rs\\.?|INR)\\s*(\\d[\\d,]*(?:\\.\\d{1,2})?)$/i);
+        if (!match) return;
+        var amount = Number(match[1].replace(/,/g, ''));
+        if (!Number.isFinite(amount) || amount <= 0) return;
+        var finalAmount = Math.round(amount * (100 - discount)) / 100;
+        element.dataset.aloraPriceApplied = 'true';
+        element.dataset.aloraOriginalPrice = element.textContent.trim();
+        element.textContent = '₹' + finalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        var badge = document.createElement('span');
+        badge.className = 'alora-discount-badge';
+        badge.textContent = '10% OFF';
+        badge.style.cssText = 'display:inline-block;margin-left:6px;padding:2px 6px;border-radius:999px;background:#dcfce7;color:#166534;font:700 11px/1.35 system-ui,sans-serif;vertical-align:middle;white-space:nowrap;';
+        element.insertAdjacentElement('afterend', badge);
+      });
+    }
+    document.addEventListener('click', keepReferral, true);
+    var run = function () { setTimeout(discountedPrices, 0); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
+    new MutationObserver(run).observe(document.documentElement, { childList: true, subtree: true });
+  })();`);
 });
 
 // Root endpoint
