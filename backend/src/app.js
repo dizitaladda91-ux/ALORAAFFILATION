@@ -49,6 +49,10 @@ app.get('/favicon.ico', (req, res) => {
 // Serve Storefront Auto-Discount SDK Script
 app.get('/alora-storefront-discount.js', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  // This file is intentionally embedded by the separate Alora storefront
+  // origin. Helmet's default same-origin policy otherwise blocks the browser
+  // from executing it even though CORS is enabled.
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('Content-Type', 'application/javascript');
   // The script controls checkout pricing display, so storefront visitors
   // should receive updates immediately after a deployment.
