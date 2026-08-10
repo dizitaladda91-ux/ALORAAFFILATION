@@ -53,14 +53,9 @@ app.get('/alora-storefront-discount.js', (req, res) => {
   // The script controls checkout pricing display, so storefront visitors
   // should receive updates immediately after a deployment.
   res.setHeader('Cache-Control', 'no-cache, must-revalidate');
-  const sdkPath = path.join(__dirname, '../../frontend/public/alora-storefront-discount.js');
-  if (fs.existsSync(sdkPath)) {
-    return res.sendFile(sdkPath);
-  }
-  // Render can deploy only backend/, where frontend/public is unavailable.
-  // Do not redirect to another host: that made storefronts receive a stale SDK
-  // (or a cached redirect) and the referral discount disappeared on Shop pages.
-  return res.send(`(function () {
+  // This supplement handles prices injected asynchronously by the Shop page
+  // and keeps the referral in every same-site navigation.
+  const storefrontSdk = `(function () {
     'use strict';
     var params = new URLSearchParams(window.location.search);
     var ref = params.get('ref') || params.get('referral') || params.get('affiliate') || params.get('coupon') || params.get('coupon_code') || params.get('discount_code') || localStorage.getItem('alora_ref_code') || sessionStorage.getItem('alora_ref_code');
@@ -105,7 +100,16 @@ app.get('/alora-storefront-discount.js', (req, res) => {
     var run = function () { setTimeout(discountedPrices, 0); };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
     new MutationObserver(run).observe(document.documentElement, { childList: true, subtree: true });
-  })();`);
+  })();`;
+  const sdkPath = path.join(__dirname, '../../frontend/public/alora-storefront-discount.js');
+  if (fs.existsSync(sdkPath)) {
+    const baseSdk = fs.readFileSync(sdkPath, 'utf8');
+    return res.send(`${baseSdk}\n${storefrontSdk}`);
+  }
+
+  // Render can deploy only backend/, where frontend/public is unavailable.
+  // Do not redirect to another host: a redirect can serve a stale SDK.
+  return res.send(storefrontSdk);
 });
 
 // Root endpoint
