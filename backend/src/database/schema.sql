@@ -408,6 +408,11 @@ ALTER TABLE conversion_events ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(1
 ALTER TABLE conversion_events ADD COLUMN IF NOT EXISTS eligible_amount NUMERIC(12,2);
 ALTER TABLE commissions ADD COLUMN IF NOT EXISTS commission_type VARCHAR(30) NOT NULL DEFAULT 'DIRECT';
 UPDATE conversion_events SET gross_amount=amount, eligible_amount=amount WHERE gross_amount IS NULL OR eligible_amount IS NULL;
+-- Alora sends its immutable MongoDB order ID to the conversion endpoint.
+-- This protects the affiliate ledger if the storefront retries a webhook or
+-- its conversion-sync worker runs more than once.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_conversion_events_order_id_unique
+  ON conversion_events(order_id) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_commission_rules_matching ON commission_rules(event_type, is_active, minimum_amount, maximum_amount) WHERE deleted_at IS NULL;
 INSERT INTO commission_rules (name, type, value, event_type, minimum_amount, maximum_amount, commission_base, is_active)
 SELECT 'Shopping slab 0-1000', 'percentage', 10, 'shopping', 0, 1000, 'NET', TRUE

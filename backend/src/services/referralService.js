@@ -109,17 +109,35 @@ class ReferralService {
       throw ApiError.conflict('This referral coupon has already been used by this customer.');
     }
 
-    const conversion = await commissionRepository.createConversion({
-      clickId,
-      referralId: null,
-      affiliateId: link.user_id,
-      orderId,
-      amount,
-      grossAmount,
-      discountAmount,
-      eligibleAmount,
-      currency,
-    });
+    let conversion;
+    try {
+      conversion = await commissionRepository.createConversion({
+        clickId,
+        referralId: null,
+        affiliateId: link.user_id,
+        orderId,
+        amount,
+        grossAmount,
+        discountAmount,
+        eligibleAmount,
+        currency,
+      });
+    } catch (error) {
+      // The database is the final idempotency guard. A retry can race the
+      // initial request after both callers have completed the first lookup.
+      if (error?.code === '23505') {
+        const recorded = await commissionRepository.findConversionByOrderId(orderId);
+        if (recorded) {
+          return {
+            conversion: recorded,
+            commission: null,
+            commissionTier: null,
+            alreadyRecorded: true,
+          };
+        }
+      }
+      throw error;
+    }
     await couponRedemptionRepository.attachConversion(redemption.id, conversion.id);
 
     const isShoppingAffiliate = [ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(link.affiliate_role);

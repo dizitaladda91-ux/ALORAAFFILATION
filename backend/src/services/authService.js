@@ -239,8 +239,7 @@ class AuthService {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await userRepository.saveEmailVerificationToken(userId, hashed, expiresAt);
-    const verificationUrl = `${config.frontendUrl.replace(/\/$/, '')}/verify-email/${token}`;
-    emailService.sendEmailVerificationEmail(user, verificationUrl).catch(err => logger.error('Failed to send verification email', err));
+    emailService.sendVerificationEmail(user, token).catch(err => logger.error('Failed to send verification email', { error: err.message }));
     return { message: 'Verification email sent successfully' };
   }
 
@@ -264,8 +263,7 @@ class AuthService {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
     await userRepository.savePasswordResetToken(user.id, hashed, expiresAt);
-    const resetUrl = `${config.frontendUrl.replace(/\/$/, '')}/reset-password/${token}`;
-    emailService.sendPasswordResetEmail(user, resetUrl).catch(err => logger.error('Failed to send reset email', err));
+    emailService.sendPasswordResetEmail(user, token).catch(err => logger.error('Failed to send reset email', { error: err.message }));
     return { message: 'If that account exists, a reset link has been sent' };
   }
 
