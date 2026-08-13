@@ -11,14 +11,25 @@ class AffiliateRepository {
     return res.rows[0];
   }
 
-  async findLinkByCode(referralCode) {
-    const res = await db.query(
+  async findLinkByCode(referralCode, client = db) {
+    const res = await client.query(
       `SELECT al.*, u.status as user_status, u.parent_affiliate_id, r.name AS affiliate_role
        FROM affiliate_links al
        JOIN users u ON al.user_id = u.id
        JOIN roles r ON u.role_id = r.id
        WHERE LOWER(al.referral_code) = LOWER($1) AND al.deleted_at IS NULL`,
       [referralCode]
+    );
+    return res.rows[0] || null;
+  }
+
+  async findValidClick({ clickId, affiliateLinkId, referralCode }, client = db) {
+    const res = await client.query(
+      `SELECT id FROM click_events
+       WHERE id=$1 AND affiliate_link_id=$2 AND LOWER(referral_code)=LOWER($3)
+         AND deleted_at IS NULL
+       LIMIT 1`,
+      [clickId, affiliateLinkId, referralCode]
     );
     return res.rows[0] || null;
   }

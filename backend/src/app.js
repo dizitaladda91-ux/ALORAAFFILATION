@@ -8,6 +8,7 @@ const errorHandler = require('./middlewares/errorMiddleware');
 const routesV1 = require('./routes/v1');
 const ApiError = require('./utils/apiError');
 const { writeHealthSnapshot } = require('./monitoring/healthcheck');
+const referralService = require('./services/referralService');
 const fs = require('fs');
 const path = require('path');
 
@@ -46,6 +47,23 @@ app.get('/favicon.ico', (req, res) => {
   res.status(204).end();
 });
 
+// Works even when the affiliate API is deployed without the portal SPA.
+// The portal's React route remains supported, but shared links now have a
+// server-side redirect fallback as well.
+app.get('/ref/:code', async (req, res, next) => {
+  try {
+    const result = await referralService.trackClick({
+      referralCode: req.params.code,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      referrerUrl: req.get('referrer'),
+    });
+    return res.redirect(302, result.valid ? result.targetUrl : config.storefrontUrl);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 // Serve Storefront Auto-Discount SDK Script
 app.get('/alora-storefront-discount.js', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -64,10 +82,13 @@ app.get('/alora-storefront-discount.js', (req, res) => {
     var params = new URLSearchParams(window.location.search);
     var ref = params.get('ref') || params.get('referral') || params.get('affiliate') || params.get('coupon') || params.get('coupon_code') || params.get('discount_code') || localStorage.getItem('alora_ref_code') || sessionStorage.getItem('alora_ref_code');
     if (!ref) return;
+    var clickId = params.get('clickId') || params.get('click_id') || localStorage.getItem('alora_click_id') || sessionStorage.getItem('alora_click_id') || '';
     localStorage.setItem('alora_ref_code', ref);
     sessionStorage.setItem('alora_ref_code', ref);
+    if (clickId) { localStorage.setItem('alora_click_id', clickId); sessionStorage.setItem('alora_click_id', clickId); }
     document.cookie = 'alora_ref_code=' + encodeURIComponent(ref) + '; path=/; max-age=2592000; SameSite=Lax';
     var discount = 10;
+    window.dispatchEvent(new CustomEvent('alora:referral-ready', { detail: { refCode: ref, referralCode: ref, clickId: clickId, discountPercent: discount } }));
     function keepReferral(event) {
       var link = event.target.closest && event.target.closest('a[href]');
       if (!link) return;

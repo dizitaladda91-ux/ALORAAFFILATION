@@ -7,6 +7,7 @@ const notificationRepository = require('../repositories/notification.repository'
 const couponRedemptionRepository = require('../repositories/couponRedemptionRepository');
 const { ROLES } = require('../constants/roles');
 const { SHOPPING_COMMISSION_TIERS, RECRUITMENT_TEAM_TIERS } = require('../constants/affiliateLink.constants');
+const db = require('../database');
 
 const STANDARD_AFFILIATE_TIERS = SHOPPING_COMMISSION_TIERS;
 const getStandardAffiliateTier = (amount) =>
@@ -27,7 +28,11 @@ class ReferralService {
           userAgent,
           referrerUrl,
         });
-      } catch (err) {}
+      } catch (err) {
+        // Never issue an attributable referral URL if its click could not be
+        // persisted; otherwise conversions cannot be securely verified.
+        throw ApiError.internal('Unable to record referral click. Please retry.');
+      }
     }
 
     const discountPercent = config.affiliateDiscountPercent || 10;
@@ -50,7 +55,7 @@ class ReferralService {
     return {
       clickId: click?.id || null,
       referralCode,
-      valid: true,
+      valid: Boolean(click),
       targetUrl,
       discountPercent,
     };
@@ -87,81 +92,31 @@ class ReferralService {
   }
 
   async processConversion({ referralCode, orderId, customerEmail, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'INR', clickId = null }) {
-    const link = await affiliateRepository.findLinkByCode(referralCode);
-    if (!link || link.link_type !== 'SHOPPING' || !link.is_active || link.user_status !== 'active') {
-      throw ApiError.notFound(`Invalid referral code: ${referralCode}`);
-    }
-
-    const existingConversion = await commissionRepository.findConversionByOrderId(orderId);
-    if (existingConversion) {
-      return {
-        conversion: existingConversion,
-        commission: null,
-        commissionTier: null,
-        alreadyRecorded: true,
-      };
-    }
-
-    // This atomic unique claim makes a referral coupon one-time per customer
-    // email, even if they open the link again in another browser/device.
-    const redemption = await couponRedemptionRepository.claim({ referralCode, customerEmail, orderId });
-    if (!redemption) {
-      throw ApiError.conflict('This referral coupon has already been used by this customer.');
-    }
-
-    let conversion;
+    const client = await db.getClient();
+    let result;
+    let link;
+    let commissionAmount;
     try {
-      conversion = await commissionRepository.createConversion({
-        clickId,
-        referralId: null,
-        affiliateId: link.user_id,
-        orderId,
-        amount,
-        grossAmount,
-        discountAmount,
-        eligibleAmount,
-        currency,
-      });
-    } catch (error) {
-      // The database is the final idempotency guard. A retry can race the
-      // initial request after both callers have completed the first lookup.
-      if (error?.code === '23505') {
-        const recorded = await commissionRepository.findConversionByOrderId(orderId);
-        if (recorded) {
-          return {
-            conversion: recorded,
-            commission: null,
-            commissionTier: null,
-            alreadyRecorded: true,
-          };
-        }
+      await client.query('BEGIN');
+      link = await affiliateRepository.findLinkByCode(referralCode, client);
+      if (!link || link.link_type !== 'SHOPPING' || !link.is_active || link.user_status !== 'active') throw ApiError.notFound(`Invalid referral code: ${referralCode}`);
+      const click = await affiliateRepository.findValidClick({ clickId, affiliateLinkId: link.id, referralCode }, client);
+      if (!click) throw ApiError.badRequest('Click ID does not belong to this active referral code.');
+      const existingConversion = await commissionRepository.findConversionByOrderId(orderId, client);
+      if (existingConversion) {
+        await client.query('COMMIT');
+        return { conversion: existingConversion, commission: null, commissionTier: null, alreadyRecorded: true };
       }
-      throw error;
-    }
-    await couponRedemptionRepository.attachConversion(redemption.id, conversion.id);
-
-    const isShoppingAffiliate = [ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(link.affiliate_role);
-    const rule = isShoppingAffiliate ? await commissionRepository.findMatchingRule({ eventType: 'shopping', eligibleAmount }) : await commissionRepository.findActiveRule();
-    if (!rule) throw ApiError.badRequest('No active commission rule matches this conversion');
-    const commissionRate = parseFloat(rule.value);
-    const commissionType = rule.type;
-
-    let commissionAmount = 0;
-    if (commissionType === 'percentage') {
-      commissionAmount = (amount * commissionRate) / 100;
-    } else {
-      commissionAmount = commissionRate;
-    }
-
-    const commission = await commissionRepository.createCommission({
-      affiliateId: link.user_id,
-      conversionId: conversion.id,
-      ruleId: rule.id,
-      amount: commissionAmount.toFixed(2),
-      rate: commissionRate,
-      status: 'pending',
-      commissionType: 'DIRECT',
-    });
+      const isShoppingAffiliate = [ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(link.affiliate_role);
+      const rule = isShoppingAffiliate ? await commissionRepository.findMatchingRule({ eventType: 'shopping', eligibleAmount }, client) : await commissionRepository.findActiveRule(client);
+      if (!rule) throw ApiError.badRequest('No active commission rule matches this conversion');
+      const redemption = await couponRedemptionRepository.claim({ referralCode, customerEmail, orderId }, client);
+      if (!redemption) throw ApiError.conflict('This referral coupon has already been used by this customer.');
+      const conversion = await commissionRepository.createConversion({ clickId, referralId: null, affiliateId: link.user_id, orderId, amount, grossAmount, discountAmount, eligibleAmount, currency }, client);
+      await couponRedemptionRepository.attachConversion(redemption.id, conversion.id, client);
+      const commissionRate = parseFloat(rule.value);
+      commissionAmount = rule.type === 'percentage' ? (amount * commissionRate) / 100 : commissionRate;
+      const commission = await commissionRepository.createCommission({ affiliateId: link.user_id, conversionId: conversion.id, ruleId: rule.id, amount: commissionAmount.toFixed(2), rate: commissionRate, status: 'pending', commissionType: 'DIRECT' }, client);
 
     // A recruited affiliate's sale also earns its parent Super Affiliate.
     // Team size 1-15 earns 5%; size 16+ earns 7%.
@@ -181,14 +136,25 @@ class ReferralService {
         rate: teamRate,
         status: 'pending',
         commissionType: 'TEAM',
-      });
+      }, client);
 
-      notificationRepository.create({
-        userId: link.parent_affiliate_id,
-        title: 'New Team Commission Earned!',
-        message: `You earned ${teamRate}% team commission on order #${orderId}.`,
-        type: 'team_conversion',
-      }).catch(() => {});
+    }
+
+      result = {
+        conversion, commission, teamCommission,
+        commissionTier: isShoppingAffiliate ? { label: rule.name, rate: commissionRate } : null,
+        alreadyRecorded: false,
+      };
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      if (error?.code === '23505') {
+        const recorded = await commissionRepository.findConversionByOrderId(orderId);
+        if (recorded) return { conversion: recorded, commission: null, commissionTier: null, alreadyRecorded: true };
+      }
+      throw error;
+    } finally {
+      client.release();
     }
 
     try {
@@ -200,13 +166,7 @@ class ReferralService {
       }).catch(() => {});
     } catch (err) {}
 
-    return {
-      conversion,
-      commission,
-      teamCommission,
-      commissionTier: isShoppingAffiliate ? { label: rule.name, rate: commissionRate } : null,
-      alreadyRecorded: false,
-    };
+    return result;
   }
 
   async getTeamMembers(superAffiliateId, role, { page = 1, limit = 20 } = {}) {

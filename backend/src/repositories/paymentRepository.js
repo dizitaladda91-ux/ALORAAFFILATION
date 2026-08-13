@@ -25,6 +25,45 @@ class PaymentRepository {
     const r = await client.query(`INSERT INTO webhook_events (gateway_event_id,event_type,payload,status) VALUES ($1,$2,$3,'RECEIVED') ON CONFLICT (gateway_event_id) DO NOTHING RETURNING *`, [eventId, eventType, JSON.stringify(payload)]); return r.rows[0] || null;
   }
   async completeWebhook(client, eventId) { await client.query(`UPDATE webhook_events SET status='PROCESSED', processed_at=CURRENT_TIMESTAMP WHERE gateway_event_id=$1`, [eventId]); }
+  async reverseForFullRefund(client, { gatewayPaymentId, gatewayOrderId, gatewayRefundId, amount, payload }) {
+    const paymentResult = await client.query(
+      `SELECT * FROM payments WHERE (gateway_payment_id=$1 OR gateway_order_id=$2) FOR UPDATE`,
+      [gatewayPaymentId || null, gatewayOrderId || null]
+    );
+    const payment = paymentResult.rows[0];
+    if (!payment) return { ignored: true, reason: 'PAYMENT_NOT_FOUND' };
+    await client.query(
+      `INSERT INTO refunds (payment_id, gateway_refund_id, amount, status, gateway_response)
+       VALUES ($1,$2,$3,$4,$5) ON CONFLICT (gateway_refund_id) DO NOTHING`,
+      [payment.id, gatewayRefundId, Number(amount || 0) / 100, 'processed', JSON.stringify(payload)]
+    );
+    const refundedAmount = Number(amount || 0) / 100;
+    if (refundedAmount < Number(payment.amount)) {
+      await client.query(`UPDATE payments SET status='PARTIALLY_REFUNDED', updated_at=CURRENT_TIMESTAMP WHERE id=$1`, [payment.id]);
+      return { ignored: true, reason: 'PARTIAL_REFUND_RECORDED' };
+    }
+    await client.query(`UPDATE payments SET status='REFUNDED', updated_at=CURRENT_TIMESTAMP WHERE id=$1`, [payment.id]);
+    const commissions = await client.query(
+      `SELECT c.*, w.id AS wallet_id, w.available_balance FROM commissions c
+       LEFT JOIN wallets w ON w.user_id=c.affiliate_id AND w.deleted_at IS NULL
+       JOIN conversion_events ce ON ce.id=c.conversion_id
+       WHERE ce.order_id=$1 AND c.status IN ('pending','approved') FOR UPDATE`, [payment.gateway_order_id]
+    );
+    for (const commission of commissions.rows) {
+      if (commission.status === 'approved' && commission.wallet_id) {
+        const opening = Number(commission.available_balance);
+        const update = await client.query(`UPDATE wallets SET available_balance=available_balance-$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2 RETURNING available_balance`, [commission.amount, commission.wallet_id]);
+        await client.query(
+          `INSERT INTO wallet_transactions (wallet_id,user_id,type,reference_type,reference_id,amount,opening_balance,closing_balance,description,status)
+           VALUES ($1,$2,'COMMISSION_REVERSAL','COMMISSION',$3,$4,$5,$6,'Commission reversed after full payment refund','SUCCESS')`,
+          [commission.wallet_id, commission.affiliate_id, commission.id, -Number(commission.amount), opening, Number(update.rows[0].available_balance)]
+        );
+      }
+      await client.query(`UPDATE commissions SET status='rejected', updated_at=CURRENT_TIMESTAMP WHERE id=$1`, [commission.id]);
+    }
+    await client.query(`UPDATE conversion_events SET status='refunded', updated_at=CURRENT_TIMESTAMP WHERE order_id=$1`, [payment.gateway_order_id]);
+    return { ignored: false, reversedCommissions: commissions.rowCount };
+  }
   async createConversionAndCommission(client, payment) {
     const existing = await client.query(`SELECT id FROM conversion_events WHERE order_id=$1 AND deleted_at IS NULL`, [payment.gateway_order_id]);
     if (existing.rows[0]) return { alreadyRecorded: true };

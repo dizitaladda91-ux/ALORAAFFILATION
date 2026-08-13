@@ -115,8 +115,8 @@ class PaymentService {
       return { ignored: true, event: payload.event };
     }
 
-    const entity = payload.payload?.payment?.entity || payload.payload?.order?.entity;
-    if (!entity || (!entity.order_id && !entity.id)) {
+    const entity = payload.payload?.payment?.entity || payload.payload?.order?.entity || payload.payload?.refund?.entity;
+    if (!entity || (!entity.order_id && !entity.id && !entity.payment_id)) {
       throw ApiError.badRequest('Webhook payload is missing payment/order entity');
     }
 
@@ -140,6 +140,22 @@ class PaymentService {
       await this.processGatewayPayment(entity.order_id || entity.id, entity.id || payload.payload?.payment?.entity?.id, 'SUCCESS', entity);
     } else if (payload.event === 'payment.failed') {
       await this.processGatewayPayment(entity.order_id, entity.id, 'FAILED', entity);
+    } else if (payload.event === 'refund.processed') {
+      const client = await db.getClient();
+      try {
+        await client.query('BEGIN');
+        await paymentRepository.reverseForFullRefund(client, {
+          gatewayPaymentId: entity.payment_id,
+          gatewayOrderId: entity.order_id,
+          gatewayRefundId: entity.id,
+          amount: entity.amount,
+          payload,
+        });
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally { client.release(); }
     }
 
     await paymentRepository.completeWebhook(db, payload.event_id);

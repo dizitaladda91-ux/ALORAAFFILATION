@@ -1,15 +1,15 @@
 const db = require('../database');
 
 class CommissionRepository {
-  async findActiveRule() {
-    const res = await db.query(
+  async findActiveRule(client = db) {
+    const res = await client.query(
       `SELECT * FROM commission_rules WHERE is_active = true AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`
     );
     return res.rows[0] || null;
   }
 
-  async findMatchingRule({ eventType = 'generic', eligibleAmount }) {
-    const res = await db.query(
+  async findMatchingRule({ eventType = 'generic', eligibleAmount }, client = db) {
+    const res = await client.query(
       `SELECT * FROM commission_rules WHERE event_type=$1 AND is_active=TRUE AND deleted_at IS NULL
        AND minimum_amount <= $2 AND (maximum_amount IS NULL OR maximum_amount >= $2)
        ORDER BY minimum_amount DESC LIMIT 1`, [eventType, eligibleAmount]
@@ -39,8 +39,8 @@ class CommissionRepository {
     return res.rows[0];
   }
 
-  async createConversion({ clickId, referralId, affiliateId, orderId, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'INR' }) {
-    const res = await db.query(
+  async createConversion({ clickId, referralId, affiliateId, orderId, amount, grossAmount = amount, discountAmount = 0, eligibleAmount = amount, currency = 'INR' }, client = db) {
+    const res = await client.query(
       `INSERT INTO conversion_events (click_id, referral_id, affiliate_id, order_id, amount, gross_amount, discount_amount, eligible_amount, currency)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
@@ -49,8 +49,8 @@ class CommissionRepository {
     return res.rows[0];
   }
 
-  async findConversionByOrderId(orderId) {
-    const res = await db.query(
+  async findConversionByOrderId(orderId, client = db) {
+    const res = await client.query(
       `SELECT ce.*, c.id AS commission_id, c.amount AS commission_amount, c.rate AS commission_rate, c.status AS commission_status
        FROM conversion_events ce
        LEFT JOIN commissions c ON c.conversion_id = ce.id AND c.deleted_at IS NULL
@@ -69,8 +69,8 @@ class CommissionRepository {
     };
   }
 
-  async createCommission({ affiliateId, conversionId, ruleId, amount, rate, status = 'pending', commissionType = 'DIRECT' }) {
-    const res = await db.query(
+  async createCommission({ affiliateId, conversionId, ruleId, amount, rate, status = 'pending', commissionType = 'DIRECT' }, client = db) {
+    const res = await client.query(
       `INSERT INTO commissions (affiliate_id, conversion_id, rule_id, amount, rate, status, commission_type)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,

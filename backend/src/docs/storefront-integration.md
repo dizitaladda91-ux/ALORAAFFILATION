@@ -7,7 +7,8 @@
   Never expose `STOREFRONT_API_KEY` to browser JavaScript.
 
 ## Referral flow
-1. An affiliate shares `https://<affiliate-portal>/ref/<code>`.
+1. An affiliate shares `https://<affiliate-api>/ref/<code>` (or the portal SPA's
+   equivalent route). The API route is a server-side redirect fallback.
 2. The portal calls `GET /referrals/click/:code`, records the click, and redirects
    the visitor to the storefront with `ref`, `clickId`, and `discount=10`.
 3. Add this script once to the **global storefront layout/theme** (before
@@ -40,7 +41,8 @@ X-Storefront-Api-Key: <STOREFRONT_API_KEY>
    email and referral coupon receive `ALREADY_REDEEMED` and a 0% discount.
 6. After a successful payment, the storefront backend calls `POST /referrals/conversion`
    with `X-Storefront-Api-Key`, `referralCode`, `clickId`, its own immutable
-   `orderId`, and the final paid amount. This creates exactly one pending commission.
+   `orderId`, and the final paid amount. `clickId` is required and must belong to
+   the supplied active referral code. This creates exactly one pending commission.
 7. An admin uses **Settle Matured Commissions** (or runs `npm run settle:commissions`)
    after the hold window; settled commission value is credited to the affiliate wallet.
 8. The affiliate requests a withdrawal from a verified bank account. An admin approves
@@ -72,3 +74,7 @@ await fetch(`${process.env.AFFILIATE_API_URL}/referrals/conversion`, {
 ## Webhooks
 - Razorpay webhooks must be signed with the configured webhook secret.
 - The service rejects duplicate webhook deliveries by event id.
+- A completed full refund reverses pending/approved commissions. Approved
+  commissions are debited from the affiliate wallet with an audit transaction.
+- Partial refunds are recorded as `PARTIALLY_REFUNDED`; decide and implement a
+  proportional commission policy before relying on partial refunds operationally.

@@ -18,7 +18,7 @@ const conversionValidator = [
   body('discountAmount').optional().isFloat({ min: 0 }),
   body('eligibleAmount').optional().isFloat({ min: 0.01 }),
   body('currency').optional().isLength({ min: 3, max: 3 }).toUpperCase(),
-  body('clickId').optional().isUUID().withMessage('A valid click ID is required'),
+  body('clickId').isUUID().withMessage('A valid click ID is required'),
 ];
 
 module.exports = {
