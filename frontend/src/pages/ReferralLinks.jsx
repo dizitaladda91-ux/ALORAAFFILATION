@@ -15,6 +15,7 @@ export const ReferralLinks = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [targetUrl, setTargetUrl] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [saving, setSaving] = useState(false);
 
   const { showSuccess, showError } = useNotification();
@@ -38,11 +39,12 @@ export const ReferralLinks = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      await createAffiliateLink({ title, targetUrl });
+      await createAffiliateLink({ title, targetUrl, referralCode });
       showSuccess('Campaign link generated successfully');
       setModalOpen(false);
       setTitle('');
       setTargetUrl('');
+      setReferralCode('');
       loadLinks();
     } catch (err) {
       showError(err.message || 'Failed to create link');
@@ -134,6 +136,16 @@ export const ReferralLinks = () => {
             onChange={(e) => setTitle(e.target.value)}
             required
           />
+          <Input
+            label="Your Referral Name (Optional)"
+            placeholder="e.g. Divyanshu"
+            value={referralCode}
+            onChange={(e) => setReferralCode(e.target.value)}
+            maxLength={50}
+          />
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '-0.5rem 0 1rem' }}>
+            Share it as /ref/Divyanshu. Spaces become hyphens; this name must be unique. Customers using it still receive 10% off.
+          </p>
           <Input
             label="Target Destination URL (Optional)"
             placeholder="https://yourdomain.com/product/special-offer"

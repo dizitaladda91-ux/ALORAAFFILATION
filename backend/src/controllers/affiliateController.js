@@ -10,8 +10,8 @@ class AffiliateController {
   });
 
   createLink = asyncHandler(async (req, res) => {
-    const { targetUrl, title } = req.body;
-    const link = await affiliateService.createCustomLink(req.user.id, { targetUrl, title });
+    const { targetUrl, title, referralCode } = req.body;
+    const link = await affiliateService.createCustomLink(req.user.id, { targetUrl, title, referralCode });
     return sendSuccess(res, 'Custom affiliate link created', link, HTTP_STATUS.CREATED);
   });
 
