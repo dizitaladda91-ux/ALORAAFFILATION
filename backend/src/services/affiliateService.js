@@ -1,5 +1,6 @@
 const affiliateRepository = require('../repositories/affiliateRepository');
 const commissionRepository = require('../repositories/commissionRepository');
+const userRepository = require('../repositories/userRepository');
 const codeGenerator = require('../helpers/codeGenerator');
 const config = require('../config/env');
 const { AFFILIATE_LINK_TYPES } = require('../constants/affiliateLink.constants');
@@ -13,13 +14,17 @@ class AffiliateService {
     const existing = await affiliateRepository.findSystemLinkByUserAndType(userId, linkType);
     if (existing) return existing;
     if (linkType === AFFILIATE_LINK_TYPES.RECRUITMENT && role !== 'super_affiliate') return null;
-    const referralCode = codeGenerator.generateReferralCode(linkType === AFFILIATE_LINK_TYPES.RECRUITMENT ? 'SUPTEAM' : (role === 'super_affiliate' ? 'SUP' : 'AFF'));
+    const user = await userRepository.findById(userId);
+    const affiliateName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim();
+    const referralCode = codeGenerator.generateReferralCode(linkType === AFFILIATE_LINK_TYPES.RECRUITMENT ? 'SUPTEAM' : (role === 'super_affiliate' ? 'SUP' : 'AFF'), affiliateName);
     const targetUrl = linkType === AFFILIATE_LINK_TYPES.RECRUITMENT ? `${config.frontendUrl.replace(/\/$/, '')}/register?ref=${encodeURIComponent(referralCode)}` : config.storefrontUrl;
     return affiliateRepository.createLink({ userId, referralCode, targetUrl, linkType, isSystemLink: true, title: linkType === AFFILIATE_LINK_TYPES.RECRUITMENT ? 'Default Recruitment Link' : 'Default Shopping Link' });
   }
 
   async createCustomLink(userId, { targetUrl, title }) {
-    const referralCode = codeGenerator.generateReferralCode('AFF');
+    const user = await userRepository.findById(userId);
+    const affiliateName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim();
+    const referralCode = codeGenerator.generateReferralCode('AFF', affiliateName);
     // When no campaign destination is supplied, send referral traffic to the
     // storefront instead of creating a redirect back to the referral URL.
     const finalTargetUrl = targetUrl || config.storefrontUrl;

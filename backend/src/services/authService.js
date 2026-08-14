@@ -62,7 +62,8 @@ class AuthService {
 
     let primaryLink = null;
     if (role === 'affiliate' || role === 'super_affiliate') {
-      const referralCode = codeGenerator.generateReferralCode(role === 'super_affiliate' ? 'SUP' : 'AFF');
+      const affiliateName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+      const referralCode = codeGenerator.generateReferralCode(role === 'super_affiliate' ? 'SUP' : 'AFF', affiliateName);
       primaryLink = await affiliateRepository.createLink({
         userId: user.id,
         referralCode,
@@ -70,7 +71,7 @@ class AuthService {
         title: 'Default Shopping Link', linkType: 'SHOPPING', isSystemLink: true,
       });
       if (role === ROLES.SUPER_AFFILIATE) {
-        const recruitmentReferralCode = codeGenerator.generateReferralCode('SUPTEAM');
+        const recruitmentReferralCode = codeGenerator.generateReferralCode('SUPTEAM', affiliateName);
         await affiliateRepository.createLink({ userId: user.id, referralCode: recruitmentReferralCode, targetUrl: `${config.frontendUrl.replace(/\/$/, '')}/register?ref=${encodeURIComponent(recruitmentReferralCode)}`, title: 'Default Recruitment Link', linkType: 'RECRUITMENT', isSystemLink: true });
       }
     }
