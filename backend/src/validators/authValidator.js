@@ -16,7 +16,11 @@ const loginValidator = [
 ];
 
 const refreshTokenValidator = [
-  body('refreshToken').optional().isString(),
+  // The browser normally sends this credential as the HttpOnly cookie. Some
+  // clients serialize an absent body token as `null`; treat that the same as
+  // an omitted value and let the controller use the cookie (or return its
+  // normal authentication error if neither credential exists).
+  body('refreshToken').optional({ values: 'null' }).isString().notEmpty(),
 ];
 
 module.exports = {

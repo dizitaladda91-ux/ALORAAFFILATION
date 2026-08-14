@@ -33,7 +33,7 @@ class AuthController {
   verifyMfaLogin = asyncHandler(async (req, res) => sendSuccess(res, 'Login successful', this.sanitizeTokens(await authService.verifyMfaLogin(req.body.mfaToken, req.body.code, req.ip), res)));
 
   refreshToken = asyncHandler(async (req, res) => {
-    const result = await authService.refreshTokens(req.cookies.refreshToken || req.body.refreshToken);
+    const result = await authService.refreshTokens(req.cookies.refreshToken || req.body?.refreshToken);
     return sendSuccess(res, 'Token refreshed successfully', this.sanitizeTokens({ tokens: result }, res));
   });
   forgotPassword = asyncHandler(async (req, res) => { await authService.requestPasswordReset(req.body.email); return sendSuccess(res, 'If that email exists, reset instructions have been sent'); });
