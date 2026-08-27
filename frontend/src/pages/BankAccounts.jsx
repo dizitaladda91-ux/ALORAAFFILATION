@@ -16,7 +16,16 @@ export const BankAccounts = () => {
   useEffect(() => { load(); }, []);
   const change = (event) => {
     const { name, value } = event.target;
-    const updatedValue = name === 'ifscCode' ? value.toUpperCase().trim() : value;
+    let updatedValue = value;
+    if (name === 'ifscCode') {
+      let clean = value.replace(/\s+/g, '').toUpperCase();
+      if (clean.length >= 5 && clean[4] === 'O') {
+        clean = clean.substring(0, 4) + '0' + clean.substring(5);
+      }
+      updatedValue = clean;
+    } else if (name === 'accountNumber') {
+      updatedValue = value.replace(/\s+/g, '');
+    }
     setForm((current) => ({ ...current, [name]: updatedValue }));
   };
   const submit = async (event) => { event.preventDefault(); setSaving(true); try { await createBankAccount(form); setForm(emptyForm); showSuccess('Bank account added. It will be available after verification.'); load(); } catch (error) { showError(error.message || 'Unable to add bank account'); } finally { setSaving(false); } };
