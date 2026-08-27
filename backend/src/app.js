@@ -33,8 +33,10 @@ app.use(
 );
 
 // Body parser & Cookie parser
-const razorpayWebhookPath = `${config.apiPrefix || ''}/payments/webhook`;
-app.use(razorpayWebhookPath, express.raw({ type: '*/*' }));
+const webhookPaths = ['/payments/webhook', '/api/v1/payments/webhook'];
+webhookPaths.forEach((wPath) => {
+  app.use(wPath, express.raw({ type: '*/*' }));
+});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
@@ -184,6 +186,10 @@ app.get('/docs', (req, res) => {
   }
   return res.status(404).json({ message: 'OpenAPI document not found' });
 });
+
+// Direct root webhook handler for Razorpay (supports both /payments/webhook & /api/v1/payments/webhook)
+const paymentController = require('./controllers/paymentController');
+app.all('/payments/webhook', paymentController.webhook);
 
 // API Routes — e.g. /api/v1/auth/login or /auth/login
 if (config.apiPrefix) {
