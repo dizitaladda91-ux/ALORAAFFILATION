@@ -168,11 +168,12 @@ export const AdminWithdrawals = () => {
       return;
     }
     try {
+      if (dialog.type === 'mark_paid') await approveWithdrawal(dialog.item.id, detail.trim());
       if (dialog.type === 'reject') await rejectWithdrawal(dialog.item.id, detail.trim());
       if (dialog.type === 'process') await updatePayout(dialog.item.id, 'process', { transactionReference: detail.trim() });
       if (dialog.type === 'complete') await updatePayout(dialog.item.id, 'complete', { transactionReference: detail.trim() });
       if (dialog.type === 'fail') await updatePayout(dialog.item.id, 'fail', { failureReason: detail.trim() });
-      showSuccess(dialog.type === 'reject' ? 'Withdrawal rejected and balance released.' : `Payout ${dialog.type}d successfully.`);
+      showSuccess(dialog.type === 'mark_paid' ? 'Withdrawal marked as Paid & Confirmed!' : dialog.type === 'reject' ? 'Withdrawal rejected and balance released.' : `Payout ${dialog.type}d successfully.`);
       setDialog(null);
       load();
     } catch (error) {
@@ -181,7 +182,9 @@ export const AdminWithdrawals = () => {
   };
 
   const dialogCopy =
-    dialog?.type === 'reject'
+    dialog?.type === 'mark_paid'
+      ? ['Mark Paid (Confirm Disbursal)', 'Transaction ID / UTR No. (e.g. UTR-660520178021 or GPay Ref #)']
+      : dialog?.type === 'reject'
       ? ['Reject withdrawal', 'Reason for rejection']
       : dialog?.type === 'fail'
       ? ['Fail payout', 'Failure reason']
@@ -299,7 +302,7 @@ export const AdminWithdrawals = () => {
                 <Badge status={item.status}>{item.status}</Badge>
                 {item.status === 'pending' && (
                   <>
-                    <Button size="sm" style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', fontWeight: 600 }} onClick={() => approve(item)}>
+                    <Button size="sm" style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', fontWeight: 600 }} onClick={() => openDialog('mark_paid', item)}>
                       ✅ Mark Paid (GPay / PhonePe)
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => openDialog('reject', item)}>

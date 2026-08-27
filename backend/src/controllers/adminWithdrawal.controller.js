@@ -18,30 +18,58 @@ exports.list = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { items, pagination: { page, limit, total: totalRecords, totalPages, hasNextPage: page < totalPages } } });
 });
 exports.approve = asyncHandler(async (req, res) => {
-  const withdrawal = await withdrawalRepository.findById(req.params.id);
-  if (!withdrawal) throw ApiError.notFound('Withdrawal request not found.');
-  if (withdrawal.status !== 'pending') throw ApiError.badRequest('Only pending requests can be approved.');
-  const approved = await withdrawalRepository.approve(req.params.id, req.user.id, req.body.notes);
-  await logRepository.createAuditLog({ actorId: req.user.id, targetUserId: withdrawal.user_id, action: 'WITHDRAWAL_APPROVED', changesJson: { withdrawalId: withdrawal.id, withdrawalNumber: withdrawal.withdrawal_number, notes: req.body.notes || null }, ipAddress: req.ip });
-  // Send approval notification & email
+  const client = await db.getClient();
   try {
-    const user = await userRepository.findById(withdrawal.user_id);
-    if (user && user.email) {
-      emailService.sendWithdrawalApprovedEmail(user, {
-        amount: withdrawal.amount,
-        approved_at: new Date(),
-      }).catch(err => logger.error('Failed to send withdrawal approval email:', err));
+    await client.query('BEGIN');
+    const withdrawal = await withdrawalRepository.findById(req.params.id);
+    if (!withdrawal) throw ApiError.notFound('Withdrawal request not found.');
+    if (withdrawal.status !== 'pending') throw ApiError.badRequest('Only pending requests can be approved.');
+    const approved = await withdrawalRepository.approve(req.params.id, req.user.id, req.body.notes, client);
+
+    const wallet = await walletRepository.findByUserId(withdrawal.user_id, client);
+    if (wallet) {
+      await client.query(
+        `
+        UPDATE wallets
+        SET
+          pending_balance = GREATEST(0, pending_balance - $2),
+          total_withdrawn = total_withdrawn + $2,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+        `,
+        [wallet.id, Number(withdrawal.amount)]
+      );
     }
-    notificationRepository.create({
-      userId: withdrawal.user_id,
-      title: 'Withdrawal Approved! ✅',
-      message: `Your withdrawal request ${withdrawal.withdrawal_number || ''} of ₹${withdrawal.amount} has been approved by admin.`,
-      type: 'withdrawal',
-    }).catch(err => logger.error('Withdrawal approval notification error:', err));
-  } catch (emailError) {
-    logger.error('Error sending withdrawal approval notification:', emailError);
+
+    await client.query('COMMIT');
+    await logRepository.createAuditLog({ actorId: req.user.id, targetUserId: withdrawal.user_id, action: 'WITHDRAWAL_APPROVED', changesJson: { withdrawalId: withdrawal.id, withdrawalNumber: withdrawal.withdrawal_number, notes: req.body.notes || null }, ipAddress: req.ip });
+
+    // Send approval notification & email
+    try {
+      const user = await userRepository.findById(withdrawal.user_id);
+      if (user && user.email) {
+        emailService.sendWithdrawalApprovedEmail(user, {
+          amount: withdrawal.amount,
+          approved_at: new Date(),
+        }).catch(err => logger.error('Failed to send withdrawal approval email:', err));
+      }
+      notificationRepository.create({
+        userId: withdrawal.user_id,
+        title: 'Withdrawal Approved & Paid! ✅',
+        message: `Your withdrawal request ${withdrawal.withdrawal_number || ''} of ₹${withdrawal.amount} has been paid and received. ${req.body.notes ? `(Ref: ${req.body.notes})` : ''}`,
+        type: 'withdrawal',
+      }).catch(err => logger.error('Withdrawal approval notification error:', err));
+    } catch (emailError) {
+      logger.error('Error sending withdrawal approval notification:', emailError);
+    }
+
+    res.json({ success: true, data: approved });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
   }
-  res.json({ success: true, data: approved });
 });
 exports.reject = asyncHandler(async (req, res) => {
   const client = await db.getClient();
