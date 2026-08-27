@@ -103,9 +103,9 @@ class CommissionRepository {
     const res = await db.query(
       `SELECT c.*, w.id AS wallet_id
        FROM commissions c
-       LEFT JOIN wallets w ON w.user_id = c.affiliate_id AND w.deleted_at IS NULL
-       WHERE c.status = 'pending'
-         AND c.created_at <= (CURRENT_TIMESTAMP - INTERVAL '1 day' * $1)
+       LEFT JOIN wallets w ON w.user_id::text = c.affiliate_id::text AND w.deleted_at IS NULL
+       WHERE LOWER(c.status) = 'pending'
+         AND ($1::integer = 0 OR c.created_at <= (CURRENT_TIMESTAMP - INTERVAL '1 day' * $1))
          AND c.deleted_at IS NULL`,
       [holdDays]
     );

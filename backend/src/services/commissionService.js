@@ -15,8 +15,9 @@ class CommissionService {
   }
 
   async updateCommissionStatus(commissionId, status) {
+    const targetStatus = (status || '').toLowerCase();
     const validStatuses = ['pending', 'approved', 'rejected', 'paid'];
-    if (!validStatuses.includes(status)) {
+    if (!validStatuses.includes(targetStatus)) {
       throw ApiError.badRequest(`Status must be one of: ${validStatuses.join(', ')}`);
     }
 
@@ -33,11 +34,11 @@ class CommissionService {
         throw ApiError.notFound('Commission record not found');
       }
 
-      const oldStatus = comm.status;
-      const updated = await commissionRepository.updateCommissionStatus(commissionId, status, client);
+      const oldStatus = (comm.status || '').toLowerCase();
+      const updated = await commissionRepository.updateCommissionStatus(commissionId, targetStatus, client);
 
       // Transitioning from pending to approved/paid: credit wallet balance
-      if (oldStatus === 'pending' && (status === 'approved' || status === 'paid')) {
+      if (oldStatus === 'pending' && (targetStatus === 'approved' || targetStatus === 'paid')) {
         const wallet = comm.wallet_id
           ? await walletRepository.lockWallet(comm.wallet_id, client)
           : await walletRepository.findOrCreateByUserId(comm.affiliate_id, client);

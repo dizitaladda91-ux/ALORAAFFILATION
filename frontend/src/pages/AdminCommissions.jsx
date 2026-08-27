@@ -42,15 +42,15 @@ export const AdminCommissions = () => {
     }
   };
 
-  const handleAutoSettle = async () => {
+  const handleAutoSettle = async (days = 0) => {
     setSettling(true);
     try {
-      const res = await api.post('/commissions/auto-settle', { holdDays: 7 });
+      const res = await api.post('/commissions/auto-settle', { holdDays: days });
       const { settledCount, totalSettledAmount } = res.data.data;
-      showSuccess(`Auto-settled ${settledCount} matured commissions total ${formatCurrency(totalSettledAmount)}`);
+      showSuccess(`Successfully settled ${settledCount} commissions totaling ${formatCurrency(totalSettledAmount)}!`);
       load();
     } catch (err) {
-      showError(err.response?.data?.message || 'Auto-settlement failed');
+      showError(err.response?.data?.message || 'Settlement failed');
     } finally {
       setSettling(false);
     }
@@ -68,13 +68,23 @@ export const AdminCommissions = () => {
           <p style={{ color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>Review, approve, or reject affiliate sales commissions in real-time.</p>
         </div>
 
-        <Button
-          onClick={handleAutoSettle}
-          loading={settling}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none' }}
-        >
-          <Zap size={18} /> Settle Matured Commissions (&gt;7 Days)
-        </Button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <Button
+            onClick={() => handleAutoSettle(0)}
+            loading={settling}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none' }}
+          >
+            <Zap size={18} /> Settle ALL Pending Now
+          </Button>
+          <Button
+            onClick={() => handleAutoSettle(7)}
+            loading={settling}
+            variant="secondary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Clock size={18} /> Settle Matured (&gt;7 Days)
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
