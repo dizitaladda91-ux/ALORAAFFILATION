@@ -149,9 +149,9 @@ class CommissionRepository {
       LEFT JOIN profiles p ON p.user_id = u.id
       WHERE c.deleted_at IS NULL
     `;
-    if (status) {
+    if (status && status !== 'all') {
       values.push(status);
-      query += ` AND c.status = $${values.length}`;
+      query += ` AND LOWER(c.status) = LOWER($${values.length})`;
     }
     values.push(limit, offset);
     query += ` ORDER BY c.created_at DESC LIMIT $${values.length - 1} OFFSET $${values.length}`;

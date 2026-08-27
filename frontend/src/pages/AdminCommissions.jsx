@@ -57,7 +57,7 @@ export const AdminCommissions = () => {
   };
 
   // Stats calculation
-  const pendingItems = commissions.filter((c) => c.status === 'pending');
+  const pendingItems = commissions.filter((c) => (c.status || '').toLowerCase() === 'pending');
   const totalPendingAmount = pendingItems.reduce((acc, c) => acc + Number(c.amount || 0), 0);
 
   return (
@@ -146,57 +146,60 @@ export const AdminCommissions = () => {
                 </tr>
               )}
 
-              {commissions.map((c) => (
-                <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '0.85rem', fontSize: '0.88rem' }}>
-                    {formatDate(c.created_at)}
-                  </td>
+              {commissions.map((c) => {
+                const isPending = (c.status || '').toLowerCase() === 'pending';
+                return (
+                  <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '0.85rem', fontSize: '0.88rem' }}>
+                      {formatDate(c.created_at)}
+                    </td>
 
-                  <td style={{ padding: '0.85rem' }}>
-                    <strong>{c.affiliate_name || 'Affiliate'}</strong>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{c.affiliate_email}</div>
-                  </td>
+                    <td style={{ padding: '0.85rem' }}>
+                      <strong>{c.affiliate_name || 'Affiliate'}</strong>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{c.affiliate_email}</div>
+                    </td>
 
-                  <td style={{ padding: '0.85rem', fontSize: '0.88rem', fontFamily: 'monospace' }}>
-                    {c.order_id || 'N/A'}
-                  </td>
+                    <td style={{ padding: '0.85rem', fontSize: '0.88rem', fontFamily: 'monospace' }}>
+                      {c.order_id || 'N/A'}
+                    </td>
 
-                  <td style={{ padding: '0.85rem', fontWeight: 600 }}>
-                    {formatCurrency(c.order_amount || 0)}
-                  </td>
+                    <td style={{ padding: '0.85rem', fontWeight: 600 }}>
+                      {formatCurrency(c.order_amount || 0)}
+                    </td>
 
-                  <td style={{ padding: '0.85rem', fontWeight: 700, color: '#10b981' }}>
-                    {formatCurrency(c.amount || 0)}
-                  </td>
+                    <td style={{ padding: '0.85rem', fontWeight: 700, color: '#10b981' }}>
+                      {formatCurrency(c.amount || 0)}
+                    </td>
 
-                  <td style={{ padding: '0.85rem' }}>
-                    <Badge status={c.status}>{c.status}</Badge>
-                  </td>
+                    <td style={{ padding: '0.85rem' }}>
+                      <Badge status={c.status}>{c.status}</Badge>
+                    </td>
 
-                  <td style={{ padding: '0.85rem', textAlign: 'right' }}>
-                    {c.status === 'pending' ? (
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                        <Button
-                          size="sm"
-                          onClick={() => updateStatus(c.id, 'approved')}
-                          style={{ background: '#10b981', color: '#fff', border: 'none' }}
-                        >
-                          <CheckCircle2 size={14} style={{ marginRight: '4px' }} /> Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => updateStatus(c.id, 'rejected')}
-                          style={{ background: '#ef4444', color: '#fff', border: 'none' }}
-                        >
-                          <XCircle size={14} style={{ marginRight: '4px' }} /> Reject
-                        </Button>
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No action required</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                    <td style={{ padding: '0.85rem', textAlign: 'right' }}>
+                      {isPending ? (
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                          <Button
+                            size="sm"
+                            onClick={() => updateStatus(c.id, 'approved')}
+                            style={{ background: '#10b981', color: '#fff', border: 'none' }}
+                          >
+                            <CheckCircle2 size={14} style={{ marginRight: '4px' }} /> Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => updateStatus(c.id, 'rejected')}
+                            style={{ background: '#ef4444', color: '#fff', border: 'none' }}
+                          >
+                            <XCircle size={14} style={{ marginRight: '4px' }} /> Reject
+                          </Button>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No action required</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
