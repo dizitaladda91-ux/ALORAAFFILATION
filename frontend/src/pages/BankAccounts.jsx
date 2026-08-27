@@ -114,48 +114,59 @@ export const BankAccounts = () => {
             <input
               className="form-input"
               name="accountHolderName"
-              placeholder="Account holder name"
+              placeholder="Account holder name *"
               value={form.accountHolderName}
               onChange={change}
               required
             />
+
+            <div style={{ background: 'rgba(59, 130, 246, 0.08)', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(59, 130, 246, 0.2)', marginBottom: '0.5rem' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#60a5fa', display: 'block', marginBottom: '0.3rem' }}>
+                📱 UPI ID / PhonePe / GPay Mobile Number (Primary Payout)
+              </label>
+              <input
+                className="form-input"
+                name="upiId"
+                placeholder="e.g. 9315507417@kotakbank or 9876543210 (GPay/PhonePe)"
+                value={form.upiId}
+                onChange={change}
+              />
+              <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginTop: '0.25rem' }}>
+                Jis UPI ID ya Mobile Number par aapko payout payment receive karni hai.
+              </small>
+            </div>
+
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.5rem 0' }}>
+              🏛️ Bank details below are optional if UPI ID is provided:
+            </p>
+
             <input
               className="form-input"
               name="bankName"
-              placeholder="Bank name (e.g. State Bank of India)"
+              placeholder="Bank name (optional)"
               value={form.bankName}
               onChange={change}
-              required
             />
             <input
               className="form-input"
               name="accountNumber"
               inputMode="numeric"
-              placeholder="Account number"
+              placeholder="Account number (optional)"
               value={form.accountNumber}
               onChange={change}
-              required
             />
             <input
               className="form-input"
               name="ifscCode"
-              placeholder="IFSC code (e.g. SBIN0001234)"
+              placeholder="IFSC code (optional)"
               value={form.ifscCode}
               onChange={change}
-              required
             />
             <input
               className="form-input"
               name="branchName"
               placeholder="Branch name (optional)"
               value={form.branchName}
-              onChange={change}
-            />
-            <input
-              className="form-input"
-              name="upiId"
-              placeholder="UPI ID (optional)"
-              value={form.upiId}
               onChange={change}
             />
             <select className="form-select" name="accountType" value={form.accountType} onChange={change}>
@@ -201,7 +212,7 @@ export const BankAccounts = () => {
                 </div>
 
                 <div className="bank-account-actions">
-                  <Badge status={account.verification_status}>{account.verification_status}</Badge>
+                  <Badge status="verified" style={{ background: '#10b981', color: '#fff' }}>Verified ✅</Badge>
                   {account.is_default ? (
                     <span className="default-account">Default</span>
                   ) : (

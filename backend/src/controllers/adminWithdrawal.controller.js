@@ -134,7 +134,10 @@ exports.createRazorpayPayoutOrder = asyncHandler(async (req, res) => {
         withdrawalId: String(withdrawal.id),
         withdrawalNumber: String(withdrawal.withdrawal_number || ''),
         userId: String(withdrawal.user_id),
-        email: user?.email || ''
+        email: user?.email || '',
+        upiId: String(withdrawal.upi_id || ''),
+        accountNumber: String(withdrawal.account_number || ''),
+        accountName: String(withdrawal.account_name || '')
       }
     });
   } catch (rzpErr) {

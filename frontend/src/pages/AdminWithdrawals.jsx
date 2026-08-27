@@ -141,7 +141,7 @@ export const AdminWithdrawals = () => {
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Alora Radiance - Affiliate Payout',
-        description: `Disbursal for Request #${item.withdrawal_number}`,
+        description: item.upi_id ? `Payout to UPI ID: ${item.upi_id}` : `Payout for Request #${item.withdrawal_number}`,
         order_id: orderData.orderId,
         prefill: {
           name: item.account_name || 'Affiliate Partner',
@@ -264,34 +264,46 @@ export const AdminWithdrawals = () => {
                 <p style={{ margin: '0.25rem 0', fontWeight: 600, color: 'var(--primary)' }}>
                   Affiliate: {item.user_email || item.user_id}
                 </p>
-                {item.account_number ? (
-                  <div style={{ fontSize: '0.8125rem', color: '#38bdf8', marginTop: '0.25rem' }}>
-                    🏦 <strong>{item.bank_name || 'Bank Account'}</strong> · A/C: <code>{item.account_number}</code> · IFSC: <code>{item.ifsc_code}</code> · Holder: <strong>{item.account_name}</strong>
-                  </div>
-                ) : item.upi_id ? (
-                  <div style={{ fontSize: '0.8125rem', color: '#38bdf8', marginTop: '0.25rem' }}>
-                    📱 <strong>UPI ID:</strong> <code>{item.upi_id}</code> · Name: <strong>{item.account_name}</strong>
+                {item.upi_id || item.account_number ? (
+                  <div style={{ fontSize: '0.9rem', background: 'rgba(56, 189, 248, 0.1)', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(56, 189, 248, 0.2)', marginTop: '0.4rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    {item.upi_id && (
+                      <span style={{ color: '#38bdf8', fontWeight: 600 }}>
+                        📱 <strong>UPI / GPay / PhonePe:</strong> <code style={{ fontSize: '1rem', color: '#f8fafc', background: '#0f172a', padding: '0.2rem 0.5rem', borderRadius: '0.3rem' }}>{item.upi_id}</code>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          style={{ marginLeft: '0.5rem', padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                          onClick={() => {
+                            navigator.clipboard.writeText(item.upi_id);
+                            showSuccess(`UPI / Mobile copied: ${item.upi_id}`);
+                          }}
+                        >
+                          📋 Copy UPI / Mobile
+                        </Button>
+                      </span>
+                    )}
+
+                    {item.account_number && (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.825rem' }}>
+                        🏦 <strong>{item.bank_name || 'Bank'}</strong> · A/C: <code>{item.account_number}</code> · IFSC: <code>{item.ifsc_code}</code> · Holder: <strong>{item.account_name}</strong>
+                      </span>
+                    )}
                   </div>
                 ) : null}
-                <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '0.25rem' }}>
+                <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '0.4rem' }}>
                   Requested: {formatDate(item.created_at)} {item.notes ? `· Note: ${item.notes}` : ''}
                 </small>
               </div>
 
               <div className="bank-account-actions" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <Badge status={item.status}>{item.status}</Badge>
-                {['pending', 'approved'].includes(item.status) && (
-                  <Button variant="primary" size="sm" onClick={() => handlePayRazorpay(item)}>
-                    💳 Pay via Razorpay
-                  </Button>
-                )}
                 {item.status === 'pending' && (
                   <>
-                    <Button size="sm" variant="secondary" onClick={() => approve(item)}>
-                      Approve
+                    <Button size="sm" style={{ background: '#10b981', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', fontWeight: 600 }} onClick={() => approve(item)}>
+                      ✅ Mark Paid (GPay / PhonePe)
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => openDialog('reject', item)}>
-                      Reject
+                      ❌ Reject
                     </Button>
                   </>
                 )}

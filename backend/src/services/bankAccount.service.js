@@ -53,12 +53,17 @@ class BankAccountService {
         );
       }
 
-      // Ensure document_url column exists in table
+      // Ensure document_url and is_verified columns exist in table
       await client.query("ALTER TABLE affiliate_bank_accounts ADD COLUMN IF NOT EXISTS document_url TEXT;").catch(() => {});
+      await client.query("ALTER TABLE affiliate_bank_accounts ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT TRUE;").catch(() => {});
+      await client.query("UPDATE affiliate_bank_accounts SET is_verified = TRUE WHERE is_verified IS FALSE OR is_verified IS NULL;").catch(() => {});
 
       const rawAccountType = (data.accountType || 'SAVINGS').toString().toUpperCase().trim();
       const normalizedAccountType = ['SAVINGS', 'CURRENT'].includes(rawAccountType) ? rawAccountType : 'SAVINGS';
       const documentUrl = data.documentUrl || data.document_url || null;
+      const bankName = data.bankName || 'UPI Account';
+      const accountNumber = data.accountNumber || (data.upiId ? data.upiId : 'N/A');
+      const ifscCode = data.ifscCode || 'UPI0000000';
 
       // Create account with dual constraint fallback (SAVINGS vs savings)
       let bankAccount;
@@ -75,21 +80,22 @@ class BankAccountService {
             upi_id,
             account_type,
             document_url,
-            is_default
+            is_default,
+            is_verified
           )
           VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,TRUE
           )
           RETURNING *;
           `,
           [
             userId,
             data.accountHolderName,
-            data.bankName,
-            data.accountNumber,
-            data.ifscCode,
-            data.branchName,
-            data.upiId,
+            bankName,
+            accountNumber,
+            ifscCode,
+            data.branchName || null,
+            data.upiId || null,
             normalizedAccountType,
             documentUrl,
             isDefault,
@@ -109,21 +115,22 @@ class BankAccountService {
               upi_id,
               account_type,
               document_url,
-              is_default
+              is_default,
+              is_verified
             )
             VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,TRUE
             )
             RETURNING *;
             `,
             [
               userId,
               data.accountHolderName,
-              data.bankName,
-              data.accountNumber,
-              data.ifscCode,
-              data.branchName,
-              data.upiId,
+              bankName,
+              accountNumber,
+              ifscCode,
+              data.branchName || null,
+              data.upiId || null,
               normalizedAccountType.toLowerCase(),
               documentUrl,
               isDefault,
