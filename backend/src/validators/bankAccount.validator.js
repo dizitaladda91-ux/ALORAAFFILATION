@@ -7,7 +7,7 @@ const accountFields = [
     .trim()
     .customSanitizer((val) => (typeof val === 'string' ? val.replace(/\s+/g, '') : val))
     .matches(/^(?:[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z0-9.\-_]{2,64}|[6-9][0-9]{9})$/)
-    .withMessage('Please enter a valid UPI ID (e.g. name@ybl, 9315507417@kotakbank) or 10-digit Mobile Number (e.g. 9876543210).'),
+    .withMessage('Please enter a valid UPI ID (e.g. name@upi, name@okaxis) or 10-digit Mobile Number (e.g. 9876543210).'),
   body('bankName')
     .optional({ nullable: true, checkFalsy: true })
     .trim()

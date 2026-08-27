@@ -127,7 +127,7 @@ export const BankAccounts = () => {
               <input
                 className="form-input"
                 name="upiId"
-                placeholder="e.g. 9315507417@kotakbank or 9876543210 (GPay/PhonePe)"
+                placeholder="e.g. name@upi or 9876543210 (GPay/PhonePe)"
                 value={form.upiId}
                 onChange={change}
               />
