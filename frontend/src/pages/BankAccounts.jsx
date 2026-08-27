@@ -14,7 +14,11 @@ export const BankAccounts = () => {
   const { showSuccess, showError } = useNotification();
   const load = async () => { try { setAccounts(await fetchBankAccounts()); } catch (error) { showError(error.message || 'Unable to load bank accounts'); } };
   useEffect(() => { load(); }, []);
-  const change = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+  const change = (event) => {
+    const { name, value } = event.target;
+    const updatedValue = name === 'ifscCode' ? value.toUpperCase().trim() : value;
+    setForm((current) => ({ ...current, [name]: updatedValue }));
+  };
   const submit = async (event) => { event.preventDefault(); setSaving(true); try { await createBankAccount(form); setForm(emptyForm); showSuccess('Bank account added. It will be available after verification.'); load(); } catch (error) { showError(error.message || 'Unable to add bank account'); } finally { setSaving(false); } };
   const makeDefault = async (id) => { try { await setDefaultBankAccount(id); showSuccess('Default bank account updated'); load(); } catch (error) { showError(error.message || 'Unable to set default account'); } };
   const remove = async (id) => { if (!window.confirm('Delete this bank account?')) return; try { await deleteBankAccount(id); showSuccess('Bank account deleted'); load(); } catch (error) { showError(error.message || 'Unable to delete bank account'); } };

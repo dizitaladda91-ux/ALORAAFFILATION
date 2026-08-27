@@ -20,11 +20,54 @@ class CommissionService {
       throw ApiError.badRequest(`Status must be one of: ${validStatuses.join(', ')}`);
     }
 
-    const updated = await commissionRepository.updateCommissionStatus(commissionId, status);
-    if (!updated) {
-      throw ApiError.notFound('Commission record not found');
+    const client = await db.getClient();
+    try {
+      await client.query('BEGIN');
+
+      const commRes = await client.query(
+        `SELECT * FROM commissions WHERE id = $1 AND deleted_at IS NULL FOR UPDATE`,
+        [commissionId]
+      );
+      const comm = commRes.rows[0];
+      if (!comm) {
+        throw ApiError.notFound('Commission record not found');
+      }
+
+      const oldStatus = comm.status;
+      const updated = await commissionRepository.updateCommissionStatus(commissionId, status, client);
+
+      // Transitioning from pending to approved/paid: credit wallet balance
+      if (oldStatus === 'pending' && (status === 'approved' || status === 'paid')) {
+        const wallet = comm.wallet_id
+          ? await walletRepository.lockWallet(comm.wallet_id, client)
+          : await walletRepository.findOrCreateByUserId(comm.affiliate_id, client);
+        const openingBalance = Number(wallet.available_balance);
+
+        const walletUpdate = await client.query(
+          `UPDATE wallets
+           SET available_balance = available_balance + $1,
+               lifetime_earnings = lifetime_earnings + $1,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = $2
+           RETURNING available_balance`,
+          [comm.amount, wallet.id]
+        );
+
+        await client.query(
+          `INSERT INTO wallet_transactions (wallet_id, user_id, type, reference_type, reference_id, amount, opening_balance, closing_balance, description, status)
+           VALUES ($1, $2, 'COMMISSION_SETTLEMENT', 'COMMISSION', $3, $4, $5, $6, 'Admin Commission Approval', 'SUCCESS')`,
+          [wallet.id, comm.affiliate_id, comm.id, comm.amount, openingBalance, Number(walletUpdate.rows[0].available_balance)]
+        );
+      }
+
+      await client.query('COMMIT');
+      return updated;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
     }
-    return updated;
   }
 
   /**

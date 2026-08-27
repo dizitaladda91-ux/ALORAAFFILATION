@@ -7,6 +7,7 @@ const walletRepository = require('../repositories/walletrepository');
 const emailService = require('../services/emailService');
 const logger = require('../logs/logger');
 const logRepository = require('../repositories/logRepository');
+const notificationRepository = require('../repositories/notification.repository');
 const config = require('../config/env');
 
 exports.list = asyncHandler(async (req, res) => {

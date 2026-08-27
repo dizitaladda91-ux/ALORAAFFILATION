@@ -1,0 +1,19 @@
+{
+  "appId": "com.aloraradiance.affiliate",
+  "appName": "Alora Affiliate",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#1e1b4b"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#0f172a"
+    }
+  }
+}
