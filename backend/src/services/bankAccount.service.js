@@ -56,37 +56,75 @@ class BankAccountService {
       const rawAccountType = (data.accountType || 'SAVINGS').toString().toUpperCase().trim();
       const normalizedAccountType = ['SAVINGS', 'CURRENT'].includes(rawAccountType) ? rawAccountType : 'SAVINGS';
 
-      // Create account
-      const bankAccount = await client.query(
-        `
-        INSERT INTO affiliate_bank_accounts (
-          user_id,
-          account_holder_name,
-          bank_name,
-          account_number,
-          ifsc_code,
-          branch_name,
-          upi_id,
-          account_type,
-          is_default
-        )
-        VALUES (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9
-        )
-        RETURNING *;
-        `,
-        [
-          userId,
-          data.accountHolderName,
-          data.bankName,
-          data.accountNumber,
-          data.ifscCode,
-          data.branchName,
-          data.upiId,
-          normalizedAccountType,
-          isDefault,
-        ]
-      );
+      // Create account with dual constraint fallback (SAVINGS vs savings)
+      let bankAccount;
+      try {
+        bankAccount = await client.query(
+          `
+          INSERT INTO affiliate_bank_accounts (
+            user_id,
+            account_holder_name,
+            bank_name,
+            account_number,
+            ifsc_code,
+            branch_name,
+            upi_id,
+            account_type,
+            is_default
+          )
+          VALUES (
+            $1,$2,$3,$4,$5,$6,$7,$8,$9
+          )
+          RETURNING *;
+          `,
+          [
+            userId,
+            data.accountHolderName,
+            data.bankName,
+            data.accountNumber,
+            data.ifscCode,
+            data.branchName,
+            data.upiId,
+            normalizedAccountType,
+            isDefault,
+          ]
+        );
+      } catch (insertErr) {
+        if (insertErr.message && insertErr.message.includes('affiliate_bank_accounts_account_type_check')) {
+          bankAccount = await client.query(
+            `
+            INSERT INTO affiliate_bank_accounts (
+              user_id,
+              account_holder_name,
+              bank_name,
+              account_number,
+              ifsc_code,
+              branch_name,
+              upi_id,
+              account_type,
+              is_default
+            )
+            VALUES (
+              $1,$2,$3,$4,$5,$6,$7,$8,$9
+            )
+            RETURNING *;
+            `,
+            [
+              userId,
+              data.accountHolderName,
+              data.bankName,
+              data.accountNumber,
+              data.ifscCode,
+              data.branchName,
+              data.upiId,
+              normalizedAccountType.toLowerCase(),
+              isDefault,
+            ]
+          );
+        } else {
+          throw insertErr;
+        }
+      }
 
       await client.query("COMMIT");
 
