@@ -32,6 +32,7 @@ const Withdrawals = lazy(() => import('../pages/Withdrawals').then(({ Withdrawal
 const BankAccounts = lazy(() => import('../pages/BankAccounts').then(({ BankAccounts: Page }) => ({ default: Page })));
 const AdminWithdrawals = lazy(() => import('../pages/AdminWithdrawals').then(({ AdminWithdrawals: Page }) => ({ default: Page })));
 const AdminBankAccounts = lazy(() => import('../pages/AdminBankAccounts').then(({ AdminBankAccounts: Page }) => ({ default: Page })));
+const AdminCommissions = lazy(() => import('../pages/AdminCommissions').then(({ AdminCommissions: Page }) => ({ default: Page })));
 const MarketingAssets = lazy(() => import('../pages/MarketingAssets').then(({ MarketingAssets: Page }) => ({ default: Page })));
 
 export const AppRoutes = () => {
@@ -61,12 +62,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.AUDIT_LOGS} element={<AuditLogs />} />
         <Route path={ROUTES.ADMIN_WITHDRAWALS} element={<AdminWithdrawals />} />
         <Route path={ROUTES.ADMIN_BANK_ACCOUNTS} element={<AdminBankAccounts />} />
-      </Route>
-
-      {/* Super Affiliate Protected Routes */}
-      <Route element={<ProtectedRoute allowedRoles={[ROLES.SUPER_AFFILIATE]} />}>
-        <Route path={ROUTES.SUPER_AFFILIATE_DASHBOARD} element={<SuperAffiliateDashboard />} />
-        <Route path={ROUTES.TEAM_TRACKING} element={<TeamManagement />} />
+        <Route path={ROUTES.ADMIN_COMMISSIONS} element={<AdminCommissions />} />
       </Route>
 
       {/* Shared Affiliate Protected Routes */}

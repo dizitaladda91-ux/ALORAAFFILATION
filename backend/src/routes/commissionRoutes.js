@@ -10,6 +10,7 @@ const validate = require('../middlewares/validationMiddleware');
 router.use(authenticate);
 
 router.get('/rules', commissionController.getRules);
+router.get('/admin/all', authorizeRoles(ROLES.SUPER_ADMIN, ROLES.ADMIN), commissionController.getAllCommissions);
 router.post('/rules', authorizeRoles(ROLES.SUPER_ADMIN, ROLES.ADMIN), createRuleValidator, validate, commissionController.createRule);
 router.patch('/:commissionId/status', authorizeRoles(ROLES.SUPER_ADMIN, ROLES.ADMIN), commissionController.updateStatus);
 router.post('/auto-settle', authorizeRoles(ROLES.SUPER_ADMIN, ROLES.ADMIN), commissionController.autoSettle);

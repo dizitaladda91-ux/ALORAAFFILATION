@@ -12,8 +12,8 @@ const server = app.listen(config.port, () => {
   logger.info(` API: http://localhost:${config.port}${config.apiPrefix || '/'}`);
   logger.info(`=======================================================`);
   
-  // Start background 24-hour commission auto-settlement scheduler
-  startScheduler(15, 24);
+  // Start background 7-day commission auto-settlement scheduler
+  startScheduler(15, 7);
 });
 
 const unexpectedErrorHandler = (error) => {

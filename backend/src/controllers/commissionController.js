@@ -31,9 +31,19 @@ class CommissionController {
   });
 
   autoSettle = asyncHandler(async (req, res) => {
-    const holdHours = parseInt(req.body.holdHours || (req.body.holdDays ? Number(req.body.holdDays) * 24 : 24), 10);
-    const result = await commissionService.autoSettleMaturedCommissions(holdHours);
+    const holdDays = parseInt(req.body.holdDays || (req.body.holdHours ? Math.ceil(Number(req.body.holdHours) / 24) : 7), 10);
+    const result = await commissionService.autoSettleMaturedCommissions(holdDays);
     return sendSuccess(res, 'Automated commission settlement completed', result);
+  });
+
+  getAllCommissions = asyncHandler(async (req, res) => {
+    const { status, limit, page } = req.query;
+    const items = await commissionService.getAllAdminCommissions({
+      status: status || null,
+      limit: parseInt(limit || '100', 10),
+      offset: (parseInt(page || '1', 10) - 1) * parseInt(limit || '100', 10),
+    });
+    return sendSuccess(res, 'Admin commissions fetched successfully', items);
   });
 }
 

@@ -28,6 +28,7 @@ export const ROUTES = {
   SYSTEM_SETTINGS: '/admin/settings',
   ADMIN_WITHDRAWALS: '/admin/withdrawals',
   ADMIN_BANK_ACCOUNTS: '/admin/bank-accounts',
+  ADMIN_COMMISSIONS: '/admin/commissions',
   PROFILE: '/profile',
   MARKETING_ASSETS: '/marketing-assets',
 };

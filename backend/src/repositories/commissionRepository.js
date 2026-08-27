@@ -99,15 +99,15 @@ class CommissionRepository {
     return res.rows[0];
   }
 
-  async findMaturedPendingCommissions(holdHours = 24) {
+  async findMaturedPendingCommissions(holdDays = 7) {
     const res = await db.query(
       `SELECT c.*, w.id AS wallet_id
        FROM commissions c
        LEFT JOIN wallets w ON w.user_id = c.affiliate_id AND w.deleted_at IS NULL
        WHERE c.status = 'pending'
-         AND c.created_at <= (CURRENT_TIMESTAMP - INTERVAL '1 hour' * $1)
+         AND c.created_at <= (CURRENT_TIMESTAMP - INTERVAL '1 day' * $1)
          AND c.deleted_at IS NULL`,
-      [holdHours]
+      [holdDays]
     );
     return res.rows;
   }
@@ -136,6 +136,27 @@ class CommissionRepository {
       );
       return statsRes.rows[0];
     }
+  }
+
+  async findAllAdminCommissions({ status = null, limit = 100, offset = 0 } = {}) {
+    const values = [];
+    let query = `
+      SELECT c.*, ce.order_id, ce.amount as order_amount, ce.currency, u.email as affiliate_email,
+             COALESCE(p.first_name || ' ' || p.last_name, u.email) as affiliate_name
+      FROM commissions c
+      LEFT JOIN conversion_events ce ON c.conversion_id = ce.id
+      LEFT JOIN users u ON c.affiliate_id = u.id
+      LEFT JOIN profiles p ON p.user_id = u.id
+      WHERE c.deleted_at IS NULL
+    `;
+    if (status) {
+      values.push(status);
+      query += ` AND c.status = $${values.length}`;
+    }
+    values.push(limit, offset);
+    query += ` ORDER BY c.created_at DESC LIMIT $${values.length - 1} OFFSET $${values.length}`;
+    const res = await db.query(query, values);
+    return res.rows;
   }
 }
 

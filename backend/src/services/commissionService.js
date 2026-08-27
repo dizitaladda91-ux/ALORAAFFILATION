@@ -74,11 +74,11 @@ class CommissionService {
    * Automatically transition pending commissions created past the hold window
    * to approved status and credit the affiliate's available wallet balance.
    */
-  async autoSettleMaturedCommissions(holdHours = 24) {
+  async autoSettleMaturedCommissions(holdDays = 7) {
     const client = await db.getClient();
     try {
       await client.query('BEGIN');
-      const matured = await commissionRepository.findMaturedPendingCommissions(holdHours);
+      const matured = await commissionRepository.findMaturedPendingCommissions(holdDays);
       let settledCount = 0;
       let totalSettledAmount = 0;
 
@@ -109,7 +109,7 @@ class CommissionService {
         // 3. Record wallet transaction log
         await client.query(
           `INSERT INTO wallet_transactions (wallet_id, user_id, type, reference_type, reference_id, amount, opening_balance, closing_balance, description, status)
-           VALUES ($1, $2, 'COMMISSION_SETTLEMENT', 'COMMISSION', $3, $4, $5, $6, 'Automated 24-Hour Commission Settlement', 'SUCCESS')`,
+           VALUES ($1, $2, 'COMMISSION_SETTLEMENT', 'COMMISSION', $3, $4, $5, $6, 'Automated 7-Day Commission Settlement', 'SUCCESS')`,
           [wallet.id, comm.affiliate_id, comm.id, comm.amount, openingBalance, Number(walletUpdate.rows[0].available_balance)]
         );
 
@@ -127,6 +127,10 @@ class CommissionService {
     } finally {
       client.release();
     }
+  }
+
+  async getAllAdminCommissions(filters) {
+    return commissionRepository.findAllAdminCommissions(filters);
   }
 }
 
