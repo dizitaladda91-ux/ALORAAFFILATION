@@ -282,6 +282,7 @@ CREATE TABLE IF NOT EXISTS affiliate_bank_accounts (
   branch_name VARCHAR(100),
   upi_id VARCHAR(100),
   account_type VARCHAR(20) NOT NULL DEFAULT 'SAVINGS',
+  document_url TEXT,
   is_default BOOLEAN NOT NULL DEFAULT FALSE,
   verification_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (verification_status IN ('PENDING', 'VERIFIED', 'REJECTED')),
   verified_by __USER_ID_TYPE__ REFERENCES users(id),

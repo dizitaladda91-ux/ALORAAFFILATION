@@ -53,8 +53,12 @@ class BankAccountService {
         );
       }
 
+      // Ensure document_url column exists in table
+      await client.query("ALTER TABLE affiliate_bank_accounts ADD COLUMN IF NOT EXISTS document_url TEXT;").catch(() => {});
+
       const rawAccountType = (data.accountType || 'SAVINGS').toString().toUpperCase().trim();
       const normalizedAccountType = ['SAVINGS', 'CURRENT'].includes(rawAccountType) ? rawAccountType : 'SAVINGS';
+      const documentUrl = data.documentUrl || data.document_url || null;
 
       // Create account with dual constraint fallback (SAVINGS vs savings)
       let bankAccount;
@@ -70,10 +74,11 @@ class BankAccountService {
             branch_name,
             upi_id,
             account_type,
+            document_url,
             is_default
           )
           VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8,$9
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10
           )
           RETURNING *;
           `,
@@ -86,6 +91,7 @@ class BankAccountService {
             data.branchName,
             data.upiId,
             normalizedAccountType,
+            documentUrl,
             isDefault,
           ]
         );
@@ -102,10 +108,11 @@ class BankAccountService {
               branch_name,
               upi_id,
               account_type,
+              document_url,
               is_default
             )
             VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10
             )
             RETURNING *;
             `,
@@ -118,6 +125,7 @@ class BankAccountService {
               data.branchName,
               data.upiId,
               normalizedAccountType.toLowerCase(),
+              documentUrl,
               isDefault,
             ]
           );
