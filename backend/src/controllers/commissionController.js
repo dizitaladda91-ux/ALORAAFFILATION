@@ -31,8 +31,8 @@ class CommissionController {
   });
 
   autoSettle = asyncHandler(async (req, res) => {
-    const holdDays = parseInt(req.body.holdDays || '7', 10);
-    const result = await commissionService.autoSettleMaturedCommissions(holdDays);
+    const holdHours = parseInt(req.body.holdHours || (req.body.holdDays ? Number(req.body.holdDays) * 24 : 24), 10);
+    const result = await commissionService.autoSettleMaturedCommissions(holdHours);
     return sendSuccess(res, 'Automated commission settlement completed', result);
   });
 }

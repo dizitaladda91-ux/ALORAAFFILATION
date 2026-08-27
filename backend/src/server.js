@@ -1,6 +1,7 @@
 const app = require('./app');
 const config = require('./config/env');
 const logger = require('./logs/logger');
+const { startScheduler } = require('./services/settlementScheduler');
 
 const server = app.listen(config.port, () => {
   const dbHost = config.dbUrl ? config.dbUrl.split('@')[1] || 'configured' : 'not set';
@@ -10,6 +11,9 @@ const server = app.listen(config.port, () => {
   logger.info(` Database Host: ${dbHost}`);
   logger.info(` API: http://localhost:${config.port}${config.apiPrefix || '/'}`);
   logger.info(`=======================================================`);
+  
+  // Start background 24-hour commission auto-settlement scheduler
+  startScheduler(15, 24);
 });
 
 const unexpectedErrorHandler = (error) => {
