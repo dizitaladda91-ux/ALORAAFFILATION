@@ -1,6 +1,12 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
 const config = require('../config/env');
 const logger = require('../logs/logger');
+
+// Force Node.js to resolve IPv4 addresses first (prevents ENETUNREACH on Cloud Hosts)
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 class EmailService {
   constructor() {
@@ -22,7 +28,10 @@ class EmailService {
     try {
       if (provider === 'gmail' && gmailUser && gmailPass) {
         this.transporter = nodemailer.createTransport({
-          service: 'gmail',
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+          family: 4,
           auth: {
             user: gmailUser,
             pass: gmailPass,
@@ -31,7 +40,7 @@ class EmailService {
           greetingTimeout: 15000,
           socketTimeout: 15000,
         });
-        logger.info(`Email transporter initialized with Gmail service: ${gmailUser}`);
+        logger.info(`Email transporter initialized with Gmail IPv4 service: ${gmailUser}`);
         return;
       }
 
