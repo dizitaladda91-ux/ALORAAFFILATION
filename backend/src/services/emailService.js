@@ -22,16 +22,16 @@ class EmailService {
     try {
       if (provider === 'gmail' && gmailUser && gmailPass) {
         this.transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 465,
-          secure: true,
-          family: 4,
+          service: 'gmail',
           auth: {
             user: gmailUser,
             pass: gmailPass,
           },
+          connectionTimeout: 15000,
+          greetingTimeout: 15000,
+          socketTimeout: 15000,
         });
-        logger.info(`Email transporter initialized with Gmail IPv4 provider: ${gmailUser}`);
+        logger.info(`Email transporter initialized with Gmail service: ${gmailUser}`);
         return;
       }
 
@@ -352,19 +352,25 @@ class EmailService {
    * Send email verification link
    */
   async sendVerificationEmail(user, verificationToken) {
+    const targetEmail = user.official_email || user.officialEmail || user.email;
     const verifyLink = `${config.frontendUrl}/verify-email/${verificationToken}`;
     const subject = 'Verify Your Email Address';
 
     const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Verify Your Email</h2>
-        <p>Hi ${user.first_name || 'there'},</p>
-        <p>Please click the button below to verify your email address:</p>
-        <p><a href="${verifyLink}" style="background:#007bff;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block;">Verify email</a></p>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
+        <h2 style="color: #6366f1;">Verify Your Email Address</h2>
+        <p style="color: #334155; font-size: 15px;">Hi ${user.first_name || 'Partner'},</p>
+        <p style="color: #334155; font-size: 15px;">Please click the button below to verify your email address for your Alora Radiance partner account:</p>
+        <p style="margin: 25px 0;">
+          <a href="${verifyLink}" style="background:#4f46e5;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
+            Verify Email Address
+          </a>
+        </p>
+        <p style="color: #64748b; font-size: 13px;">This verification link will expire in 24 hours.</p>
       </div>
     `;
 
-    return this.sendEmail(user.email, subject, htmlContent);
+    return this.sendEmail(targetEmail, subject, htmlContent);
   }
 
   /**
