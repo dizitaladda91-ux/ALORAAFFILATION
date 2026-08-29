@@ -11,6 +11,16 @@ class AuthController {
     this.setRefreshCookie(res, result.tokens.refreshToken);
     return { ...result, tokens: { accessToken: result.tokens.accessToken } };
   }
+  sendRegistrationOtp = asyncHandler(async (req, res) => {
+    const result = await authService.sendRegistrationOtp(req.body.email);
+    return sendSuccess(res, result.message, result);
+  });
+
+  verifyRegistrationOtp = asyncHandler(async (req, res) => {
+    const result = await authService.verifyRegistrationOtp(req.body.email, req.body.otp);
+    return sendSuccess(res, result.message, result);
+  });
+
   register = asyncHandler(async (req, res) => {
     const result = await authService.register({
       ...req.body,

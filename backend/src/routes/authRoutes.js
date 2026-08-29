@@ -6,6 +6,8 @@ const validate = require('../middlewares/validationMiddleware');
 const { authenticate } = require('../middlewares/authMiddleware');
 const { authRateLimiter } = require('../middlewares/rateLimiter');
 
+router.post('/send-registration-otp', authRateLimiter, [require('express-validator').body('email').isEmail().withMessage('Please enter a valid email address')], validate, authController.sendRegistrationOtp);
+router.post('/verify-registration-otp', authRateLimiter, [require('express-validator').body('email').isEmail(), require('express-validator').body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits')], validate, authController.verifyRegistrationOtp);
 router.post('/register', authRateLimiter, registerValidator, validate, authController.register);
 router.post('/login', authRateLimiter, loginValidator, validate, authController.login);
 router.post('/mfa/setup', authRateLimiter, [require('express-validator').body('mfaToken').isString().notEmpty()], validate, authController.beginMfaSetup);

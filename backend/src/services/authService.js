@@ -13,11 +13,42 @@ const logger = require('../logs/logger');
 const notificationRepository = require('../repositories/notification.repository');
 const walletRepository = require('../repositories/walletrepository');
 const { ROLES } = require('../constants/roles');
+const otpRepository = require('../repositories/otpRepository');
 const crypto = require('crypto');
 const mfaService = require('./mfaService');
 
 class AuthService {
-  async register({ email, officialEmail = null, password, firstName, lastName, company = null, role = 'affiliate', recruitmentCode = null, ipAddress = null }) {
+  async sendRegistrationOtp(email) {
+    const normalizedEmail = (email || '').toLowerCase().trim();
+    if (!normalizedEmail || !/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+      throw ApiError.badRequest('Please enter a valid email address');
+    }
+    const existingUser = await userRepository.findByEmail(normalizedEmail);
+    if (existingUser) {
+      throw ApiError.conflict('This email address is already registered. Please login instead.');
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await otpRepository.saveOtp(normalizedEmail, otp);
+    await emailService.sendRegistrationOtp(normalizedEmail, otp);
+    return { success: true, message: `Verification OTP sent to ${normalizedEmail}` };
+  }
+
+  async verifyRegistrationOtp(email, otp) {
+    const normalizedEmail = (email || '').toLowerCase().trim();
+    if (!normalizedEmail || !otp) {
+      throw ApiError.badRequest('Email address and 6-digit OTP code are required');
+    }
+
+    const isValid = await otpRepository.verifyOtp(normalizedEmail, otp);
+    if (!isValid) {
+      throw ApiError.badRequest('Invalid or expired OTP code. Please check your email or click Resend OTP.');
+    }
+
+    return { success: true, verified: true, message: 'Email address verified successfully! ✅' };
+  }
+
+  async register({ email, officialEmail = null, otp = null, password, firstName, lastName, company = null, role = 'affiliate', recruitmentCode = null, ipAddress = null }) {
     if (![ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(role)) {
       throw ApiError.forbidden('Administrative accounts cannot be created through public registration');
     }

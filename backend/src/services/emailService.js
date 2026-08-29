@@ -301,6 +301,34 @@ class EmailService {
   }
 
   /**
+   * Send 6-Digit Registration Verification OTP
+   */
+  async sendRegistrationOtp(email, otp) {
+    const subject = `Your Alora Verification Code: ${otp}`;
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 550px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #6366f1; margin-bottom: 5px;">Alora Radiance Partner</h2>
+          <p style="color: #64748b; font-size: 14px;">Email Address Verification</p>
+        </div>
+        
+        <p style="color: #334155; font-size: 16px;">Hello,</p>
+        <p style="color: #334155; font-size: 15px; line-height: 1.5;">Thank you for registering with Alora Radiance! Please use the following 6-digit OTP code to verify your email address and complete your account creation:</p>
+        
+        <div style="background-color: #f8fafc; border: 2px dashed #6366f1; padding: 20px; border-radius: 10px; text-align: center; margin: 25px 0;">
+          <span style="font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #4338ca; font-family: monospace;">${otp}</span>
+        </div>
+        
+        <p style="color: #64748b; font-size: 13px; text-align: center;">⏱️ This verification code is valid for <strong>10 minutes</strong>. Do not share this OTP with anyone.</p>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 25px 0;" />
+        <p style="color: #94a3b8; font-size: 12px; text-align: center;">If you did not request this code, please ignore this email.</p>
+      </div>
+    `;
+
+    return this.sendEmail(email, subject, htmlContent);
+  }
+
+  /**
    * Send email verification link
    */
   async sendVerificationEmail(user, verificationToken) {

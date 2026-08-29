@@ -8,6 +8,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
 import { ROUTES } from '../constants/routes';
 import { ROLES } from '../constants/roles';
+import { API_ENDPOINTS } from '../constants/apiEndpoints';
+import api from '../services/api';
 
 export const Register = () => {
   const [formData, setFormData] = useState({
@@ -23,6 +25,14 @@ export const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // OTP Verification state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+
   const { register } = useAuth();
   const { showSuccess, showError } = useNotification();
   const navigate = useNavigate();
@@ -32,8 +42,48 @@ export const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleSendOtp = async () => {
+    const targetEmail = (formData.officialEmail || formData.email || '').trim();
+    if (!targetEmail || !/^\S+@\S+\.\S+$/.test(targetEmail)) {
+      showError('Please enter a valid email address first.');
+      return;
+    }
+    setOtpSending(true);
+    try {
+      await api.post(API_ENDPOINTS.AUTH.SEND_OTP, { email: targetEmail });
+      setOtpSent(true);
+      showSuccess(`6-Digit OTP Code sent to ${targetEmail}. Please check your inbox!`);
+    } catch (err) {
+      showError(err.message || 'Failed to send OTP code.');
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const targetEmail = (formData.officialEmail || formData.email || '').trim();
+    if (!otpCode || otpCode.trim().length !== 6) {
+      showError('Please enter the 6-digit OTP code sent to your email.');
+      return;
+    }
+    setOtpVerifying(true);
+    try {
+      await api.post(API_ENDPOINTS.AUTH.VERIFY_OTP, { email: targetEmail, otp: otpCode.trim() });
+      setOtpVerified(true);
+      showSuccess('Official Email address verified successfully! ✅');
+    } catch (err) {
+      showError(err.message || 'Invalid OTP code. Please check your email or click Resend OTP.');
+    } finally {
+      setOtpVerifying(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!otpVerified) {
+      showError('Please verify your official email with the 6-Digit OTP code before creating an account.');
+      return;
+    }
     if (formData.password !== confirmPassword) {
       showError('Passwords do not match. Please try again.');
       return;
@@ -87,6 +137,7 @@ export const Register = () => {
             required
           />
         </div>
+
         <Input
           label="Login Email ID"
           type="email"
@@ -97,21 +148,82 @@ export const Register = () => {
           onChange={handleChange}
           required
         />
-        <Input
-          label="Official Email for Payment Receipts & Notifications"
-          type="email"
-          name="officialEmail"
-          placeholder="yourrealinbox@gmail.com (All payment receipts & reset links go here)"
-          autoComplete="email"
-          value={formData.officialEmail}
-          onChange={handleChange}
-        />
+
+        <div style={{ marginBottom: '1.25rem' }}>
+          <Input
+            label="Official Email for Payment Receipts & Notifications"
+            type="email"
+            name="officialEmail"
+            placeholder="yourrealinbox@gmail.com (All payment receipts & reset links go here)"
+            autoComplete="email"
+            value={formData.officialEmail}
+            onChange={handleChange}
+            required
+          />
+
+          {!otpVerified ? (
+            <div style={{ marginTop: '0.5rem', background: '#f8fafc', padding: '0.85rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              {!otpSent ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  loading={otpSending}
+                  onClick={handleSendOtp}
+                  style={{ width: '100%', background: '#4f46e5', color: '#ffffff', fontWeight: 600 }}
+                >
+                  📩 Send 6-Digit Email Verification OTP
+                </Button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Enter 6-Digit OTP"
+                      maxLength="6"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                      style={{ letterSpacing: '4px', fontSize: '1rem', fontWeight: 700, textAlign: 'center' }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      loading={otpVerifying}
+                      onClick={handleVerifyOtp}
+                      style={{ background: '#10b981', color: '#ffffff', fontWeight: 600 }}
+                    >
+                      Verify OTP
+                    </Button>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: '#64748b' }}>
+                    <span>Didn't receive code?</span>
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      disabled={otpSending}
+                      style={{ background: 'none', border: 'none', color: '#4f46e5', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Resend OTP 🔄
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ marginTop: '0.4rem', color: '#10b981', fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <Check size={16} /> Official Email Verified Successfully!
+            </div>
+          )}
+        </div>
+
         <Input
           label="Company or brand name"
           name="company"
           placeholder="Optional - e.g. Acme Growth"
           onChange={handleChange}
         />
+
         <div className="form-group register-role-group">
           <div className="register-field-heading">
             <label className="form-label" htmlFor="account-role">How will you use Alora?</label>
@@ -128,6 +240,7 @@ export const Register = () => {
             <option value="super_affiliate">I'll lead a team of affiliates</option>
           </select>
         </div>
+
         <div className="register-password-grid">
           <div className="form-group password-field">
             <label className="form-label" htmlFor="password">Create password</label>
@@ -149,6 +262,7 @@ export const Register = () => {
               </button>
             </div>
           </div>
+
           <div className="form-group password-field">
             <label className="form-label" htmlFor="confirmPassword">Confirm password</label>
             <div className="password-input-wrap">
@@ -160,6 +274,7 @@ export const Register = () => {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                minLength="8"
                 required
               />
               <button className="password-toggle" type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
@@ -168,18 +283,11 @@ export const Register = () => {
             </div>
           </div>
         </div>
-        <p className="register-password-hint"><Check size={14} /> Use 8 or more characters for a secure password.</p>
-        <div className="register-trust-note"><ShieldCheck size={16} /><span>Your details are protected with secure encryption.</span></div>
-        <Button type="submit" loading={loading} className="register-submit">
-          <Sparkles size={17} /> Create my account
+
+        <Button type="submit" loading={loading} style={{ width: '100%', marginTop: '1rem' }}>
+          Create Partner Account
         </Button>
       </form>
-      <div className="register-signin">
-        Already have an account?{' '}
-        <Link to={ROUTES.LOGIN} style={{ color: 'var(--primary)', fontWeight: 700 }}>
-          Sign in
-        </Link>
-      </div>
     </AuthLayout>
   );
 };
