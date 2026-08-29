@@ -47,9 +47,10 @@ exports.approve = asyncHandler(async (req, res) => {
     // Send approval notification & email
     try {
       const user = await userRepository.findById(withdrawal.user_id);
-      if (user && user.email) {
+      if (user) {
         emailService.sendWithdrawalApprovedEmail(user, {
           amount: withdrawal.amount,
+          transactionReference: req.body.notes || withdrawal.notes || '',
           approved_at: new Date(),
         }).catch(err => logger.error('Failed to send withdrawal approval email:', err));
       }

@@ -29,8 +29,8 @@ if (env === 'production' && paymentsEnabled) {
     throw new Error('Razorpay credentials must be configured when PAYMENTS_ENABLED=true');
   }
 }
-const emailEnabled = process.env.EMAIL_ENABLED === 'true';
-const emailProvider = process.env.EMAIL_PROVIDER || 'test';
+const emailEnabled = process.env.EMAIL_ENABLED !== 'false';
+const emailProvider = process.env.EMAIL_PROVIDER || 'gmail';
 if (env === 'production' && emailEnabled) {
   if (!['smtp', 'sendgrid', 'gmail'].includes(emailProvider)) {
     throw new Error('EMAIL_PROVIDER must be smtp, sendgrid, or gmail when EMAIL_ENABLED=true');

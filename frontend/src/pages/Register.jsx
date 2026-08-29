@@ -80,10 +80,6 @@ export const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!otpVerified) {
-      showError('Please verify your official email with the 6-Digit OTP code before creating an account.');
-      return;
-    }
     if (formData.password !== confirmPassword) {
       showError('Passwords do not match. Please try again.');
       return;

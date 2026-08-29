@@ -15,12 +15,23 @@ class EmailService {
   initializeTransporter() {
     const { email } = config;
 
-    if (!email.enabled) {
-      logger.info('Email service disabled. Using console logger.');
-      return;
-    }
+    const gmailUser = email.gmailUser || process.env.GMAIL_USER;
+    const gmailPass = (email.gmailPassword || process.env.GMAIL_PASSWORD || '').replace(/\s+/g, '');
+    const provider = (gmailUser && gmailPass) ? 'gmail' : email.provider;
 
     try {
+      if (provider === 'gmail' && gmailUser && gmailPass) {
+        this.transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: gmailUser,
+            pass: gmailPass,
+          },
+        });
+        logger.info(`Email transporter initialized with Gmail provider: ${gmailUser}`);
+        return;
+      }
+
       if (email.provider === 'smtp') {
         this.transporter = nodemailer.createTransport({
           host: email.smtpHost,
@@ -39,14 +50,6 @@ class EmailService {
           auth: {
             user: 'apikey',
             pass: email.sendgridApiKey,
-          },
-        });
-      } else if (email.provider === 'gmail') {
-        this.transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: email.gmailUser,
-            pass: email.gmailPassword,
           },
         });
       } else {
@@ -215,24 +218,38 @@ class EmailService {
   async sendWithdrawalApprovedEmail(user, withdrawal) {
     const targetEmail = user.official_email || user.officialEmail || user.email;
     const { firstName } = user;
-    const { amount, approved_at } = withdrawal;
+    const { amount, approved_at, transactionReference, notes } = withdrawal;
+    const utrNo = transactionReference || notes || '';
 
-    const subject = `Withdrawal Approved & Paid - ₹${Number(amount || 0).toFixed(2)}`;
+    const subject = `Withdrawal Confirmed & Paid - ₹${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Withdrawal Approved & Paid! ✅</h2>
-        <p>Hi ${firstName || 'Partner'},</p>
+      <div style="font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #10b981; margin-bottom: 5px;">Alora Radiance Payout</h2>
+          <p style="color: #64748b; font-size: 14px;">Confirmed Payment Receipt</p>
+        </div>
+
+        <p style="color: #334155; font-size: 16px;">Hi ${firstName || 'Partner'},</p>
+        <p style="color: #334155; font-size: 15px; line-height: 1.5;">Great news! Your withdrawal request of <strong>₹${Number(amount || 0).toFixed(2)}</strong> has been processed and successfully paid out.</p>
         
-        <p>Great news! Your withdrawal of <strong>₹${Number(amount || 0).toFixed(2)}</strong> has been processed and paid out.</p>
-        
-        <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; margin: 20px 0;">
-          <p><strong>Amount Paid:</strong> ₹${Number(amount || 0).toFixed(2)}</p>
-          <p><strong>Approved on:</strong> ${new Date(approved_at || Date.now()).toLocaleDateString()}</p>
+        <div style="background-color: #f0fdf4; padding: 20px; border-radius: 10px; border: 1px solid #86efac; margin: 20px 0;">
+          <p style="margin: 0 0 10px 0; color: #166534; font-size: 15px;"><strong>Amount Paid:</strong> ₹${Number(amount || 0).toFixed(2)}</p>
+          ${utrNo ? `<p style="margin: 0 0 10px 0; color: #166534; font-size: 15px;"><strong>Transaction / UTR ID:</strong> <span style="font-family: monospace; font-size: 16px; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${utrNo}</span></p>` : ''}
+          <p style="margin: 0; color: #166534; font-size: 14px;"><strong>Date:</strong> ${new Date(approved_at || Date.now()).toLocaleDateString()}</p>
         </div>
         
-        <p>Thank you for being part of our affiliate program!</p>
+        <p style="color: #64748b; font-size: 14px;">You can view your updated wallet balance and transaction receipts directly in your partner dashboard.</p>
         
-        <p>Best regards,<br/>The Affiliate Team</p>
+        <p style="margin-top: 25px;">
+          <a href="${config.frontendUrl}/withdrawals" 
+             style="background-color: #10b981; color: white; padding: 12px 24px; 
+                    text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            View Withdrawal Receipts
+          </a>
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 25px 0;" />
+        <p style="color: #94a3b8; font-size: 12px; text-align: center;">Thank you for being a valued Alora Radiance partner!</p>
       </div>
     `;
 
