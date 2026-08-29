@@ -22,13 +22,16 @@ class EmailService {
     try {
       if (provider === 'gmail' && gmailUser && gmailPass) {
         this.transporter = nodemailer.createTransport({
-          service: 'gmail',
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+          family: 4,
           auth: {
             user: gmailUser,
             pass: gmailPass,
           },
         });
-        logger.info(`Email transporter initialized with Gmail provider: ${gmailUser}`);
+        logger.info(`Email transporter initialized with Gmail IPv4 provider: ${gmailUser}`);
         return;
       }
 
