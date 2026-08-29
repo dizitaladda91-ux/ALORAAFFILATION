@@ -19,6 +19,14 @@ class ProfileService {
       throw ApiError.notFound('User not found');
     }
 
+    const officialEmail = data.officialEmail?.trim().toLowerCase();
+    if (officialEmail) {
+      if (!/^\S+@\S+\.\S+$/.test(officialEmail)) {
+        throw ApiError.badRequest('Please provide a valid official notification email address');
+      }
+      await userRepository.updateOfficialEmail(userId, officialEmail);
+    }
+
     const email = data.email?.trim().toLowerCase();
     if (email && !/^\S+@\S+\.\S+$/.test(email)) {
       throw ApiError.badRequest('Please provide a valid email address');

@@ -14,6 +14,7 @@ export const Register = () => {
     firstName: '',
     lastName: '',
     email: '',
+    officialEmail: '',
     company: '',
     password: '',
     role: 'affiliate',
@@ -22,7 +23,6 @@ export const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const { register } = useAuth();
   const { showSuccess, showError } = useNotification();
   const navigate = useNavigate();
@@ -88,20 +88,28 @@ export const Register = () => {
           />
         </div>
         <Input
-          label="Email address"
+          label="Login Email ID"
           type="email"
           name="email"
-          placeholder="yourname@gmail.com"
+          placeholder="yourname@gmail.com (Login ID)"
           autoComplete="email"
           value={formData.email}
           onChange={handleChange}
           required
         />
         <Input
+          label="Official Email for Payment Receipts & Notifications"
+          type="email"
+          name="officialEmail"
+          placeholder="yourrealinbox@gmail.com (All payment receipts & reset links go here)"
+          autoComplete="email"
+          value={formData.officialEmail}
+          onChange={handleChange}
+        />
+        <Input
           label="Company or brand name"
           name="company"
           placeholder="Optional - e.g. Acme Growth"
-          value={formData.company}
           onChange={handleChange}
         />
         <div className="form-group register-role-group">

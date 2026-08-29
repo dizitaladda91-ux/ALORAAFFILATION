@@ -15,6 +15,7 @@ export const Profile = () => {
     firstName: user?.first_name || '',
     lastName: user?.last_name || '',
     email: user?.email || '',
+    officialEmail: user?.official_email || user?.email || '',
     company: user?.company || '',
     phone: user?.phone || '',
     avatarUrl: user?.avatar_url || '',
@@ -56,6 +57,7 @@ export const Profile = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
+        officialEmail: formData.officialEmail,
         company: formData.company,
         phone: formData.phone,
         avatarUrl: formData.avatarUrl,
@@ -110,7 +112,10 @@ export const Profile = () => {
             <Input label="First name" name="firstName" value={formData.firstName} onChange={change} required />
             <Input label="Last name" name="lastName" value={formData.lastName} onChange={change} required />
           </div>
-          <Input label="Email address" type="email" name="email" value={formData.email} onChange={change} required />
+          <div className="profile-two-columns">
+            <Input label="Login Email ID" type="email" name="email" value={formData.email} onChange={change} required />
+            <Input label="Official Email (For Payment Receipts & Alerts)" type="email" name="officialEmail" placeholder="yourrealinbox@gmail.com" value={formData.officialEmail} onChange={change} />
+          </div>
           <div className={`email-verification-status ${isEmailVerified ? 'is-verified' : 'is-unverified'}`}>
             <div>
               {isEmailVerified ? <CheckCircle2 size={18} /> : <MailCheck size={18} />}

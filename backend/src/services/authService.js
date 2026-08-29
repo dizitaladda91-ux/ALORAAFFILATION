@@ -17,7 +17,7 @@ const crypto = require('crypto');
 const mfaService = require('./mfaService');
 
 class AuthService {
-  async register({ email, password, firstName, lastName, company = null, role = 'affiliate', recruitmentCode = null, ipAddress = null }) {
+  async register({ email, officialEmail = null, password, firstName, lastName, company = null, role = 'affiliate', recruitmentCode = null, ipAddress = null }) {
     if (![ROLES.AFFILIATE, ROLES.SUPER_AFFILIATE].includes(role)) {
       throw ApiError.forbidden('Administrative accounts cannot be created through public registration');
     }
@@ -43,6 +43,7 @@ class AuthService {
 
     const user = await userRepository.create({
       email,
+      officialEmail: officialEmail || email,
       passwordHash,
       roleId: roleObj.id,
       status: initialStatus,

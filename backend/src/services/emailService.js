@@ -100,16 +100,17 @@ class EmailService {
    * Send welcome email for new affiliates
    */
   async sendWelcomeEmail(affiliate) {
-    const { email: affiliateEmail, firstName } = affiliate;
+    const targetEmail = affiliate.official_email || affiliate.officialEmail || affiliate.email;
+    const { firstName } = affiliate;
     const subject = 'Welcome to Our Affiliate Program!';
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Welcome, ${firstName}!</h2>
+        <h2>Welcome, ${firstName || 'Partner'}!</h2>
         <p>Thank you for joining our affiliate program. We're excited to have you on board!</p>
         
         <h3>Next Steps:</h3>
         <ol>
-          <li>Complete your profile with bank account details</li>
+          <li>Complete your profile with your official payout details</li>
           <li>Generate your unique referral links</li>
           <li>Start promoting and earning commissions!</li>
         </ol>
@@ -127,21 +128,22 @@ class EmailService {
       </div>
     `;
 
-    return this.sendEmail(affiliateEmail, subject, htmlContent);
+    return this.sendEmail(targetEmail, subject, htmlContent);
   }
 
   /**
    * Send commission earned notification
    */
   async sendCommissionEmail(affiliate, commission) {
-    const { email: affiliateEmail, firstName } = affiliate;
+    const targetEmail = affiliate.official_email || affiliate.officialEmail || affiliate.email;
+    const { firstName } = affiliate;
     const { amount, referral_code, created_at } = commission;
 
     const subject = `Commission Earned: ₹${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Commission Earned! 🎉</h2>
-        <p>Hi ${firstName},</p>
+        <p>Hi ${firstName || 'Partner'},</p>
         
         <p>Great news! You've earned a commission:</p>
         
@@ -165,32 +167,32 @@ class EmailService {
       </div>
     `;
 
-    return this.sendEmail(affiliateEmail, subject, htmlContent);
+    return this.sendEmail(targetEmail, subject, htmlContent);
   }
 
   /**
    * Send withdrawal request confirmation
    */
   async sendWithdrawalRequestEmail(user, withdrawal) {
-    const { email: userEmail, firstName } = user;
+    const targetEmail = user.official_email || user.officialEmail || user.email;
+    const { firstName } = user;
     const { amount, status, requested_at, bank_account_number } = withdrawal;
 
     const subject = `Withdrawal Request Confirmation - ₹${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Withdrawal Request Received</h2>
-        <p>Hi ${firstName},</p>
+        <p>Hi ${firstName || 'Partner'},</p>
         
         <p>Your withdrawal request has been received and is being processed:</p>
         
         <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0;">
           <p><strong>Amount:</strong> ₹${Number(amount || 0).toFixed(2)}</p>
-          <p><strong>Status:</strong> <span style="color: #ffc107;">${status.toUpperCase()}</span></p>
-          <p><strong>Bank Account (last 4):</strong> ****${(bank_account_number || '').slice(-4)}</p>
-          <p><strong>Requested on:</strong> ${new Date(requested_at).toLocaleDateString()}</p>
+          <p><strong>Status:</strong> <span style="color: #ffc107;">${(status || 'PENDING').toUpperCase()}</span></p>
+          <p><strong>Requested on:</strong> ${new Date(requested_at || Date.now()).toLocaleDateString()}</p>
         </div>
         
-        <p>You'll receive an email once your withdrawal is processed and transferred to your bank account.</p>
+        <p>You'll receive an email once your withdrawal is processed and transferred to your account.</p>
         
         <p>
           <a href="${config.frontendUrl}/withdrawals" 
@@ -204,27 +206,27 @@ class EmailService {
       </div>
     `;
 
-    return this.sendEmail(userEmail, subject, htmlContent);
+    return this.sendEmail(targetEmail, subject, htmlContent);
   }
 
   /**
    * Send withdrawal approval notification
    */
   async sendWithdrawalApprovedEmail(user, withdrawal) {
-    const { email: userEmail, firstName } = user;
+    const targetEmail = user.official_email || user.officialEmail || user.email;
+    const { firstName } = user;
     const { amount, approved_at } = withdrawal;
 
-    const subject = `Withdrawal Approved - ₹${Number(amount || 0).toFixed(2)}`;
+    const subject = `Withdrawal Approved & Paid - ₹${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Withdrawal Approved! ✅</h2>
-        <p>Hi ${firstName},</p>
+        <h2>Withdrawal Approved & Paid! ✅</h2>
+        <p>Hi ${firstName || 'Partner'},</p>
         
-        <p>Great news! Your withdrawal of <strong>₹${Number(amount || 0).toFixed(2)}</strong> has been approved.</p>
-        
-        <p>The funds should appear in your bank account within 2-5 business days.</p>
+        <p>Great news! Your withdrawal of <strong>₹${Number(amount || 0).toFixed(2)}</strong> has been processed and paid out.</p>
         
         <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; margin: 20px 0;">
+          <p><strong>Amount Paid:</strong> ₹${Number(amount || 0).toFixed(2)}</p>
           <p><strong>Approved on:</strong> ${new Date(approved_at || Date.now()).toLocaleDateString()}</p>
         </div>
         
@@ -234,21 +236,22 @@ class EmailService {
       </div>
     `;
 
-    return this.sendEmail(userEmail, subject, htmlContent);
+    return this.sendEmail(targetEmail, subject, htmlContent);
   }
 
   /**
    * Send withdrawal rejection notification
    */
   async sendWithdrawalRejectedEmail(user, withdrawal, reason) {
-    const { email: userEmail, firstName } = user;
+    const targetEmail = user.official_email || user.officialEmail || user.email;
+    const { firstName } = user;
     const { amount } = withdrawal;
 
     const subject = `Withdrawal Request Declined - ₹${Number(amount || 0).toFixed(2)}`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Withdrawal Request Declined</h2>
-        <p>Hi ${firstName},</p>
+        <p>Hi ${firstName || 'Partner'},</p>
         
         <p>Unfortunately, your withdrawal request for <strong>₹${Number(amount || 0).toFixed(2)}</strong> has been declined.</p>
         
@@ -262,14 +265,15 @@ class EmailService {
       </div>
     `;
 
-    return this.sendEmail(userEmail, subject, htmlContent);
+    return this.sendEmail(targetEmail, subject, htmlContent);
   }
 
   /**
    * Send password reset email
    */
   async sendPasswordResetEmail(user, resetToken) {
-    const { email: userEmail, firstName } = user;
+    const targetEmail = user.official_email || user.officialEmail || user.email;
+    const { firstName } = user;
     const resetLink = `${config.frontendUrl}/reset-password/${resetToken}`;
     const subject = 'Reset Your Password';
 
