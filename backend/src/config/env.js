@@ -29,21 +29,8 @@ if (env === 'production' && paymentsEnabled) {
     throw new Error('Razorpay credentials must be configured when PAYMENTS_ENABLED=true');
   }
 }
-const emailEnabled = process.env.EMAIL_ENABLED !== 'false';
+const emailEnabled = process.env.EMAIL_ENABLED === 'true' || Boolean(process.env.GMAIL_USER && process.env.GMAIL_PASSWORD);
 const emailProvider = process.env.EMAIL_PROVIDER || 'gmail';
-if (env === 'production' && emailEnabled) {
-  if (!['smtp', 'sendgrid', 'gmail'].includes(emailProvider)) {
-    throw new Error('EMAIL_PROVIDER must be smtp, sendgrid, or gmail when EMAIL_ENABLED=true');
-  }
-  const providerCredentials = {
-    smtp: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD),
-    sendgrid: Boolean(process.env.SENDGRID_API_KEY),
-    gmail: Boolean(process.env.GMAIL_USER && process.env.GMAIL_PASSWORD),
-  };
-  if (!providerCredentials[emailProvider]) {
-    throw new Error(`Email credentials for provider '${emailProvider}' must be configured when EMAIL_ENABLED=true`);
-  }
-}
 
 module.exports = {
   env,
