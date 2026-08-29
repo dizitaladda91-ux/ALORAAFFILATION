@@ -29,18 +29,19 @@ class EmailService {
       if (provider === 'gmail' && gmailUser && gmailPass) {
         this.transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
-          port: 465,
-          secure: true,
+          port: 587,
+          secure: false,
+          requireTLS: true,
           family: 4,
           auth: {
             user: gmailUser,
             pass: gmailPass,
           },
-          connectionTimeout: 15000,
-          greetingTimeout: 15000,
-          socketTimeout: 15000,
+          connectionTimeout: 20000,
+          greetingTimeout: 20000,
+          socketTimeout: 20000,
         });
-        logger.info(`Email transporter initialized with Gmail IPv4 service: ${gmailUser}`);
+        logger.info(`Email transporter initialized with Gmail Port 587 STARTTLS provider: ${gmailUser}`);
         return;
       }
 
