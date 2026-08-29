@@ -317,7 +317,7 @@ class EmailService {
       </div>
     `;
 
-    return this.sendEmail(userEmail, subject, htmlContent);
+    return this.sendEmail(targetEmail, subject, htmlContent);
   }
 
   /**
