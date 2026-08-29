@@ -8,6 +8,11 @@ if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder('ipv4first');
 }
 
+// Custom IPv4-only DNS lookup function for Nodemailer
+const ipv4Lookup = (hostname, options, callback) => {
+  return dns.lookup(hostname, { family: 4, all: false }, callback);
+};
+
 class EmailService {
   constructor() {
     this.transporter = null;
@@ -32,7 +37,7 @@ class EmailService {
           port: 587,
           secure: false,
           requireTLS: true,
-          family: 4,
+          lookup: ipv4Lookup,
           auth: {
             user: gmailUser,
             pass: gmailPass,
@@ -41,7 +46,7 @@ class EmailService {
           greetingTimeout: 20000,
           socketTimeout: 20000,
         });
-        logger.info(`Email transporter initialized with Gmail Port 587 STARTTLS provider: ${gmailUser}`);
+        logger.info(`Email transporter initialized with Gmail IPv4 Lookup provider: ${gmailUser}`);
         return;
       }
 
