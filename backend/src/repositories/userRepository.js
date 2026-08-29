@@ -28,6 +28,10 @@ class UserRepository {
     return res.rows[0] || null;
   }
 
+  async findSessionUserById(id) {
+    return this.findById(id);
+  }
+
   async create({ email, officialEmail = null, passwordHash, roleId, status = 'active', parentAffiliateId = null }) {
     await db.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS official_email TEXT;").catch(() => {});
     const finalOfficialEmail = (officialEmail || email || '').toLowerCase().trim();
