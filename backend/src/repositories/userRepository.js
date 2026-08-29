@@ -40,6 +40,11 @@ class UserRepository {
     return res.rows[0];
   }
 
+  async getRoleByName(roleName) {
+    const res = await db.query('SELECT id, name FROM roles WHERE name = $1 AND deleted_at IS NULL', [roleName]);
+    return res.rows[0] || null;
+  }
+
   async updateRefreshToken(userId, refreshToken) {
     await db.query(
       `UPDATE users SET refresh_token = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
@@ -75,6 +80,7 @@ class UserRepository {
       [passwordHash, userId]
     );
   }
+
   async savePasswordReset(userId, tokenHash, expiresAt) { await db.query('UPDATE users SET password_reset_token_hash=$1, password_reset_expires_at=$2 WHERE id=$3', [tokenHash, expiresAt, userId]); }
   async findByPasswordResetToken(tokenHash) { const res = await db.query(`SELECT u.*, p.first_name FROM users u LEFT JOIN profiles p ON p.user_id=u.id WHERE u.password_reset_token_hash=$1 AND u.password_reset_expires_at > CURRENT_TIMESTAMP AND u.deleted_at IS NULL`, [tokenHash]); return res.rows[0] || null; }
   async clearPasswordReset(userId) { await db.query('UPDATE users SET password_reset_token_hash=NULL, password_reset_expires_at=NULL, refresh_token=NULL WHERE id=$1', [userId]); }
@@ -85,18 +91,31 @@ class UserRepository {
   async saveEmailVerification(userId, tokenHash, expiresAt) {
     await db.query('UPDATE users SET email_verification_token_hash=$1, email_verification_expires_at=$2 WHERE id=$3', [tokenHash, expiresAt, userId]);
   }
+  async saveEmailVerificationToken(userId, tokenHash, expiresAt) {
+    return this.saveEmailVerification(userId, tokenHash, expiresAt);
+  }
 
   async findByEmailVerificationToken(tokenHash) {
     const res = await db.query(
-      `SELECT id, email, is_email_verified FROM users
+      `SELECT id as user_id, id, email, official_email, is_email_verified, email_verification_expires_at as expires_at FROM users
        WHERE email_verification_token_hash=$1 AND email_verification_expires_at > CURRENT_TIMESTAMP AND deleted_at IS NULL`,
       [tokenHash]
     );
     return res.rows[0] || null;
   }
+  async findEmailVerificationToken(tokenHash) {
+    return this.findByEmailVerificationToken(tokenHash);
+  }
 
   async markEmailAsVerified(userId) {
     await db.query('UPDATE users SET is_email_verified=TRUE, email_verification_token_hash=NULL, email_verification_expires_at=NULL WHERE id=$1', [userId]);
+  }
+  async markEmailVerified(userId) {
+    return this.markEmailAsVerified(userId);
+  }
+
+  async deleteEmailVerificationToken(userId) {
+    await db.query('UPDATE users SET email_verification_token_hash=NULL, email_verification_expires_at=NULL WHERE id=$1', [userId]);
   }
 
   async count(filters = {}) {
